@@ -2384,7 +2384,7 @@ else if($idReporteActual == 0){
             $saldoInicialDon2Tp2 = 0;
 
             if (!empty($fechaInicio)) {
-                $sqlSaldoInicial = "SELECT * FROM inventario WHERE Fecha < '".addslashes($fechaInicio)."'";
+                $sqlSaldoInicial = "SELECT * FROM inventario WHERE Estado = 1 AND Fecha < '".addslashes($fechaInicio)."'";
                 $resultSaldoInicial = $PSN1->query($sqlSaldoInicial);
 
                 while($rowSaldo = $resultSaldoInicial->fetch_assoc()) {
@@ -2406,12 +2406,12 @@ else if($idReporteActual == 0){
                         $saldoInicialDon2Tp1 += (int)$tp1;
                         $saldoInicialDon2Tp2 += (int)$tp2;
                     }
-                    // Entradas de Ximena tipo 2
-                    if (($tipo == '2') AND ($don1 == '1') AND (($IdUsu == '22') AND ($Fac == $Id))) {
+                    // Entradas a este facilitador registradas como tipo 2
+                    if (($tipo == '2') AND ($don1 == '1') AND ($Fac == $Id)) {
                         $saldoInicialDon1Tp1 += (int)$tp1;
                         $saldoInicialDon1Tp2 += (int)$tp2;
                     }
-                    if (($tipo == '2') AND ($don2 == '1') AND (($IdUsu == '22') AND ($Fac == $Id))) {
+                    if (($tipo == '2') AND ($don2 == '1') AND ($Fac == $Id)) {
                         $saldoInicialDon2Tp1 += (int)$tp1;
                         $saldoInicialDon2Tp2 += (int)$tp2;
                     }
@@ -2451,6 +2451,7 @@ else if($idReporteActual == 0){
             $whereConditions = array();
 
             // Filtro de usuario: registros donde el usuario es IdUsuario O Facilitador O es una transferencia que recibe
+            $whereConditions[] = "inventario.Estado = 1";
             $whereConditions[] = "(inventario.IdUsuario = '".$Id."' OR inventario.Facilitador = '".$Id."')";
 
             if (!empty($fechaInicio)) {
@@ -2648,6 +2649,7 @@ else if($idReporteActual == 0){
                             // Aplicar SOLO los filtros de fecha (NO el filtro de usuario)
                             // porque esta tabla muestra todos los facilitadores
                             $whereConditionsFacilitador = array();
+                            $whereConditionsFacilitador[] = "Estado = 1";
                             if (!empty($fechaInicio)) {
                                 $whereConditionsFacilitador[] = "Fecha >= '".addslashes($fechaInicio)."'";
                             }
@@ -2676,11 +2678,11 @@ else if($idReporteActual == 0){
                                 $tp2  = $row_inventario["TipoSopa2"];
                                 $Fac    = $row_inventario["Facilitador"];
                                 $IdUsu  = $row_inventario["IdUsuario"];
-                                if (($tipo == '2') AND ($don1 == '1') AND (($IdUsu == '22') AND ($Fac == $wid))) {
+                                if (($tipo == '2') AND ($don1 == '1') AND ($Fac == $wid)) {
                                     $sumDon1Tp1 = $sumDon1Tp1 + (int)$tp1; 
                                     $sumDon1Tp2 = $sumDon1Tp2 + (int)$tp2; 
                                 } else {
-                                    if (($tipo == '2') AND ($don2 == '1') AND (($IdUsu == '22') AND ($Fac == $wid))) {
+                                    if (($tipo == '2') AND ($don2 == '1') AND ($Fac == $wid)) {
                                         $sumDon2Tp1 = $sumDon2Tp1 + (int)$tp1; 
                                         $sumDon2Tp2 = $sumDon2Tp2 + (int)$tp2; 
                                     } else {
@@ -2719,7 +2721,7 @@ else if($idReporteActual == 0){
                             $wr4 = ($sumDon1Tp2 + $sumDon2Tp2);
                             $wr5 = ($resDon1Tp2 + $resDon2Tp2);
                             $wr6 = ($sumDon1Tp2 + $sumDon2Tp2) - ($resDon1Tp2 + $resDon2Tp2);
-                            if (($wr3 > 0) || ($wr6 > 0)) {
+                            if (($wr1 > 0) || ($wr2 > 0) || ($wr4 > 0) || ($wr5 > 0) || ($wr3 > 0) || ($wr6 > 0)) {
                                 
                             ?>
                             <tr>
@@ -2772,12 +2774,12 @@ else if($idReporteActual == 0){
                         $sumDon2Tp1 = $sumDon2Tp1 + (int)$tp1;
                         $sumDon2Tp2 = $sumDon2Tp2 + (int)$tp2;
                     }
-                    // Tipo 2: Donaciones salidas de Ximena (user 22) a este facilitador (recibido)
-                    if (($tipo == '2') AND ($don1 == '1') AND (($IdUsu == '22') AND ($Fac == $Id))) {
+                    // Tipo 2: Entradas recibidas por este facilitador
+                    if (($tipo == '2') AND ($don1 == '1') AND ($Fac == $Id)) {
                         $sumDon1Tp1 = $sumDon1Tp1 + (int)$tp1;
                         $sumDon1Tp2 = $sumDon1Tp2 + (int)$tp2;
                     }
-                    if (($tipo == '2') AND ($don2 == '1') AND (($IdUsu == '22') AND ($Fac == $Id))) {
+                    if (($tipo == '2') AND ($don2 == '1') AND ($Fac == $Id)) {
                         $sumDon2Tp1 = $sumDon2Tp1 + (int)$tp1;
                         $sumDon2Tp2 = $sumDon2Tp2 + (int)$tp2;
                     }
@@ -2819,8 +2821,8 @@ else if($idReporteActual == 0){
                 $wtransMixVeg3lb = $transferSalienteTp2;
 
                 // Existencias = Saldo Inicial + Recibido en período - Entregado en período - Transferido
-                $wresMixVeg1lb = $saldoInicialDon1Tp1 + $wrecMixVeg1lb - $wentMixVeg1lb - $wtransMixVeg1lb;
-                $wresMixVeg3lb = $saldoInicialDon1Tp2 + $wrecMixVeg3lb - $wentMixVeg3lb - $wtransMixVeg3lb;
+                $wresMixVeg1lb = ($saldoInicialDon1Tp1 + $saldoInicialDon2Tp1) + $wrecMixVeg1lb - $wentMixVeg1lb - $wtransMixVeg1lb;
+                $wresMixVeg3lb = ($saldoInicialDon1Tp2 + $saldoInicialDon2Tp2) + $wrecMixVeg3lb - $wentMixVeg3lb - $wtransMixVeg3lb;
                 $_SESSION["wresMixVeg1lb"] = $wresMixVeg1lb;
                 $_SESSION["wresMixVeg3lb"] = $wresMixVeg3lb;
                 ?>

@@ -763,7 +763,7 @@ $sql = "
 
     UNION ALL
 
-    SELECT 'Seguimiento / otra entrega' AS Tipo, IFNULL(SUM(CASE WHEN inventario.Tipo = 5 THEN inventario.TipoSopa1 + inventario.TipoSopa2 ELSE 0 END),0) AS Total
+    SELECT '2da entrega / otra entrega' AS Tipo, IFNULL(SUM(CASE WHEN inventario.Tipo = 5 THEN inventario.TipoSopa1 + inventario.TipoSopa2 ELSE 0 END),0) AS Total
     FROM inventario
     " . $FiltroFechaLugar . "
     " . ($esVistaFacilitador ? " AND inventario.IdUsuario = " . $Facilitador : "") . "
@@ -1201,9 +1201,9 @@ if ($esVistaFacilitador) {
 
                     <div class="grid-col-3">
                         <div class="kpi-card kpi-orange">
-                            <div class="kpi-label">A beneficiarios</div>
+                            <div class="kpi-label">Unidades entregadas</div>
                             <div class="kpi-value"><?= fmt_num($resumenInv['beneficiarios']); ?></div>
-                            <div class="kpi-help">Entregas reales a la población atendida.</div>
+                            <div class="kpi-help">Entregas reales a la población atendida (Beneficiarios).</div>
                         </div>
                     </div>
 
