@@ -543,6 +543,8 @@ $Graphp07 = 1;
 $Graphp08 = 1;
 $Graphp09 = 1;
 $Graphp10 = 1;
+$Graphp11 = 1;
+$Graphp12 = 1;
 
 /* =========================================================
  * KPIs INVENTARIO
@@ -754,7 +756,7 @@ $sql = "
 
     UNION ALL
 
-    SELECT 'Caracterización' AS Tipo, IFNULL(SUM(CASE WHEN inventario.Tipo = 4 THEN inventario.TipoSopa1 + inventario.TipoSopa2 ELSE 0 END),0) AS Total
+    SELECT '1ra entrega' AS Tipo, IFNULL(SUM(CASE WHEN inventario.Tipo = 4 THEN inventario.TipoSopa1 + inventario.TipoSopa2 ELSE 0 END),0) AS Total
     FROM inventario
     " . $FiltroFechaLugar . "
     " . ($esVistaFacilitador ? " AND inventario.IdUsuario = " . $Facilitador : "") . "
@@ -1012,6 +1014,66 @@ if ($PSN->num_rows() > 0) {
     }
     $Graphp10 = 0;
 }
+
+/* =========================================================
+ * GRAPH 11: ENTRADAS POR FECHA PARA FACILITADOR
+ * ========================================================= */
+$nombreGrafica11 = "Entradas por fecha del facilitador";
+$datosGraph11 = array();
+$datosGraph11[] = '["Fecha", "Mix de vegetales 1 lb", "Mix de vegetales 3 lb"]';
+
+if ($esVistaFacilitador) {
+    $sql = "
+        SELECT
+            inventario.Fecha,
+            IFNULL(SUM(inventario.TipoSopa1), 0) AS TipoSopa1,
+            IFNULL(SUM(inventario.TipoSopa2), 0) AS TipoSopa2
+        FROM inventario
+        " . $FiltroFechaLugar . "
+          AND inventario.Tipo = 2
+          AND inventario.Facilitador = '" . $Facilitador . "'
+        GROUP BY inventario.Fecha
+        ORDER BY inventario.Fecha ASC
+    ";
+
+    $PSN->query($sql);
+    if ($PSN->num_rows() > 0) {
+        while ($PSN->next_record()) {
+            $datosGraph11[] = "['" . $PSN->f('Fecha') . "', " . (float) $PSN->f('TipoSopa1') . ", " . (float) $PSN->f('TipoSopa2') . "]";
+        }
+        $Graphp11 = 0;
+    }
+}
+
+/* =========================================================
+ * GRAPH 12: SALIDAS POR FECHA PARA FACILITADOR
+ * ========================================================= */
+$nombreGrafica12 = "Salidas por fecha del facilitador";
+$datosGraph12 = array();
+$datosGraph12[] = '["Fecha", "Mix de vegetales 1 lb", "Mix de vegetales 3 lb"]';
+
+if ($esVistaFacilitador) {
+    $sql = "
+        SELECT
+            inventario.Fecha,
+            IFNULL(SUM(inventario.TipoSopa1), 0) AS TipoSopa1,
+            IFNULL(SUM(inventario.TipoSopa2), 0) AS TipoSopa2
+        FROM inventario
+        " . $FiltroFechaLugar . "
+          AND inventario.Tipo IN (2,3,4,5,7)
+          AND inventario.IdUsuario = " . $Facilitador . "
+        GROUP BY inventario.Fecha
+        ORDER BY inventario.Fecha ASC
+    ";
+
+    $PSN->query($sql);
+    if ($PSN->num_rows() > 0) {
+        while ($PSN->next_record()) {
+            $datosGraph12[] = "['" . $PSN->f('Fecha') . "', " . (float) $PSN->f('TipoSopa1') . ", " . (float) $PSN->f('TipoSopa2') . "]";
+        }
+        $Graphp12 = 0;
+    }
+}
 ?>
 
 <div class="container">
@@ -1207,6 +1269,22 @@ if ($PSN->num_rows() > 0) {
                             <h4><?= $nombreGrafica10; ?></h4>
                             <p class="dash-subtitle">Saldo neto disponible por cada presentación del producto.</p>
                             <div id="graph10" class="chart-box sm"></div>
+                        </div>
+                    </div>
+
+                    <div class="grid-col-6">
+                        <div class="dash-card" style="margin-bottom:0;">
+                            <h4><?= $nombreGrafica11; ?></h4>
+                            <p class="dash-subtitle">Muestra cuanto recibio el facilitador en cada fecha del rango filtrado.</p>
+                            <div id="graph11" class="chart-box"></div>
+                        </div>
+                    </div>
+
+                    <div class="grid-col-6">
+                        <div class="dash-card" style="margin-bottom:0;">
+                            <h4><?= $nombreGrafica12; ?></h4>
+                            <p class="dash-subtitle">Muestra cuanto salio desde el facilitador en cada fecha del rango filtrado.</p>
+                            <div id="graph12" class="chart-box"></div>
                         </div>
                     </div>
                 </div>
@@ -1480,6 +1558,8 @@ var rows07 = [<?= isset($datosGraph07) ? implode(",", $datosGraph07) : '';?>];
 var rows08 = [<?= isset($datosGraph08) ? implode(",", $datosGraph08) : '';?>];
 var rows09 = [<?= isset($datosGraph09) ? implode(",", $datosGraph09) : '';?>];
 var rows10 = [<?= isset($datosGraph10) ? implode(",", $datosGraph10) : '';?>];
+var rows11 = [<?= isset($datosGraph11) ? implode(",", $datosGraph11) : '';?>];
+var rows12 = [<?= isset($datosGraph12) ? implode(",", $datosGraph12) : '';?>];
 
 function drawChart01(){
     drawArrayColumn('graph01', rows01, {
@@ -1626,12 +1706,46 @@ function drawChart10(){
     });
 }
 
+function drawChart11(){
+    if (!<?= $esVistaFacilitador ? 'true' : 'false'; ?>) {
+        renderEmptyState('graph11', 'Debe filtrar por facilitador para mostrar esta grafica.');
+        return;
+    }
+
+    drawArrayColumn('graph11', rows11, {
+        animation:{ startup:true, duration:1200, easing:'out' },
+        chartArea:{ left:70, top:30, width:'80%', height:'68%' },
+        legend:{ position:'bottom' },
+        bar:{ groupWidth:'60%' },
+        vAxis:{ minValue: 0, title:'Cantidad' },
+        hAxis:{ title:'Fecha' }
+    });
+}
+
+function drawChart12(){
+    if (!<?= $esVistaFacilitador ? 'true' : 'false'; ?>) {
+        renderEmptyState('graph12', 'Debe filtrar por facilitador para mostrar esta grafica.');
+        return;
+    }
+
+    drawArrayColumn('graph12', rows12, {
+        animation:{ startup:true, duration:1200, easing:'out' },
+        chartArea:{ left:70, top:30, width:'80%', height:'68%' },
+        legend:{ position:'bottom' },
+        bar:{ groupWidth:'60%' },
+        vAxis:{ minValue: 0, title:'Cantidad' },
+        hAxis:{ title:'Fecha' }
+    });
+}
+
 function drawInventario(){
     drawChart01();
     drawChart02();
     drawChart03();
     drawChart09();
     drawChart10();
+    drawChart11();
+    drawChart12();
 }
 
 function drawCaracterizacion(){
