@@ -1434,7 +1434,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                 <!-- Sección de Evidencia Fotográfica -->
                 <div class="form-group">
                     <label>📸 Evidencia Fotográfica (Opcional)</label>
-                    <input type="file" id="fotosEvidencia" multiple accept="image/jpeg,image/png,image/jpg,image/webp" style="display: block; margin-top: 8px;">
+                    <input type="file" id="fotosEvidencia" multiple accept="image/jpeg,image/png,image/jpg,image/webp" required style="display: block; margin-top: 8px;">
                     <small style="color: #666; display: block; margin-top: 8px;">Máximo 5 MB por imagen. Formatos: JPG, PNG, WebP</small>
                     <div id="fotosPreview" style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px;"></div>
                 </div>
@@ -2186,6 +2186,17 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         const fotosPreview = document.getElementById('fotosPreview');
 
         if (fotosInput) {
+            const fotosLabel = fotosInput.closest('.form-group')?.querySelector('label');
+            const fotosHelp = fotosInput.closest('.form-group')?.querySelector('small');
+            if (fotosLabel) {
+                fotosLabel.textContent = 'Evidencia Fotográfica (Obligatoria)';
+            }
+            if (fotosHelp) {
+                fotosHelp.textContent = 'Debe cargar al menos una imagen. Máximo 5 MB por imagen. Formatos: JPG, PNG, WebP';
+            }
+        }
+
+        if (fotosInput) {
             fotosInput.addEventListener('change', function(e) {
                 fotosPreview.innerHTML = '';
                 const files = Array.from(this.files);
@@ -2230,11 +2241,31 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         }
     });
 
+    function obtenerFotosEvidenciaValidas() {
+        const fotosInput = document.getElementById('fotosEvidencia');
+        if (!fotosInput || !fotosInput.files || fotosInput.files.length === 0) {
+            return [];
+        }
+
+        const MAX_SIZE = 5 * 1024 * 1024;
+        const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+
+        return Array.from(fotosInput.files).filter(file =>
+            ALLOWED_TYPES.includes(file.type) && file.size <= MAX_SIZE
+        );
+    }
+
     function saveNewReport(event) {
         event.preventDefault();
 
         if (!selectedGrupo) {
             showStatusMessage('No hay grupo seleccionado', 'error');
+            return;
+        }
+
+        const fotosValidas = obtenerFotosEvidenciaValidas();
+        if (fotosValidas.length === 0) {
+            showStatusMessage('Debe cargar al menos una evidencia fotográfica válida para guardar el reporte', 'error');
             return;
         }
 
@@ -2307,11 +2338,11 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                 const nuevoReporteId = data.nuevoReporteId;
 
                 // Procesar imágenes si existen
-                const fotosInput = document.getElementById('fotosEvidencia');
-                if (fotosInput && fotosInput.files.length > 0) {
+                const fotosValidas = obtenerFotosEvidenciaValidas();
+                if (fotosValidas.length > 0) {
                     btnSubmit.textContent = 'Guardando imágenes...';
                     btnSubmit.disabled = true;
-                    uploadReportImages(nuevoReporteId, fotosInput.files, btnSubmit, textOriginal);
+                    uploadReportImages(nuevoReporteId, fotosValidas, btnSubmit, textOriginal);
                 } else {
                     showStatusMessage(`✅ Reporte creado correctamente`, 'success');
                     closeActivityModal();

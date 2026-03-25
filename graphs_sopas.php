@@ -448,7 +448,7 @@ $fecha_actual = date("Y-m-d");
 $FechaFin = req_date("FechaFin", date("Y-m-d"));
 $FechaIni = isset($_REQUEST["FechaIni"]) && $_REQUEST["FechaIni"] != ""
     ? $_REQUEST["FechaIni"]
-    : "2021-02-01";
+    : "";
 
 if ($FechaIni > $FechaFin) {
     $tmp = $FechaIni;
@@ -505,7 +505,9 @@ if ($departamento != 0) {
     $FiltroFechaLugar .= " AND inventario.Departamento = '" . $departamento . "'";
 }
 
-$FiltroFechaLugar .= " AND inventario.Fecha >= '" . $FechaIni . "'";
+if ($FechaIni != "") {
+    $FiltroFechaLugar .= " AND inventario.Fecha >= '" . $FechaIni . "'";
+}
 $FiltroFechaLugar .= " AND inventario.Fecha <= '" . $FechaFin . "'";
 
 $esVistaFacilitador = ($Facilitador != 0);
@@ -543,7 +545,15 @@ if ($esVistaFacilitador && $FechaIni != "") {
                     THEN inventario.TipoSopa1 ELSE 0 END),0)
                 -
                 IFNULL(SUM(CASE
-                    WHEN inventario.Tipo IN (2,3,4,5,7) AND inventario.IdUsuario = " . $Facilitador . "
+                    WHEN (
+                        inventario.Tipo IN (2,3,4,5)
+                        AND inventario.IdUsuario = " . $Facilitador . "
+                        AND (inventario.Donante1 = 1 OR inventario.Donante2 = 1)
+                    )
+                    OR (
+                        inventario.Tipo = 7
+                        AND inventario.IdUsuario = " . $Facilitador . "
+                    )
                     THEN inventario.TipoSopa1 ELSE 0 END),0)
             ) AS saldo_tipo1,
 
@@ -561,7 +571,15 @@ if ($esVistaFacilitador && $FechaIni != "") {
                     THEN inventario.TipoSopa2 ELSE 0 END),0)
                 -
                 IFNULL(SUM(CASE
-                    WHEN inventario.Tipo IN (2,3,4,5,7) AND inventario.IdUsuario = " . $Facilitador . "
+                    WHEN (
+                        inventario.Tipo IN (2,3,4,5)
+                        AND inventario.IdUsuario = " . $Facilitador . "
+                        AND (inventario.Donante1 = 1 OR inventario.Donante2 = 1)
+                    )
+                    OR (
+                        inventario.Tipo = 7
+                        AND inventario.IdUsuario = " . $Facilitador . "
+                    )
                     THEN inventario.TipoSopa2 ELSE 0 END),0)
             ) AS saldo_tipo2
         FROM inventario
@@ -617,6 +635,7 @@ $Graphp12 = 1;
  * ========================================================= */
 $resumenInv = array(
     'abastecido' => 0,
+    'entregado' => 0,
     'facilitadores' => 0,
     'beneficiarios' => 0,
     'transferencias' => 0,
@@ -639,11 +658,15 @@ if ($esVistaFacilitador) {
                 THEN inventario.TipoSopa1 + inventario.TipoSopa2 ELSE 0 END),0) AS transferencias_entrantes,
 
             IFNULL(SUM(CASE
-                WHEN inventario.Tipo = 2 AND inventario.IdUsuario = " . $Facilitador . "
+                WHEN inventario.Tipo = 2
+                  AND inventario.IdUsuario = " . $Facilitador . "
+                  AND (inventario.Donante1 = 1 OR inventario.Donante2 = 1)
                 THEN inventario.TipoSopa1 + inventario.TipoSopa2 ELSE 0 END),0) AS entregado_facilitadores,
 
             IFNULL(SUM(CASE
-                WHEN inventario.Tipo IN (3,4,5) AND inventario.IdUsuario = " . $Facilitador . "
+                WHEN inventario.Tipo IN (3,4,5)
+                  AND inventario.IdUsuario = " . $Facilitador . "
+                  AND (inventario.Donante1 = 1 OR inventario.Donante2 = 1)
                 THEN inventario.TipoSopa1 + inventario.TipoSopa2 ELSE 0 END),0) AS entregado_beneficiarios,
 
             IFNULL(SUM(CASE
@@ -665,6 +688,7 @@ if ($esVistaFacilitador) {
         $transferOut = (float) $PSN4->f('transferencias_salientes');
 
         $resumenInv['abastecido'] = $entradasPropias + $recibidoCentral + $transferIn;
+        $resumenInv['entregado'] = $movFac + $movBen;
         $resumenInv['facilitadores'] = $movFac;
         $resumenInv['beneficiarios'] = $movBen;
         $resumenInv['transferencias'] = $transferOut;
@@ -698,6 +722,7 @@ if ($esVistaFacilitador) {
     if ($PSN4->num_rows() > 0) {
         $PSN4->next_record();
         $resumenInv['abastecido'] = (float) $PSN4->f('abastecido');
+        $resumenInv['entregado'] = (float) $PSN4->f('facilitadores') + (float) $PSN4->f('beneficiarios');
         $resumenInv['facilitadores'] = (float) $PSN4->f('facilitadores');
         $resumenInv['beneficiarios'] = (float) $PSN4->f('beneficiarios');
         $resumenInv['transferencias'] = (float) $PSN4->f('transferencias');
@@ -762,7 +787,9 @@ if ($esVistaFacilitador) {
                   OR (inventario.Tipo = 8 AND inventario.IdUsuario = " . $Facilitador . ")
                 THEN inventario.TipoSopa1 ELSE 0 END),0) AS Recibido,
             IFNULL(SUM(CASE
-                WHEN inventario.Tipo IN (3,4,5,7,2) AND inventario.IdUsuario = " . $Facilitador . "
+                WHEN inventario.Tipo IN (2,3,4,5)
+                  AND inventario.IdUsuario = " . $Facilitador . "
+                  AND (inventario.Donante1 = 1 OR inventario.Donante2 = 1)
                 THEN inventario.TipoSopa1 ELSE 0 END),0) AS Salida
         FROM inventario
         " . $FiltroFechaLugar . "
@@ -777,7 +804,9 @@ if ($esVistaFacilitador) {
                   OR (inventario.Tipo = 8 AND inventario.IdUsuario = " . $Facilitador . ")
                 THEN inventario.TipoSopa2 ELSE 0 END),0) AS Recibido,
             IFNULL(SUM(CASE
-                WHEN inventario.Tipo IN (3,4,5,7,2) AND inventario.IdUsuario = " . $Facilitador . "
+                WHEN inventario.Tipo IN (2,3,4,5)
+                  AND inventario.IdUsuario = " . $Facilitador . "
+                  AND (inventario.Donante1 = 1 OR inventario.Donante2 = 1)
                 THEN inventario.TipoSopa2 ELSE 0 END),0) AS Salida
         FROM inventario
         " . $FiltroFechaLugar . "
@@ -1132,7 +1161,8 @@ if ($esVistaFacilitador) {
             IFNULL(SUM(inventario.TipoSopa2), 0) AS TipoSopa2
         FROM inventario
         " . $FiltroFechaLugar . "
-          AND inventario.Tipo IN (2,3,4,5,7)
+          AND inventario.Tipo IN (2,3,4,5)
+          AND (inventario.Donante1 = 1 OR inventario.Donante2 = 1)
           AND inventario.IdUsuario = " . $Facilitador . "
         GROUP BY inventario.Fecha
         ORDER BY inventario.Fecha ASC
@@ -1274,7 +1304,7 @@ if ($esVistaFacilitador) {
                     <div class="grid-col-3">
                         <div class="kpi-card kpi-orange">
                             <div class="kpi-label">Unidades entregadas</div>
-                            <div class="kpi-value"><?= fmt_num($resumenInv['beneficiarios']); ?></div>
+                            <div class="kpi-value"><?= fmt_num($resumenInv['entregado']); ?></div>
                             <div class="kpi-help">Entregas reales a la población atendida (Beneficiarios).</div>
                         </div>
                     </div>
