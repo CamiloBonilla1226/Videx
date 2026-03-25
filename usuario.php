@@ -22,9 +22,46 @@ if (!isset($_REQUEST["ctrl"]) || soloNumeros($_REQUEST["ctrl"]) == "" || soloNum
     $ctrl = soloNumeros($_REQUEST["ctrl"]);
 }
 
+$soloLecturaFacilitador = (isset($_SESSION["perfil"]) && soloNumeros($_SESSION["perfil"]) == 163);
+
 // Array que nos servira para ir llevando cuenta de los requerimientos.
 $arrayRequerimientos = array();
 if (isset($_POST["funcion"])) {
+    if ($soloLecturaFacilitador) {
+        $camposSoloLecturaFacilitador = array(
+            "acceso" => 0,
+            "acceso_graphs" => 0,
+            "excluido_reportes" => 0,
+            "empresa_tipo" => 0,
+            "empresa_representante" => "",
+            "empresa_contacto" => "",
+            "empresa_direccion" => "",
+            "empresa_url" => "",
+            "empresa_telefono1" => "",
+            "empresa_telefono2" => "",
+            "empresa_celular1" => "",
+            "empresa_celular2" => "",
+            "empresa_email1" => "",
+            "empresa_email2" => "",
+            "empresa_cargo" => "",
+            "empresa_aprobacion" => 0,
+            "empresa_paisid" => 0,
+            "empresa_pais" => "",
+            "empresa_socio" => "",
+            "empresa_proceso" => "",
+            "empresa_pd" => "",
+            "empresa_sitio_cor" => "",
+            "empresa_sitio" => "",
+            "empresa_rm" => "",
+            "empresa_circuito" => 0
+        );
+
+        foreach ($camposSoloLecturaFacilitador as $campoSoloLectura => $valorSoloLectura) {
+            if (!isset($_POST[$campoSoloLectura])) {
+                $_POST[$campoSoloLectura] = $valorSoloLectura;
+            }
+        }
+    }
     /*
     *   Para verificar errores a futuro.
         1   Campos requeridos en BLANCO (Nombre, identificacion, password)
@@ -68,6 +105,11 @@ if (isset($_POST["funcion"])) {
         $general_acceso = eliminarInvalidos($_POST["acceso"]);
         $general_acceso_graphs = eliminarInvalidos($_POST["acceso_graphs"]);
         $general_excluido_reportes = isset($_POST["excluido_reportes"]) ? 1 : 0;
+        if ($soloLecturaFacilitador) {
+            $general_acceso = 0;
+            $general_acceso_graphs = 0;
+            $general_excluido_reportes = 0;
+        }
         //
         $temp_password_check = eliminarInvalidos($_POST["password_check"]);
 
@@ -165,6 +207,8 @@ if (isset($_POST["funcion"])) {
                 /*
                  *   INSERTAMOS INFORMACIÓN EMPRESARIAL
                  */
+                $empresa_nombre = "";
+                $empresa_nit = "";
                 $empresa_tipo = soloNumeros($_POST["empresa_tipo"]);
                 if ($empresa_tipo == "")
                     $empresa_tipo = "0";
@@ -201,6 +245,31 @@ if (isset($_POST["funcion"])) {
                 $empresa_circuito = soloNumeros($_POST["empresa_circuito"]);
                 if ($empresa_circuito == "")
                     $empresa_circuito = "0";
+
+                if ($soloLecturaFacilitador) {
+                    $empresa_tipo = "0";
+                    $empresa_representante = "";
+                    $empresa_contacto = "";
+                    $empresa_direccion = "";
+                    $empresa_url = "";
+                    $empresa_telefono1 = "";
+                    $empresa_telefono2 = "";
+                    $empresa_celular1 = "";
+                    $empresa_celular2 = "";
+                    $empresa_email1 = "";
+                    $empresa_email2 = "";
+                    $empresa_cargo = "";
+                    $empresa_aprobacion = "0";
+                    $empresa_paisid = "0";
+                    $empresa_pais = "";
+                    $empresa_socio = "";
+                    $empresa_proceso = "";
+                    $empresa_pd = "";
+                    $empresa_sitio_cor = "";
+                    $empresa_sitio = "";
+                    $empresa_rm = "";
+                    $empresa_circuito = "0";
+                }
 
 
 
@@ -374,17 +443,21 @@ if (isset($_POST["funcion"])) {
                 /*
                  *   INSERTAMOS ACCESOS AL SISTEMA.
                  */
-                foreach ($_POST["menu"] as $menuopc) {                //
-                    $sql = "REPLACE INTO usuarios_menu (idUsuario, idMenu) VALUES (" . $ultimoId . ", " . soloNumeros($menuopc) . ")";
-                    $PSN1->query($sql);
+                if (!$soloLecturaFacilitador && isset($_POST["menu"]) && is_array($_POST["menu"])) {
+                    foreach ($_POST["menu"] as $menuopc) {                //
+                        $sql = "REPLACE INTO usuarios_menu (idUsuario, idMenu) VALUES (" . $ultimoId . ", " . soloNumeros($menuopc) . ")";
+                        $PSN1->query($sql);
+                    }
                 }
 
                 /*
                  *   INSERTAMOS ACCESOS DE GRAFICAS AL SISTEMA.
                  */
-                foreach ($_POST["menu_graphs"] as $menuopc) {                //
-                    $sql = "REPLACE INTO usuarios_menu_graphs (idUsuario, idMenu) VALUES (" . $ultimoId . ", " . soloNumeros($menuopc) . ")";
-                    $PSN1->query($sql);
+                if (!$soloLecturaFacilitador && isset($_POST["menu_graphs"]) && is_array($_POST["menu_graphs"])) {
+                    foreach ($_POST["menu_graphs"] as $menuopc) {                //
+                        $sql = "REPLACE INTO usuarios_menu_graphs (idUsuario, idMenu) VALUES (" . $ultimoId . ", " . soloNumeros($menuopc) . ")";
+                        $PSN1->query($sql);
+                    }
                 }
 
                 //Compruebo si las características del archivo son las que deseo
@@ -489,6 +562,66 @@ if (isset($_POST["funcion"])) {
     // TODO:ACTUALIZAR
     else if ($_POST["funcion"] == "actualizar") {
         $idUsuarioActual = soloNumeros($_REQUEST["id"]);
+        if ($soloLecturaFacilitador) {
+            $bloqueado_general_acceso = 0;
+            $bloqueado_general_acceso_graphs = 0;
+            $bloqueado_general_excluido_reportes = 0;
+            $bloqueado_empresa_tipo = "0";
+            $bloqueado_empresa_representante = "";
+            $bloqueado_empresa_contacto = "";
+            $bloqueado_empresa_direccion = "";
+            $bloqueado_empresa_url = "";
+            $bloqueado_empresa_telefono1 = "";
+            $bloqueado_empresa_telefono2 = "";
+            $bloqueado_empresa_celular1 = "";
+            $bloqueado_empresa_celular2 = "";
+            $bloqueado_empresa_email1 = "";
+            $bloqueado_empresa_email2 = "";
+            $bloqueado_empresa_cargo = "";
+            $bloqueado_empresa_aprobacion = "0";
+            $bloqueado_empresa_paisid = "0";
+            $bloqueado_empresa_pais = "";
+            $bloqueado_empresa_socio = "";
+            $bloqueado_empresa_proceso = "";
+            $bloqueado_empresa_pd = "";
+            $bloqueado_empresa_sitio_cor = "";
+            $bloqueado_empresa_sitio = "";
+            $bloqueado_empresa_rm = "";
+            $bloqueado_empresa_circuito = "0";
+
+            $sql = "SELECT usuario.acceso, usuario.acceso_graphs, usuario.excluido_reportes, usuario_empresa.* ";
+            $sql .= " FROM usuario ";
+            $sql .= " LEFT JOIN usuario_empresa ON usuario_empresa.idUsuario = usuario.id ";
+            $sql .= " WHERE usuario.id = '" . $idUsuarioActual . "'";
+            $PSN->query($sql);
+            if ($PSN->next_record()) {
+                $bloqueado_general_acceso = $PSN->f("acceso");
+                $bloqueado_general_acceso_graphs = $PSN->f("acceso_graphs");
+                $bloqueado_general_excluido_reportes = $PSN->f("excluido_reportes");
+                $bloqueado_empresa_tipo = $PSN->f("empresa_tipo");
+                $bloqueado_empresa_representante = $PSN->f("empresa_representante");
+                $bloqueado_empresa_contacto = $PSN->f("empresa_contacto");
+                $bloqueado_empresa_direccion = $PSN->f("empresa_direccion");
+                $bloqueado_empresa_url = $PSN->f("empresa_url");
+                $bloqueado_empresa_telefono1 = $PSN->f("empresa_telefono1");
+                $bloqueado_empresa_telefono2 = $PSN->f("empresa_telefono2");
+                $bloqueado_empresa_celular1 = $PSN->f("empresa_celular1");
+                $bloqueado_empresa_celular2 = $PSN->f("empresa_celular2");
+                $bloqueado_empresa_email1 = $PSN->f("empresa_email1");
+                $bloqueado_empresa_email2 = $PSN->f("empresa_email2");
+                $bloqueado_empresa_cargo = $PSN->f("empresa_cargo");
+                $bloqueado_empresa_aprobacion = $PSN->f("empresa_aprobacion");
+                $bloqueado_empresa_paisid = $PSN->f("empresa_paisid");
+                $bloqueado_empresa_pais = $PSN->f("empresa_pais");
+                $bloqueado_empresa_socio = $PSN->f("empresa_socio");
+                $bloqueado_empresa_proceso = $PSN->f("empresa_proceso");
+                $bloqueado_empresa_pd = $PSN->f("empresa_pd");
+                $bloqueado_empresa_sitio_cor = $PSN->f("empresa_sitio_cor");
+                $bloqueado_empresa_sitio = $PSN->f("empresa_sitio");
+                $bloqueado_empresa_rm = $PSN->f("empresa_rm");
+                $bloqueado_empresa_circuito = $PSN->f("empresa_circuito");
+            }
+        }
         /*
          *   PESTAÑA GENERAL
          */
@@ -523,6 +656,11 @@ if (isset($_POST["funcion"])) {
         $general_acceso = eliminarInvalidos($_POST["acceso"]);
         $general_acceso_graphs = eliminarInvalidos($_POST["acceso_graphs"]);
         $general_excluido_reportes = isset($_POST["excluido_reportes"]) ? 1 : 0;
+        if ($soloLecturaFacilitador) {
+            $general_acceso = $bloqueado_general_acceso;
+            $general_acceso_graphs = $bloqueado_general_acceso_graphs;
+            $general_excluido_reportes = $bloqueado_general_excluido_reportes;
+        }
 
         //
         $temp_password_check = eliminarInvalidos($_POST["password_check"]);
@@ -594,6 +732,8 @@ if (isset($_POST["funcion"])) {
             /*
              *   INSERTAMOS INFORMACIÓN EMPRESARIAL
              */
+            $empresa_nombre = "";
+            $empresa_nit = "";
             $empresa_tipo = soloNumeros($_POST["empresa_tipo"]);
             if ($empresa_tipo == "")
                 $empresa_tipo = "0";
@@ -630,6 +770,31 @@ if (isset($_POST["funcion"])) {
             $empresa_circuito = soloNumeros($_POST["empresa_circuito"]);
             if ($empresa_circuito == "")
                 $empresa_circuito = "0";
+
+            if ($soloLecturaFacilitador) {
+                $empresa_tipo = $bloqueado_empresa_tipo;
+                $empresa_representante = $bloqueado_empresa_representante;
+                $empresa_contacto = $bloqueado_empresa_contacto;
+                $empresa_direccion = $bloqueado_empresa_direccion;
+                $empresa_url = $bloqueado_empresa_url;
+                $empresa_telefono1 = $bloqueado_empresa_telefono1;
+                $empresa_telefono2 = $bloqueado_empresa_telefono2;
+                $empresa_celular1 = $bloqueado_empresa_celular1;
+                $empresa_celular2 = $bloqueado_empresa_celular2;
+                $empresa_email1 = $bloqueado_empresa_email1;
+                $empresa_email2 = $bloqueado_empresa_email2;
+                $empresa_cargo = $bloqueado_empresa_cargo;
+                $empresa_aprobacion = $bloqueado_empresa_aprobacion;
+                $empresa_paisid = $bloqueado_empresa_paisid;
+                $empresa_pais = $bloqueado_empresa_pais;
+                $empresa_socio = $bloqueado_empresa_socio;
+                $empresa_proceso = $bloqueado_empresa_proceso;
+                $empresa_pd = $bloqueado_empresa_pd;
+                $empresa_sitio_cor = $bloqueado_empresa_sitio_cor;
+                $empresa_sitio = $bloqueado_empresa_sitio;
+                $empresa_rm = $bloqueado_empresa_rm;
+                $empresa_circuito = $bloqueado_empresa_circuito;
+            }
 
 
 
@@ -732,23 +897,29 @@ if (isset($_POST["funcion"])) {
             /*
              *   INSERTAMOS ACCESOS AL SISTEMA.
              */
-            $sql = "DELETE FROM usuarios_menu WHERE idUsuario = " . $idUsuarioActual;
-            $PSN1->query($sql);
-            //            
-            foreach ($_POST["menu"] as $menuopc) {                //
-                $sql = "REPLACE INTO usuarios_menu (idUsuario, idMenu) VALUES (" . $idUsuarioActual . ", " . soloNumeros($menuopc) . ")";
+            if (!$soloLecturaFacilitador) {
+                $sql = "DELETE FROM usuarios_menu WHERE idUsuario = " . $idUsuarioActual;
                 $PSN1->query($sql);
+                if (isset($_POST["menu"]) && is_array($_POST["menu"])) {
+                    foreach ($_POST["menu"] as $menuopc) {                //
+                        $sql = "REPLACE INTO usuarios_menu (idUsuario, idMenu) VALUES (" . $idUsuarioActual . ", " . soloNumeros($menuopc) . ")";
+                        $PSN1->query($sql);
+                    }
+                }
             }
 
             /*
              *   INSERTAMOS ACCESOS A GRAFICAS AL SISTEMA.
              */
-            $sql = "DELETE FROM usuarios_menu_graphs WHERE idUsuario = " . $idUsuarioActual;
-            $PSN1->query($sql);
-            //            
-            foreach ($_POST["menu_graphs"] as $menuopc) {                //
-                $sql = "REPLACE INTO usuarios_menu_graphs (idUsuario, idMenu) VALUES (" . $idUsuarioActual . ", " . soloNumeros($menuopc) . ")";
+            if (!$soloLecturaFacilitador) {
+                $sql = "DELETE FROM usuarios_menu_graphs WHERE idUsuario = " . $idUsuarioActual;
                 $PSN1->query($sql);
+                if (isset($_POST["menu_graphs"]) && is_array($_POST["menu_graphs"])) {
+                    foreach ($_POST["menu_graphs"] as $menuopc) {                //
+                        $sql = "REPLACE INTO usuarios_menu_graphs (idUsuario, idMenu) VALUES (" . $idUsuarioActual . ", " . soloNumeros($menuopc) . ")";
+                        $PSN1->query($sql);
+                    }
+                }
             }
 
             //Compruebo si las características del archivo son las que deseo
@@ -762,8 +933,6 @@ if (isset($_POST["funcion"])) {
             $temp_location = $_FILES['documento_identificacion']['tmp_name'];
             $temp_ext = extension_archivo($nombre_archivo);
             $temp_nombreFile = "id" . $idUsuarioActual . "." . $temp_ext;
-
-            echo $nombre_archivo;
 
             /*echo "<br />Temp location: ".$temp_location;
             echo "<br />Temp temp_ext: ".$temp_ext;
@@ -782,7 +951,7 @@ if (isset($_POST["funcion"])) {
             $nombre_archivo = $_FILES['documento_rut']['name'];
             $temp_location = $_FILES['documento_rut']['tmp_name'];
             $temp_ext = extension_archivo($nombre_archivo);
-            $temp_nombreFile = "rut" . idUsuarioActual . "." . $temp_ext;
+            $temp_nombreFile = "rut" . $idUsuarioActual . "." . $temp_ext;
 
             if (move_uploaded_file($temp_location, "archivos/usuarios/" . $temp_nombreFile)) {
                 $sql = "UPDATE usuario_documentos SET 
@@ -1849,12 +2018,12 @@ if ($varExitoUSU == 1) {
                                     <label class="control-label col-sm-2" for="empresa_rm"><strong>RM:</strong><br /><i>Seleccione
                                             'Si' o "No' para indicar si el Facilitador recibe fondos de la OMS/ECC</i></label>
 
-                                    <label class="control-label col-sm-1" for="empresa_sitio"><strong>NO</strong></label>
-                                    <div class="col-sm-1"><input name="empresa_rm" type="radio" id="empresa_rm" value="NO" <?php if ($empresa_rm == "NO") { ?>checked<?php }
+                                    <label class="control-label col-sm-1" for="empresa_rm_no"><strong>NO</strong></label>
+                                    <div class="col-sm-1"><input name="empresa_rm" type="radio" id="empresa_rm_no" value="NO" <?php if ($empresa_rm == "NO") { ?>checked<?php }
                                     ; ?> class="form-control" /></div>
 
-                                    <label class="control-label col-sm-1" for="empresa_sitio"><strong>SI</strong></label>
-                                    <div class="col-sm-1"><input name="empresa_rm" type="radio" id="empresa_rm" value="SI" <?php if ($empresa_rm == "SI") { ?>checked<?php }
+                                    <label class="control-label col-sm-1" for="empresa_rm_si"><strong>SI</strong></label>
+                                    <div class="col-sm-1"><input name="empresa_rm" type="radio" id="empresa_rm_si" value="SI" <?php if ($empresa_rm == "SI") { ?>checked<?php }
                                     ; ?> class="form-control" /></div>
 
                                 </div>
@@ -2432,7 +2601,7 @@ if ($varExitoUSU == 1) {
                             </div>
 
                             <div class="form-group">
-                                <label class="control-label col-sm-2" for="password"><strong>Acceso al sistema:</strong></label>
+                                <label class="control-label col-sm-2" for="acceso"><strong>Acceso al sistema:</strong></label>
                                 <div class="col-sm-4"><input name="acceso" type="checkbox" id="acceso" value="1" <?php if ($general_acceso == 1) { ?>checked="checked" <?php } ?> class="form-control" /></div>
                             </div>
 
@@ -2569,9 +2738,9 @@ if ($varExitoUSU == 1) {
                                         }
 
                                         ?>
-                                        <label class="control-label col-sm-2" for="login"><?= $PSN1->f('imagen'); ?>
+                                        <label class="control-label col-sm-2" for="menu_<?= $PSN1->f('id'); ?>"><?= $PSN1->f('imagen'); ?>
                                             <strong><?= $PSN1->f('nombre'); ?></strong></label>
-                                        <div class="col-sm-4"><input type="checkbox" name="menu[]" value="<?= $PSN1->f('id'); ?>"
+                                        <div class="col-sm-4"><input type="checkbox" id="menu_<?= $PSN1->f('id'); ?>" name="menu[]" value="<?= $PSN1->f('id'); ?>"
                                                 class="form-control" <?php
                                                 if ($PSN1->f('idUsuario') != "" && $PSN1->f('idUsuario') != 0) {
                                                     ?>checked="checked" <?php
@@ -2672,9 +2841,9 @@ if ($varExitoUSU == 1) {
                                     }
 
                                     ?>
-                                        <label class="control-label col-sm-2" for="menu_graphs"><?= $PSN1->f('imagen'); ?>
+                                        <label class="control-label col-sm-2" for="menu_graphs_<?= $PSN1->f('id'); ?>"><?= $PSN1->f('imagen'); ?>
                                             <strong><?= $PSN1->f('nombre'); ?></strong></label>
-                                        <div class="col-sm-4"><input type="checkbox" name="menu_graphs[]" value="<?= $PSN1->f('id'); ?>"
+                                        <div class="col-sm-4"><input type="checkbox" id="menu_graphs_<?= $PSN1->f('id'); ?>" name="menu_graphs[]" value="<?= $PSN1->f('id'); ?>"
                                                 class="form-control" <?php
                                                 if ($PSN1->f('idUsuario') != "" && $PSN1->f('idUsuario') != 0) {
                                                     ?>checked="checked" <?php
@@ -2730,7 +2899,48 @@ if ($varExitoUSU == 1) {
 
         <script type="text/javascript">
             const btnSend = document.getElementById('send')
+            const esFacilitadorSoloLectura = <?= $soloLecturaFacilitador ? 'true' : 'false'; ?>;
+            const tabsBloqueadasFacilitador = ['#empresa', '#tab_observaciones', '#accesos', '#graficas'];
+
+            function actualizarEstadoBotonGuardar() {
+                if (!btnSend) {
+                    return false;
+                }
+
+                const pestañaActiva = document.querySelector('.nav-tabs li.active a[data-toggle="tab"]');
+                const tabActiva = document.querySelector('.tab-content .tab-pane.active');
+                const tabActivaId = pestañaActiva
+                    ? pestañaActiva.getAttribute('href')
+                    : (tabActiva ? `#${tabActiva.id}` : '');
+                const debeBloquear = esFacilitadorSoloLectura && tabsBloqueadasFacilitador.includes(tabActivaId);
+
+                btnSend.disabled = debeBloquear;
+                if (debeBloquear) {
+                    btnSend.title = 'Los facilitadores no pueden guardar cambios en esta seccion.';
+                } else {
+                    btnSend.removeAttribute('title');
+                }
+
+                return debeBloquear;
+            }
+
+            actualizarEstadoBotonGuardar();
+
+            document.querySelectorAll('.nav-tabs a[data-toggle="tab"]').forEach((tabLink) => {
+                tabLink.addEventListener('shown.bs.tab', actualizarEstadoBotonGuardar);
+                tabLink.addEventListener('click', () => {
+                    setTimeout(actualizarEstadoBotonGuardar, 50);
+                });
+            });
+
+            if (window.jQuery) {
+                window.jQuery('.nav-tabs a[data-toggle="tab"]').on('shown.bs.tab', actualizarEstadoBotonGuardar);
+            }
+
             btnSend.addEventListener('click', async () => {
+                if (actualizarEstadoBotonGuardar()) {
+                    return;
+                }
                 try {
                     let {
                         data,

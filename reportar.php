@@ -492,10 +492,16 @@ if(isset($_REQUEST["id"]) && $_REQUEST["id"] != ""){
     $idReporteActual = 0;
 }
 
+$soloLecturaReporteFacilitador = (isset($_SESSION["perfil"]) && $_SESSION["perfil"] == 163 && $idReporteActual != 0);
+$bloqueoEdicionReporteFacilitador = 0;
+
 
 // Array que nos servira para ir llevando cuenta de los requerimientos.
 $arrayRequerimientos = array();
-if(isset($_POST["funcion"])){
+if(isset($_POST["funcion"]) && $soloLecturaReporteFacilitador && ($_POST["funcion"] == "actualizar" || $_POST["funcion"] == "eliminar")){
+    $bloqueoEdicionReporteFacilitador = 1;
+}
+else if(isset($_POST["funcion"])){
     /*
     *   Para verificar errores a futuro.
         1   Campos requeridos en BLANCO (Nombre, identificacion, password)
@@ -1259,6 +1265,11 @@ if($idReporteActual > 0){
             }
             
             ?> DE <?=$temp_letrero; ?></h2>
+            <?php if ($soloLecturaReporteFacilitador || $bloqueoEdicionReporteFacilitador) { ?>
+            <div class="row">
+                <h5 class="alert alert-warning text-center">Este reporte está en modo solo lectura para facilitadores.</h5>
+            </div>
+            <?php } ?>
             <?php if ($_SESSION["perfil"] == 162 || $_SESSION["perfil"] == 2){ ?>
             <div class="cont-btn cont-flex fl-sbet">
                 <div class="item-btn">
@@ -1278,6 +1289,9 @@ if($idReporteActual > 0){
                 </div>
             </div>
     <?php } ?>
+        <?php if ($soloLecturaReporteFacilitador) { ?>
+        <fieldset id="reporte_solo_lectura" disabled="disabled">
+        <?php } ?>
         <div class="cont-tit">
             <div class="hr"><hr></div>
             <div class="tit-cen">
@@ -1843,15 +1857,18 @@ if($idReporteActual > 0){
                 </div>
             </div>
         <?php } ?>
+        <?php if ($soloLecturaReporteFacilitador) { ?>
+        </fieldset>
+        <?php } ?>
         <div class="cont-btn cont-flex fl-sbet">
                 <div class="item-btn">
                     <input type="button" onClick="window.location.href='index.php?doc=reportar_buscar'" name="previous" class="previous btn btn-info" value="Cerrar" />
                 </div>
                 <div class="item-btn">
-                    <input type="submit" name="button" value="Guardar cambios" class="btn btn-success" id="guarda_rep">
+                    <input type="submit" name="button" value="Guardar cambios" class="btn btn-success" id="guarda_rep" <?php if ($soloLecturaReporteFacilitador) { ?>disabled="disabled" title="Los facilitadores no pueden modificar reportes existentes."<?php } ?>>
                 </div>
                 <div class="item-btn">
-                    <input type="button" onClick="eliminarRegistro()" name="button" value="Eliminar" class="btn btn-danger">
+                    <input type="button" onClick="eliminarRegistro()" name="button" value="Eliminar" class="btn btn-danger" <?php if ($soloLecturaReporteFacilitador) { ?>disabled="disabled" title="Los facilitadores no pueden modificar reportes existentes."<?php } ?>>
                 </div>
             </div>            
     <input type="hidden" name="funcion" id="funcion" value="" />
@@ -1921,6 +1938,9 @@ if($idReporteActual > 0){
             }            
             
             function eliminarRegistro(){
+                if(<?= $soloLecturaReporteFacilitador ? 'true' : 'false'; ?>){
+                    return;
+                }
                 if(confirm("Esta seguro que desea eliminar este registro, esta acción NO se puede deshacer.")){
                     document.getElementById('funcion').value = "eliminar";
                     document.getElementById('form1').submit();
@@ -1928,6 +1948,9 @@ if($idReporteActual > 0){
             }
             
             function generarForm(generacion){
+                if(<?= $soloLecturaReporteFacilitador ? 'true' : 'false'; ?>){
+                    return false;
+                }
                 sumar();
                 <?php
                 //if($_SESSION["perfil"] == 163){
