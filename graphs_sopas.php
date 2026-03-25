@@ -495,7 +495,7 @@ if ($pais > 0) {
 /* =========================================================
  * FILTROS REALES INVENTARIO
  * ========================================================= */
-$FiltroFechaLugar = " WHERE inventario.Estado = 1 ";
+$FiltroFechaLugar = " WHERE inventario.Estado IN (0,1) ";
 
 if ($pais != 0) {
     $FiltroFechaLugar .= " AND inventario.Pais = '" . $pais . "'";
@@ -509,6 +509,72 @@ $FiltroFechaLugar .= " AND inventario.Fecha >= '" . $FechaIni . "'";
 $FiltroFechaLugar .= " AND inventario.Fecha <= '" . $FechaFin . "'";
 
 $esVistaFacilitador = ($Facilitador != 0);
+$saldoInicialFacilitador = array(
+    'tipo1' => 0,
+    'tipo2' => 0
+);
+
+if ($esVistaFacilitador && $FechaIni != "") {
+    $FiltroSaldoInicialFac = " WHERE inventario.Estado IN (0,1) ";
+
+    if ($pais != 0) {
+        $FiltroSaldoInicialFac .= " AND inventario.Pais = '" . $pais . "'";
+    }
+
+    if ($departamento != 0) {
+        $FiltroSaldoInicialFac .= " AND inventario.Departamento = '" . $departamento . "'";
+    }
+
+    $FiltroSaldoInicialFac .= " AND inventario.Fecha < '" . $FechaIni . "'";
+
+    $sql = "
+        SELECT
+            (
+                IFNULL(SUM(CASE
+                    WHEN inventario.Tipo = 1 AND inventario.IdUsuario = " . $Facilitador . "
+                    THEN inventario.TipoSopa1 ELSE 0 END),0)
+                +
+                IFNULL(SUM(CASE
+                    WHEN inventario.Tipo = 2 AND inventario.Facilitador = '" . $Facilitador . "'
+                    THEN inventario.TipoSopa1 ELSE 0 END),0)
+                +
+                IFNULL(SUM(CASE
+                    WHEN inventario.Tipo = 8 AND inventario.IdUsuario = " . $Facilitador . "
+                    THEN inventario.TipoSopa1 ELSE 0 END),0)
+                -
+                IFNULL(SUM(CASE
+                    WHEN inventario.Tipo IN (2,3,4,5,7) AND inventario.IdUsuario = " . $Facilitador . "
+                    THEN inventario.TipoSopa1 ELSE 0 END),0)
+            ) AS saldo_tipo1,
+
+            (
+                IFNULL(SUM(CASE
+                    WHEN inventario.Tipo = 1 AND inventario.IdUsuario = " . $Facilitador . "
+                    THEN inventario.TipoSopa2 ELSE 0 END),0)
+                +
+                IFNULL(SUM(CASE
+                    WHEN inventario.Tipo = 2 AND inventario.Facilitador = '" . $Facilitador . "'
+                    THEN inventario.TipoSopa2 ELSE 0 END),0)
+                +
+                IFNULL(SUM(CASE
+                    WHEN inventario.Tipo = 8 AND inventario.IdUsuario = " . $Facilitador . "
+                    THEN inventario.TipoSopa2 ELSE 0 END),0)
+                -
+                IFNULL(SUM(CASE
+                    WHEN inventario.Tipo IN (2,3,4,5,7) AND inventario.IdUsuario = " . $Facilitador . "
+                    THEN inventario.TipoSopa2 ELSE 0 END),0)
+            ) AS saldo_tipo2
+        FROM inventario
+        " . $FiltroSaldoInicialFac . "
+    ";
+
+    $PSN4->query($sql);
+    if ($PSN4->num_rows() > 0) {
+        $PSN4->next_record();
+        $saldoInicialFacilitador['tipo1'] = (float) $PSN4->f('saldo_tipo1');
+        $saldoInicialFacilitador['tipo2'] = (float) $PSN4->f('saldo_tipo2');
+    }
+}
 
 /* ===== SUBQUERY PARA CARACTERIZACIÓN FILTRADA ===== */
 if ($esVistaFacilitador) {
@@ -602,7 +668,9 @@ if ($esVistaFacilitador) {
         $resumenInv['facilitadores'] = $movFac;
         $resumenInv['beneficiarios'] = $movBen;
         $resumenInv['transferencias'] = $transferOut;
-        $resumenInv['saldo'] = ($entradasPropias + $recibidoCentral + $transferIn) - $movBen - $transferOut - $movFac;
+        $resumenInv['saldo'] = $saldoInicialFacilitador['tipo1'] + $saldoInicialFacilitador['tipo2']
+            + ($entradasPropias + $recibidoCentral + $transferIn)
+            - $movBen - $transferOut - $movFac;
     }
 } else {
     $sql = "
@@ -948,6 +1016,8 @@ if ($esVistaFacilitador) {
         SELECT
             'Mix de vegetales 1 lb' AS Producto,
             (
+                " . $saldoInicialFacilitador['tipo1'] . "
+                +
                 IFNULL(SUM(CASE
                     WHEN (inventario.Tipo = 1 AND inventario.IdUsuario = " . $Facilitador . ")
                       OR (inventario.Tipo = 2 AND inventario.Facilitador = '" . $Facilitador . "')
@@ -966,6 +1036,8 @@ if ($esVistaFacilitador) {
         SELECT
             'Mix de vegetales 3 lb' AS Producto,
             (
+                " . $saldoInicialFacilitador['tipo2'] . "
+                +
                 IFNULL(SUM(CASE
                     WHEN (inventario.Tipo = 1 AND inventario.IdUsuario = " . $Facilitador . ")
                       OR (inventario.Tipo = 2 AND inventario.Facilitador = '" . $Facilitador . "')

@@ -2384,7 +2384,7 @@ else if($idReporteActual == 0){
             $saldoInicialDon2Tp2 = 0;
 
             if (!empty($fechaInicio)) {
-                $sqlSaldoInicial = "SELECT * FROM inventario WHERE Estado = 1 AND Fecha < '".addslashes($fechaInicio)."'";
+                $sqlSaldoInicial = "SELECT * FROM inventario WHERE Estado IN (0,1) AND Fecha < '".addslashes($fechaInicio)."'";
                 $resultSaldoInicial = $PSN1->query($sqlSaldoInicial);
 
                 while($rowSaldo = $resultSaldoInicial->fetch_assoc()) {
@@ -2451,7 +2451,7 @@ else if($idReporteActual == 0){
             $whereConditions = array();
 
             // Filtro de usuario: registros donde el usuario es IdUsuario O Facilitador O es una transferencia que recibe
-            $whereConditions[] = "inventario.Estado = 1";
+            $whereConditions[] = "inventario.Estado IN (0,1)";
             $whereConditions[] = "(inventario.IdUsuario = '".$Id."' OR inventario.Facilitador = '".$Id."')";
 
             if (!empty($fechaInicio)) {
@@ -2649,7 +2649,7 @@ else if($idReporteActual == 0){
                             // Aplicar SOLO los filtros de fecha (NO el filtro de usuario)
                             // porque esta tabla muestra todos los facilitadores
                             $whereConditionsFacilitador = array();
-                            $whereConditionsFacilitador[] = "Estado = 1";
+                            $whereConditionsFacilitador[] = "Estado IN (0,1)";
                             if (!empty($fechaInicio)) {
                                 $whereConditionsFacilitador[] = "Fecha >= '".addslashes($fechaInicio)."'";
                             }
