@@ -1065,7 +1065,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
     <div class="header">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
             <div>
-                <h1>📊 Mis Grupos</h1>
+                <h1>📊 IPG </h1>
                 <p>Visualiza y gestiona todos tus grupos con sus datos actuales.</p>
             </div>
             <button class="btn btn-primary" onclick="openCreateGroupModal()" title="Crear un nuevo grupo" style="white-space: nowrap;">
@@ -1094,7 +1094,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         <!-- Left Panel - Lista de Grupos -->
         <div class="left-panel" id="mobileSlider">
             <div class="left-panel-header">
-                📋 Mis Grupos (${gruposCount})
+                📋 Mis IPG (${gruposCount})
             </div>
             <div class="search-container">
                 <input
@@ -1232,13 +1232,13 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
 <div class="edit-modal" id="createGroupModal">
     <div class="edit-modal-content">
         <div class="edit-modal-header">
-            <span>➕ Crear Nuevo Grupo</span>
+            <span>➕ Crear Nuevo IPG</span>
             <button class="edit-modal-close" onclick="closeCreateGroupModal()">✕</button>
         </div>
 
         <form id="createGroupForm" onsubmit="saveNewGroup(event)">
             <!-- INFORMACIÓN DEL GRUPO -->
-            <h4 style="margin-top: 15px; margin-bottom: 10px; color: #333;">📋 Información del Grupo</h4>
+            <h4 style="margin-top: 15px; margin-bottom: 10px; color: #333;">📋 Información del IPG</h4>
 
             <div class="edit-modal-section">
                 <label>Nombre del Grupo *</label>

@@ -793,10 +793,15 @@ else{
     }
 
     if (count($report_ids) > 0) {
-        $sql = "SELECT sat_reportes.*, usuario.nombre as nombreUsuario, sat_grupos.nombre as nombreGrupo, tbl_adjuntos.adj_url ";
+        $sql = "SELECT sat_reportes.*, usuario.nombre as nombreUsuario, sat_grupos.nombre as nombreGrupo, adjuntos.adj_url ";
         $sql.=" FROM sat_reportes ";
         $sql .= " LEFT JOIN usuario ON usuario.id = sat_reportes.idUsuario";
-        $sql .= " LEFT JOIN sat_grupos ON sat_grupos.id = sat_reportes.idGrupoMadre LEFT JOIN tbl_adjuntos ON sat_reportes.id = tbl_adjuntos.adj_rep_fk";
+        $sql .= " LEFT JOIN sat_grupos ON sat_grupos.id = sat_reportes.idGrupoMadre";
+        $sql .= " LEFT JOIN (
+                    SELECT adj_rep_fk, MAX(NULLIF(adj_url, '')) as adj_url
+                    FROM tbl_adjuntos
+                    GROUP BY adj_rep_fk
+                  ) as adjuntos ON sat_reportes.id = adjuntos.adj_rep_fk";
         $sql.=" WHERE sat_reportes.id IN (" . implode(',', $report_ids) . ") ORDER BY sat_reportes.id DESC";
     } else {
         $sql = "";

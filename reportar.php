@@ -2080,7 +2080,7 @@ else if($preguntarGeneracion == 1 && !isset($_POST["SendOpcion"]) ){
                 <button type="button" onClick="window.location.href='index.php?doc=grupos'" class="btn btn-primary btn-reporte-card">
                     <span class="badge-nuevo">✨ NUEVO</span>
                     <span class="btn-icon">👥</span>
-                    GRUPOS
+                    IPG
                     <span class="btn-desc">Reportes de Generaciones<br>Capacitación y Gestión</span>
                 </button>
 
