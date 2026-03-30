@@ -63,6 +63,11 @@ function build_filtros_sat($idUsuario, $fechaInicial, $fechaFinal, $paisId){
     return [$excl, $base];
 }
 
+// Mantener explícito que estas gráficas filtran por fechaReporte.
+function build_filtros_sat_fecha_reporte($idUsuario, $fechaInicial, $fechaFinal, $paisId){
+    return build_filtros_sat($idUsuario, $fechaInicial, $fechaFinal, $paisId);
+}
+
 $PSN  = new DBbase_Sql;
 $PSN1 = new DBbase_Sql; // (se mantiene por compatibilidad, aunque no se use)
 $PSN2 = new DBbase_Sql;
@@ -97,6 +102,7 @@ $buscar_idUsuario = req_num("idUsuario");
 $empresa_paisid   = req_num("empresa_paisid");
 
 list($sqlFiltro, $sqlFiltroBase) = build_filtros_sat($buscar_idUsuario, $fechaInicial, $fechaFinal, $empresa_paisid);
+list($sqlFiltroProcesoReporte, $sqlFiltroBaseProcesoReporte) = build_filtros_sat_fecha_reporte($buscar_idUsuario, $fechaInicial, $fechaFinal, $empresa_paisid);
 
 /* =========================
    3) DATASETS DE GRÁFICAS
@@ -234,7 +240,7 @@ $sql = "SELECT
             SUM(sat_reportes.preparandose) as preparandose
         FROM sat_reportes
         LEFT JOIN usuario_empresa ON usuario_empresa.idUsuario = sat_reportes.idUsuario
-        WHERE 1 ".$sqlFiltro;
+        WHERE 1 ".$sqlFiltroBaseProcesoReporte;
 
 if($row = db_first_row($PSN, $sql)){
     $bp  = (int)$row->f('bautizadosPeriodo');
@@ -258,7 +264,7 @@ $sql = "SELECT
             SUM(sat_reportes.asistencia_total) as asistencia_total
         FROM sat_reportes
         LEFT JOIN usuario_empresa ON usuario_empresa.idUsuario = sat_reportes.idUsuario
-        WHERE sat_reportes.generacionNumero = 0 ".$sqlFiltroBase;
+        WHERE sat_reportes.generacionNumero = 0 ".$sqlFiltroBaseProcesoReporte;
 
 if($row = db_first_row($PSN, $sql)){
     $conteo = (int)$row->f('conteo');
@@ -314,7 +320,7 @@ if($idUsuarioMetas <= 0){
 }
 
 // Filtro "limpio" para 77 y 8 (sin exclusiones)
-$sqlFiltroLimpio = $sqlFiltroBase;
+$sqlFiltroLimpio = $sqlFiltroBaseProcesoReporte;
 
 // Métricas Satura (Actual)
 $satura_evangelismo = 0;
@@ -338,7 +344,7 @@ $sql = "SELECT
             SUM(bautizadosPeriodo) as bautizos
         FROM sat_reportes
         LEFT JOIN usuario_empresa ON usuario_empresa.idUsuario = sat_reportes.idUsuario
-        WHERE ".$sqlUser." 1 ".$sqlFiltro;
+        WHERE ".$sqlUser." 1 ".$sqlFiltroBaseProcesoReporte;
 
 if($row = db_first_row($PSN, $sql)){
     $satura_evangelismo = (int)$row->f('evangelismo');
@@ -353,7 +359,7 @@ $sqlIglesias = "SELECT
                     COUNT(id) as iglesias
                 FROM sat_reportes
                 LEFT JOIN usuario_empresa ON usuario_empresa.idUsuario = sat_reportes.idUsuario
-                WHERE ".$sqlUser." 1 ".$sqlFiltro." ";
+                WHERE ".$sqlUser." 1 ".$sqlFiltroBaseProcesoReporte." ";
 
 $gens = [1 => 'satura_iglesias', 2 => 'satura_iglesias2', 3 => 'satura_iglesias3'];
 foreach($gens as $genN => $varName){

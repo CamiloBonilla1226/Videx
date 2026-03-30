@@ -1069,12 +1069,12 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                 <p>Visualiza y gestiona todos tus grupos con sus datos actuales.</p>
             </div>
             <button class="btn btn-primary" onclick="openCreateGroupModal()" title="Crear un nuevo grupo" style="white-space: nowrap;">
-                ➕ Crear Nuevo Grupo
+                ➕ Crear Nuevo IPG
             </button>
         </div>
         <div class="info-box">
             <strong>ℹ️ Información:</strong>
-            Este panel muestra todos los grupos que has registrado. Puedes ver información detallada de cada grupo incluyendo nombre, ubicación, dirección, grupo madre y líderes.
+            Este panel muestra todos los IPG que has registrado. Puedes ver información detallada de cada IPG incluyendo nombre, ubicación, dirección, grupo madre y líderes.
         </div>
     </div>
 
@@ -1113,7 +1113,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         <!-- Right Panel - Información y Reportes -->
         <div class="right-panel">
             <div class="right-panel-header">
-                <h3 id="groupPanelTitle">📋 Información del Grupo</h3>
+                <h3 id="groupPanelTitle">📋 Información del IPG</h3>
                 <button class="btn-new-report" onclick="newReport()" id="btnNewReport">
                     + Nuevo
                 </button>
@@ -2008,7 +2008,9 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
     function updateReportsTab(grupoData, tabReports) {
         if (grupoData.reportes_ids && grupoData.reportes_ids.length > 0) {
             const reportsHTML = grupoData.reportes_ids.map((reporteId, index) => `
-                <div class="report-item" style="display: flex; gap: 15px; padding: 12px; border: 1px solid #e0e0e0; border-radius: 6px; background: #fafafa; margin-bottom: 10px;">
+                <div class="report-item"
+                     data-href="index.php?doc=reportar&id=${reporteId}"
+                     style="display: flex; gap: 15px; padding: 12px; border: 1px solid #e0e0e0; border-radius: 6px; background: #fafafa; margin-bottom: 10px; cursor: pointer; transition: background-color 0.2s ease, border-color 0.2s ease;">
                     <div style="flex-shrink: 0;">
                         <div style="background: #2c3e50; color: white; width: 60px; height: 60px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px;">
                             #${reporteId}
@@ -2034,6 +2036,26 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             `).join('');
 
             tabReports.innerHTML = reportsHTML;
+
+            tabReports.querySelectorAll('.report-item').forEach(item => {
+                item.addEventListener('mouseenter', function() {
+                    this.style.backgroundColor = '#f0f6ff';
+                    this.style.borderColor = '#b9d4f5';
+                });
+                item.addEventListener('mouseleave', function() {
+                    this.style.backgroundColor = '#fafafa';
+                    this.style.borderColor = '#e0e0e0';
+                });
+                item.addEventListener('click', function(e) {
+                    if (e.target.closest('.image-thumbnail, button, canvas, a')) {
+                        return;
+                    }
+                    const href = this.dataset.href;
+                    if (href) {
+                        window.location.href = href;
+                    }
+                });
+            });
 
             // Cargar información e imágenes de los reportes
             if (grupoData.reportes_ids && grupoData.reportes_ids.length > 0) {
@@ -2061,7 +2083,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             return;
         }
 
-        leftPanelHeader.textContent = `📋 Mis Grupos (${filteredGrupos.length})`;
+        leftPanelHeader.textContent = `📋 Mis IPG (${filteredGrupos.length})`;
 
         const groupsHTML = filteredGrupos.map((grupoData) => {
             return `
