@@ -52,6 +52,17 @@ try {
     $asistencia_muj = intval($data['asistencia_muj'] ?? 0);
     $asistencia_jov = intval($data['asistencia_jov'] ?? 0);
     $asistencia_nin = intval($data['asistencia_nin'] ?? 0);
+    
+    // El primer reporte de un nuevo IPG debe iniciar el mapeo en nivel 2.
+    $mapeo_oracion = 2;
+    $mapeo_companerismo = 2;
+    $mapeo_adoracion = 2;
+    $mapeo_biblia = 2;
+    $mapeo_evangelizar = 2;
+    $mapeo_cena = 2;
+    $mapeo_dar = 2;
+    $mapeo_bautizar = 2;
+    $mapeo_trabajadores = 2;
 
     // Conectar a BD
     $PSN1 = new DBbase_Sql;
@@ -203,15 +214,15 @@ try {
         '',
         NOW(),
         0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
+        " . (int)$mapeo_oracion . ",
+        " . (int)$mapeo_companerismo . ",
+        " . (int)$mapeo_adoracion . ",
+        " . (int)$mapeo_biblia . ",
+        " . (int)$mapeo_evangelizar . ",
+        " . (int)$mapeo_cena . ",
+        " . (int)$mapeo_dar . ",
+        " . (int)$mapeo_bautizar . ",
+        " . (int)$mapeo_trabajadores . ",
         '$descripcion'
     )";
 

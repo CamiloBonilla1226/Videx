@@ -1297,7 +1297,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
 
             <div class="edit-modal-section">
                 <p style="font-size: 13px; color: #666; margin: 0 0 10px 0;">
-                    📌 Se creará como: <strong>Reunión Cotidiana</strong> (Gen <span id="newGroupGenDefault">0</span>)
+                    📌 Se creará como: <strong>Coach</strong> (Gen <span id="newGroupGenDefault">0</span>)
                 </p>
                 <!-- Campo oculto para pasar la actividad -->
                 <input type="hidden" name="actividad" value="reunion_cotidiana">
@@ -1370,7 +1370,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                 </button>
 
                 <button type="button" class="activity-button reunion" onclick="selectActivity('reunion_cotidiana')">
-                    <strong>🤝 Reunión Cotidiana</strong>
+                    <strong>🤝 Coach</strong>
                     <span>Reunión regular del grupo</span>
                 </button>
             </div>
@@ -1439,7 +1439,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                     <div id="fotosPreview" style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px;"></div>
                 </div>
 
-                <!-- Sección de Mapeos (solo para Reunión Cotidiana) -->
+                <!-- Sección de Mapeos (solo para Coach) -->
                 <div id="mapeosSection" style="display: none;">
                     <h4 style="margin: 20px 0 15px 0; color: #333; border-bottom: 2px solid #2c3e50; padding-bottom: 10px;">Funciones Realizadas</h4>
 
@@ -1857,11 +1857,11 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                                 '77': '🌍 Evangelismo',
                                 '8': '🎉 Gran Celebración',
                                 '99': '💧 Bautizo',
-                                '1': '🤝 Reunión Cotidiana (1)',
-                                '2': '🤝 Reunión Cotidiana (2)',
-                                '3': '🤝 Reunión Cotidiana (3)',
-                                '4': '🤝 Reunión Cotidiana (4)',
-                                '5': '🤝 Reunión Cotidiana (5)'
+                                '1': '🤝 Coach (1)',
+                                '2': '🤝 Coach (2)',
+                                '3': '🤝 Coach (3)',
+                                '4': '🤝 Coach (4)',
+                                '5': '🤝 Coach (5)'
                             };
                             const tipo = tiposActividad[reporte.generacionNumero] || 'Desconocido';
                             const fecha = new Date(reporte.fechaInicio).toLocaleDateString('es-CO', {
@@ -1871,7 +1871,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                             });
                             infoContainer.innerHTML = `<strong>${tipo}</strong> • ${fecha} • Asistencia: ${reporte.asistencia_total}`;
 
-                            // Agregar botón "Ver Mapeo" para reportes de Reunión Cotidiana (generación 1-5)
+                            // Agregar botón "Ver Mapeo" para reportes de Coach (generación 1-5)
                             const gen = parseInt(reporte.generacionNumero);
                             if (gen >= 1 && gen <= 5) {
                                 const btnContainer = document.getElementById(`mapeo-btn-${reporte.id}`);
@@ -2188,7 +2188,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             'evangelismo': '🌍 Nuevo Reporte - Evangelismo',
             'gran_celebracion': '🎉 Nuevo Reporte - Gran Celebración',
             'bautizo': '💧 Nuevo Reporte - Bautizo',
-            'reunion_cotidiana': '🤝 Nuevo Reporte - Reunión Cotidiana'
+            'reunion_cotidiana': '🤝 Nuevo Reporte - Coach'
         };
         document.getElementById('formTitle').textContent = titles[tipoActividad] || 'Nuevo Reporte';
 
@@ -2801,7 +2801,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         const grupoMadreId = document.getElementById('grupoMadreDropdown').value;
 
         // Datos del primer reporte
-        const actividad = 'reunion_cotidiana'; // Siempre es reunión cotidiana
+        const actividad = 'reunion_cotidiana'; // Siempre es Coach
         const fecha = document.getElementById('newGroupFecha').value;
         const asistencia_hom = parseInt(document.getElementById('newGroupAsisHom').value) || 0;
         const asistencia_muj = parseInt(document.getElementById('newGroupAsisMuj').value) || 0;
@@ -2839,17 +2839,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             asistencia_hom: asistencia_hom,
             asistencia_muj: asistencia_muj,
             asistencia_jov: asistencia_jov,
-            asistencia_nin: asistencia_nin,
-            // Inicializar el mapeo del primer reporte del nuevo IPG en nivel 2
-            mapeo_oracion: 2,
-            mapeo_companerismo: 2,
-            mapeo_adoracion: 2,
-            mapeo_cena: 2,
-            mapeo_biblia: 2,
-            mapeo_evangelizar: 2,
-            mapeo_dar: 2,
-            mapeo_bautizar: 2,
-            mapeo_trabajadores: 2
+            asistencia_nin: asistencia_nin
         };
 
         console.log('Datos del nuevo grupo:', datosNuevoGrupo);
