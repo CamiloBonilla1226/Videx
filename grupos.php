@@ -2839,7 +2839,17 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             asistencia_hom: asistencia_hom,
             asistencia_muj: asistencia_muj,
             asistencia_jov: asistencia_jov,
-            asistencia_nin: asistencia_nin
+            asistencia_nin: asistencia_nin,
+            // Inicializar el mapeo del primer reporte del nuevo IPG en nivel 2
+            mapeo_oracion: 2,
+            mapeo_companerismo: 2,
+            mapeo_adoracion: 2,
+            mapeo_cena: 2,
+            mapeo_biblia: 2,
+            mapeo_evangelizar: 2,
+            mapeo_dar: 2,
+            mapeo_bautizar: 2,
+            mapeo_trabajadores: 2
         };
 
         console.log('Datos del nuevo grupo:', datosNuevoGrupo);
