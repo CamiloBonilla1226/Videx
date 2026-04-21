@@ -783,6 +783,43 @@ else{
             $total_registros = $PSN1->f('conteo');
         }
     }
+
+    $totalesFiltroProceso = array(
+        "desiciones"   => 0,
+        "preparandose" => 0,
+        "discipulado"  => 0,
+        "bautizados"   => 0
+    );
+
+    $sqlTotalesProceso = "SELECT
+            SUM(CASE
+                    WHEN COALESCE(NULLIF(sat_reportes.generacionNumero, ''), 0) IN (0, 77, 8) THEN 0
+                    ELSE COALESCE(sat_reportes.desiciones, 0)
+                END) as desiciones,
+            SUM(CASE
+                    WHEN COALESCE(NULLIF(sat_reportes.generacionNumero, ''), 0) IN (0, 77, 8) THEN 0
+                    ELSE COALESCE(sat_reportes.preparandose, 0)
+                END) as preparandose,
+            SUM(CASE
+                    WHEN COALESCE(NULLIF(sat_reportes.generacionNumero, ''), 0) IN (0, 77, 8) THEN 0
+                    ELSE COALESCE(sat_reportes.discipulado, 0)
+                END) as discipulado,
+            SUM(CASE
+                    WHEN COALESCE(NULLIF(sat_reportes.generacionNumero, ''), 0) IN (0, 77, 8) THEN 0
+                    ELSE COALESCE(sat_reportes.bautizados, 0)
+                END) as bautizados
+        FROM sat_reportes
+        WHERE 1 ".$sqlFiltro;
+
+    $PSN_totales = new DBbase_Sql;
+    $PSN_totales->query($sqlTotalesProceso);
+    if($PSN_totales->num_rows() > 0 && $PSN_totales->next_record()){
+        $totalesFiltroProceso["desiciones"]   = (int)$PSN_totales->f('desiciones');
+        $totalesFiltroProceso["preparandose"] = (int)$PSN_totales->f('preparandose');
+        $totalesFiltroProceso["discipulado"]  = (int)$PSN_totales->f('discipulado');
+        $totalesFiltroProceso["bautizados"]   = (int)$PSN_totales->f('bautizados');
+    }
+
     $total_paginas = ceil($total_registros / $registros); 
     $sql_ids = "SELECT sat_reportes.id FROM sat_reportes WHERE 1 ".$sqlFiltro." ORDER BY sat_reportes.id DESC LIMIT ".$inicio.", ".$registros;
     $PSN_ids = new DBbase_Sql;
@@ -947,6 +984,13 @@ else{
                         <div class="tit-cen">
                             <h3 class="text-center">RESULTADOS DE BUSQUEDA</h3>
                             <h5><?php echo $total_registros; ?> Registros encontrados</h5>
+                            <h5>
+                                Totales del filtro actual:
+                                Deci. <?=$totalesFiltroProceso["desiciones"]; ?> |
+                                Prep. <?=$totalesFiltroProceso["preparandose"]; ?> |
+                                Disc. <?=$totalesFiltroProceso["discipulado"]; ?> |
+                                Baut. <?=$totalesFiltroProceso["bautizados"]; ?>
+                            </h5>
                         </div>
                         <div class="hr"><hr></div>
                     </div>
@@ -978,6 +1022,16 @@ else{
                                 <!--<th>Testimonio/Foto</th>-->
                                 </tr>
                             </thead>
+                            <tfoot>
+                                <tr style="background-color:#E8F4EA; font-weight:bold;">
+                                    <th colspan="7" style="text-align:right;">Totales del filtro</th>
+                                    <th><?=$totalesFiltroProceso["desiciones"]; ?></th>
+                                    <th><?=$totalesFiltroProceso["preparandose"]; ?></th>
+                                    <th><?=$totalesFiltroProceso["discipulado"]; ?></th>
+                                    <th><?=$totalesFiltroProceso["bautizados"]; ?></th>
+                                    <th colspan="3"></th>
+                                </tr>
+                            </tfoot>
                             <tbody>
                                 <?php
                                 if($total_registros > 0)

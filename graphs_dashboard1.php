@@ -52,7 +52,12 @@ function build_filtros_sat($idUsuario, $fechaInicial, $fechaFinal, $paisId){
         $base .= " AND sat_reportes.fechaReporte <= '".$fechaFinal."'";
     }
     if($paisId !== ""){
-        $base .= " AND usuario_empresa.empresa_paisid = '".$paisId."'";
+        $base .= " AND EXISTS (
+            SELECT 1
+            FROM usuario_empresa
+            WHERE usuario_empresa.idUsuario = sat_reportes.idUsuario
+              AND usuario_empresa.empresa_paisid = '".$paisId."'
+        )";
     }
 
     $excl = $base;
@@ -104,6 +109,10 @@ $empresa_paisid   = req_num("empresa_paisid");
 list($sqlFiltro, $sqlFiltroBase) = build_filtros_sat($buscar_idUsuario, $fechaInicial, $fechaFinal, $empresa_paisid);
 list($sqlFiltroProcesoReporte, $sqlFiltroBaseProcesoReporte) = build_filtros_sat_fecha_reporte($buscar_idUsuario, $fechaInicial, $fechaFinal, $empresa_paisid);
 
+// reportar_buscar usa intval(generacionNumero); por eso NULL o '' terminan tratándose como 0.
+$sqlGenEsCero = "(sat_reportes.generacionNumero = 0 OR sat_reportes.generacionNumero IS NULL OR sat_reportes.generacionNumero = '')";
+$sqlGenExcluidaProceso = "(".$sqlGenEsCero." OR sat_reportes.generacionNumero IN (77, 8))";
+
 /* =========================
    3) DATASETS DE GRÁFICAS
    ========================= */
@@ -123,7 +132,6 @@ $sql = "SELECT
             sat_reportes.generacionNumero,
             COUNT(sat_reportes.id) AS conteo
         FROM sat_reportes
-        LEFT JOIN usuario_empresa ON usuario_empresa.idUsuario = sat_reportes.idUsuario
         WHERE 1 ".$sqlFiltroSankey."
         GROUP BY sat_reportes.generacionNumero
         ORDER BY sat_reportes.generacionNumero ASC";
@@ -208,7 +216,6 @@ $sql = "SELECT
             SUM(sat_reportes.asistencia_jov) as asistencia_jov,
             SUM(sat_reportes.asistencia_nin) as asistencia_nin
         FROM sat_reportes
-        LEFT JOIN usuario_empresa ON usuario_empresa.idUsuario = sat_reportes.idUsuario
         WHERE 1 ".$sqlFiltro;
 
 if($row = db_first_row($PSN, $sql)){
@@ -232,23 +239,23 @@ $varErrorProceso = 0;
 $totalProceso = 0;
 $datosProceso = [];
 
-// Parte 1: métricas usando $sqlFiltro (excluye gen 0/77/8)
+// Parte 1: métricas visibles en reportar_buscar.
+// La tabla pone en 0 estos campos para gen 0, 77 y 8; aquí replicamos exactamente esa lógica.
 $sql = "SELECT
-            SUM(sat_reportes.bautizadosPeriodo) as bautizadosPeriodo,
-            SUM(sat_reportes.discipulado) as discipulado,
-            SUM(sat_reportes.desiciones) as desiciones,
-            SUM(sat_reportes.preparandose) as preparandose
+            SUM(CASE WHEN ".$sqlGenExcluidaProceso." THEN 0 ELSE sat_reportes.bautizados END) as bautizados,
+            SUM(CASE WHEN ".$sqlGenExcluidaProceso." THEN 0 ELSE sat_reportes.discipulado END) as discipulado,
+            SUM(CASE WHEN ".$sqlGenExcluidaProceso." THEN 0 ELSE sat_reportes.desiciones END) as desiciones,
+            SUM(CASE WHEN ".$sqlGenExcluidaProceso." THEN 0 ELSE sat_reportes.preparandose END) as preparandose
         FROM sat_reportes
-        LEFT JOIN usuario_empresa ON usuario_empresa.idUsuario = sat_reportes.idUsuario
         WHERE 1 ".$sqlFiltroBaseProcesoReporte;
 
 if($row = db_first_row($PSN, $sql)){
-    $bp  = (int)$row->f('bautizadosPeriodo');
+    $bp  = (int)$row->f('bautizados');
     $dis = (int)$row->f('discipulado');
     $dec = (int)$row->f('desiciones');
     $pre = (int)$row->f('preparandose');
 
-    $datosProceso[] = ["BAUTIZADOS PERIODO", $bp,  "purple"];
+    $datosProceso[] = ["BAUTIZADOS",         $bp,  "purple"];
     $datosProceso[] = ["EN DISCIPULADO",     $dis, "orange"];
     $datosProceso[] = ["DECISIONES",         $dec, "green"];
     $datosProceso[] = ["PREPARÁNDOSE",       $pre, "gold"];
@@ -263,8 +270,7 @@ $sql = "SELECT
             COUNT(sat_reportes.id) as conteo,
             SUM(sat_reportes.asistencia_total) as asistencia_total
         FROM sat_reportes
-        LEFT JOIN usuario_empresa ON usuario_empresa.idUsuario = sat_reportes.idUsuario
-        WHERE sat_reportes.generacionNumero = 0 ".$sqlFiltroBaseProcesoReporte;
+        WHERE ".$sqlGenEsCero." ".$sqlFiltroBaseProcesoReporte;
 
 if($row = db_first_row($PSN, $sql)){
     $conteo = (int)$row->f('conteo');
@@ -287,8 +293,7 @@ $sql = "SELECT
             COUNT(sat_reportes.id) as conteo,
             SUM(sat_reportes.asistencia_total) as asistencia_total
         FROM sat_reportes
-        LEFT JOIN usuario_empresa ON usuario_empresa.idUsuario = sat_reportes.idUsuario
-        WHERE sat_reportes.generacionNumero = 0 ".$sqlFiltroBase;
+        WHERE ".$sqlGenEsCero." ".$sqlFiltroBase;
 
 if($row = db_first_row($PSN, $sql)){
     $conteo = (int)$row->f('conteo');
@@ -337,13 +342,13 @@ $satura_evangelismo_real = 0;
 
 $sqlUser = ($idUsuarioMetas > 0) ? " sat_reportes.idUsuario = '".$idUsuarioMetas."' AND " : "";
 
-// 1) Totales (usa $sqlFiltro)
+// 1) Totales.
+// Discipulado y bautizos siguen la misma lógica visible de reportar_buscar.
 $sql = "SELECT
             SUM(asistencia_total) as evangelismo,
-            SUM(discipulado) as discipulado,
-            SUM(bautizadosPeriodo) as bautizos
+            SUM(CASE WHEN ".$sqlGenExcluidaProceso." THEN 0 ELSE sat_reportes.discipulado END) as discipulado,
+            SUM(CASE WHEN ".$sqlGenExcluidaProceso." THEN 0 ELSE sat_reportes.bautizados END) as bautizos
         FROM sat_reportes
-        LEFT JOIN usuario_empresa ON usuario_empresa.idUsuario = sat_reportes.idUsuario
         WHERE ".$sqlUser." 1 ".$sqlFiltroBaseProcesoReporte;
 
 if($row = db_first_row($PSN, $sql)){
@@ -358,7 +363,6 @@ if($row = db_first_row($PSN, $sql)){
 $sqlIglesias = "SELECT
                     COUNT(id) as iglesias
                 FROM sat_reportes
-                LEFT JOIN usuario_empresa ON usuario_empresa.idUsuario = sat_reportes.idUsuario
                 WHERE ".$sqlUser." 1 ".$sqlFiltroBaseProcesoReporte." ";
 
 $gens = [1 => 'satura_iglesias', 2 => 'satura_iglesias2', 3 => 'satura_iglesias3'];
@@ -379,7 +383,6 @@ foreach($sumMap as $genN => $varName){
     $sql = "SELECT
                 SUM(asistencia_total) as ".$alias."
             FROM sat_reportes
-            LEFT JOIN usuario_empresa ON usuario_empresa.idUsuario = sat_reportes.idUsuario
             WHERE ".$sqlUser." (sat_reportes.generacionNumero = ".$genN." ".$sqlFiltroLimpio.")";
 
     if($row = db_first_row($PSN, $sql)){
@@ -1042,10 +1045,10 @@ function drawG5(){
   var view = new google.visualization.DataView(data);
   view.setColumns([
     0,
-    { calc: "stringify", sourceColumn: 2, type: "string", role: "annotation" },
     1,
     { calc: "stringify", sourceColumn: 1, type: "string", role: "annotation" },
-    2
+    2,
+    { calc: "stringify", sourceColumn: 2, type: "string", role: "annotation" }
   ]);
 
   var options = {
