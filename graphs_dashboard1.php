@@ -276,7 +276,7 @@ if($row = db_first_row($PSN, $sql)){
     $conteo = (int)$row->f('conteo');
     $asis   = (int)$row->f('asistencia_total');
 
-    $lideresCap = $asis - $conteo;
+    $lideresCap = $asis;
     if($lideresCap < 0){ $lideresCap = 0; }
 
     $datosProceso[] = ["LÍDERES CAPACITADOS", $lideresCap, "grey"];
@@ -299,7 +299,7 @@ if($row = db_first_row($PSN, $sql)){
     $conteo = (int)$row->f('conteo');
     $asisTotal = (int)$row->f('asistencia_total');
 
-    $lideresCap = $asisTotal - $conteo;
+    $lideresCap = $asisTotal;
     if($lideresCap < 0){ $lideresCap = 0; }
 
     // Mantiene exactamente la lógica del código que pasaste

@@ -91,6 +91,16 @@ if(!isset($_REQUEST["fechaFinal"]) || eliminarInvalidos($_REQUEST["fechaFinal"])
 
 }
 
+$sqlFiltro = "";
+$buscar_idUsuario = "";
+$buscar_idGrupoMadre = "";
+$buscar_nombre = "";
+$fechaInicial = eliminarInvalidos($_REQUEST["fechaInicial"]);
+$fechaFinal = eliminarInvalidos($_REQUEST["fechaFinal"]);
+$generacionNumero = "";
+$inactivo = "";
+$sinmapeo = "";
+
 
 
 /*
@@ -785,6 +795,7 @@ else{
     }
 
     $totalesFiltroProceso = array(
+        "asistencia_total" => 0,
         "desiciones"   => 0,
         "preparandose" => 0,
         "discipulado"  => 0,
@@ -792,6 +803,7 @@ else{
     );
 
     $sqlTotalesProceso = "SELECT
+            SUM(COALESCE(sat_reportes.asistencia_total, 0)) as asistencia_total,
             SUM(CASE
                     WHEN COALESCE(NULLIF(sat_reportes.generacionNumero, ''), 0) IN (0, 77, 8) THEN 0
                     ELSE COALESCE(sat_reportes.desiciones, 0)
@@ -814,6 +826,7 @@ else{
     $PSN_totales = new DBbase_Sql;
     $PSN_totales->query($sqlTotalesProceso);
     if($PSN_totales->num_rows() > 0 && $PSN_totales->next_record()){
+        $totalesFiltroProceso["asistencia_total"] = (int)$PSN_totales->f('asistencia_total');
         $totalesFiltroProceso["desiciones"]   = (int)$PSN_totales->f('desiciones');
         $totalesFiltroProceso["preparandose"] = (int)$PSN_totales->f('preparandose');
         $totalesFiltroProceso["discipulado"]  = (int)$PSN_totales->f('discipulado');
@@ -887,6 +900,7 @@ else{
                 <div class="container">
                     <form name="form" id="form" method="get" class="form-horizontal">
                         <input type="hidden" name="doc" value="reportar_buscar" />
+                        <input type="hidden" name="pagina" value="1" />
                         <div class="cont-tit">
                             <div class="hr"><hr></div>
                             <div class="tit-cen">
@@ -986,6 +1000,7 @@ else{
                             <h5><?php echo $total_registros; ?> Registros encontrados</h5>
                             <h5>
                                 Totales del filtro actual:
+                                Ast. Total <?=$totalesFiltroProceso["asistencia_total"]; ?> |
                                 Deci. <?=$totalesFiltroProceso["desiciones"]; ?> |
                                 Prep. <?=$totalesFiltroProceso["preparandose"]; ?> |
                                 Disc. <?=$totalesFiltroProceso["discipulado"]; ?> |
@@ -1025,6 +1040,7 @@ else{
                             <tfoot>
                                 <tr style="background-color:#E8F4EA; font-weight:bold;">
                                     <th colspan="7" style="text-align:right;">Totales del filtro</th>
+                                    <th><?=$totalesFiltroProceso["asistencia_total"]; ?></th>
                                     <th><?=$totalesFiltroProceso["desiciones"]; ?></th>
                                     <th><?=$totalesFiltroProceso["preparandose"]; ?></th>
                                     <th><?=$totalesFiltroProceso["discipulado"]; ?></th>
