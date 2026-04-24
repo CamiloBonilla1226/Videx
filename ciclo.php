@@ -15,6 +15,11 @@ function ciclo_req_num($key)
     return (isset($_REQUEST[$key]) && soloNumeros($_REQUEST[$key]) != '') ? soloNumeros($_REQUEST[$key]) : '';
 }
 
+function ciclo_req_text($key)
+{
+    return (isset($_REQUEST[$key]) && trim($_REQUEST[$key]) != '') ? trim(eliminarInvalidos($_REQUEST[$key])) : '';
+}
+
 function ciclo_build_filtro_sat($idUsuario)
 {
     $sqlFiltro = '';
@@ -26,25 +31,37 @@ function ciclo_build_filtro_sat($idUsuario)
     return $sqlFiltro;
 }
 
+function ciclo_build_filtro_grupo($nombreGrupo)
+{
+    $sqlFiltro = '';
+
+    if ($nombreGrupo !== '') {
+        $sqlFiltro .= " AND sat_reportes.nombreGrupo_txt = '" . $nombreGrupo . "'";
+    }
+
+    return $sqlFiltro;
+}
+
 $PSN = new DBbase_Sql;
 $PSN2 = new DBbase_Sql;
 $PSN3 = new DBbase_Sql;
+$esFacilitador = ($_SESSION['perfil'] == 163);
 
-if ($_SESSION['perfil'] == 163) {
+if ($esFacilitador) {
     $_REQUEST['idUsuario'] = $_SESSION['id'];
 }
 
 $buscar_idUsuario = ciclo_req_num('idUsuario');
-$sqlFiltroUsuario = ciclo_build_filtro_sat($buscar_idUsuario);
-
+$buscar_nombreGrupo = ciclo_req_text('nombreGrupo_txt');
 $usuarios = array();
-$nombreUsuarioSeleccionado = 'Todos los facilitadores';
+$gruposIpg = array();
+$nombreUsuarioSeleccionado = 'Seleccione un facilitador';
 
 $sql = "SELECT id, nombre
         FROM usuario
         WHERE tipo IN (162, 163) AND acceso = 1";
 
-if ($_SESSION['perfil'] == 163) {
+if ($esFacilitador) {
     $sql .= " AND id = '" . $_SESSION['id'] . "'";
 }
 
@@ -67,25 +84,67 @@ if ($PSN2->num_rows() > 0) {
     }
 }
 
+$requiereSeleccionFacilitador = (!$esFacilitador && $buscar_idUsuario === '');
+$grupoSeleccionadoValido = false;
+
+if (!$requiereSeleccionFacilitador) {
+    $sql = "SELECT DISTINCT nombreGrupo_txt
+            FROM sat_reportes
+            WHERE idUsuario = '" . $buscar_idUsuario . "'
+              AND nombreGrupo_txt IS NOT NULL
+              AND TRIM(nombreGrupo_txt) <> ''
+              AND nombreGrupo_txt IN (
+                    SELECT nombreGrupo_txt
+                    FROM sat_reportes
+                    WHERE idUsuario = '" . $buscar_idUsuario . "'
+                      AND nombreGrupo_txt IS NOT NULL
+                      AND TRIM(nombreGrupo_txt) <> ''
+                    GROUP BY nombreGrupo_txt
+                    HAVING COUNT(*) > 1
+              )
+            ORDER BY nombreGrupo_txt ASC";
+
+    $PSN3->query($sql);
+    if ($PSN3->num_rows() > 0) {
+        while ($PSN3->next_record()) {
+            $nombreGrupo = trim($PSN3->f('nombreGrupo_txt'));
+            $gruposIpg[] = $nombreGrupo;
+
+            if ($buscar_nombreGrupo === $nombreGrupo) {
+                $grupoSeleccionadoValido = true;
+            }
+        }
+    }
+}
+
+if (!$grupoSeleccionadoValido) {
+    $buscar_nombreGrupo = '';
+}
+
+$sqlFiltroUsuario = ciclo_build_filtro_sat($buscar_idUsuario);
+$sqlFiltroGrupo = ciclo_build_filtro_grupo($buscar_nombreGrupo);
+
 $totalReportes = 0;
 $primerReporte = '';
 $ultimoReporte = '';
 $totalFacilitadoresConDatos = 0;
 
-$sql = "SELECT
-            COUNT(sat_reportes.id) AS totalReportes,
-            COUNT(DISTINCT sat_reportes.idUsuario) AS totalFacilitadores,
-            MIN(sat_reportes.fechaReporte) AS primerReporte,
-            MAX(sat_reportes.fechaReporte) AS ultimoReporte
-        FROM sat_reportes
-        WHERE 1 " . $sqlFiltroUsuario;
+if (!$requiereSeleccionFacilitador) {
+    $sql = "SELECT
+                COUNT(sat_reportes.id) AS totalReportes,
+                COUNT(DISTINCT sat_reportes.idUsuario) AS totalFacilitadores,
+                MIN(sat_reportes.fechaReporte) AS primerReporte,
+                MAX(sat_reportes.fechaReporte) AS ultimoReporte
+            FROM sat_reportes
+            WHERE 1 " . $sqlFiltroUsuario . $sqlFiltroGrupo;
 
-$PSN3->query($sql);
-if ($PSN3->next_record()) {
-    $totalReportes = (int)$PSN3->f('totalReportes');
-    $totalFacilitadoresConDatos = (int)$PSN3->f('totalFacilitadores');
-    $primerReporte = $PSN3->f('primerReporte');
-    $ultimoReporte = $PSN3->f('ultimoReporte');
+    $PSN3->query($sql);
+    if ($PSN3->next_record()) {
+        $totalReportes = (int)$PSN3->f('totalReportes');
+        $totalFacilitadoresConDatos = (int)$PSN3->f('totalFacilitadores');
+        $primerReporte = $PSN3->f('primerReporte');
+        $ultimoReporte = $PSN3->f('ultimoReporte');
+    }
 }
 ?>
 
@@ -94,29 +153,6 @@ if ($PSN3->next_record()) {
         max-width: 1200px;
         margin: 0 auto;
         padding: 20px 15px 35px;
-    }
-
-    .ciclo-hero {
-        background: linear-gradient(135deg, #f5f8fb 0%, #eef3f8 100%);
-        border: 1px solid #d9e3ee;
-        border-radius: 14px;
-        padding: 24px;
-        margin-bottom: 24px;
-        box-shadow: 0 10px 30px rgba(33, 53, 71, 0.08);
-    }
-
-    .ciclo-hero h2 {
-        margin: 0 0 8px;
-        color: #213547;
-        font-size: 28px;
-        font-weight: 700;
-    }
-
-    .ciclo-hero p {
-        margin: 0;
-        color: #556677;
-        font-size: 15px;
-        line-height: 1.6;
     }
 
     .ciclo-card {
@@ -146,36 +182,6 @@ if ($PSN3->next_record()) {
 
     .ciclo-card__body {
         padding: 22px;
-    }
-
-    .ciclo-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 16px;
-    }
-
-    .ciclo-stat {
-        background: #f8fbff;
-        border: 1px solid #dce7f2;
-        border-radius: 12px;
-        padding: 18px;
-    }
-
-    .ciclo-stat__label {
-        display: block;
-        margin-bottom: 8px;
-        color: #607284;
-        font-size: 12px;
-        font-weight: 700;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-    }
-
-    .ciclo-stat__value {
-        color: #1f2d3d;
-        font-size: 24px;
-        font-weight: 700;
-        line-height: 1.2;
     }
 
     .ciclo-muted {
@@ -215,11 +221,6 @@ if ($PSN3->next_record()) {
 </style>
 
 <div class="ciclo-wrap">
-    <div class="ciclo-hero">
-        <h2>Grafica de ciclo</h2>
-        <p>Esta vista queda preparada para construir la nueva grafica sobre <code>sat_reportes</code>. Por ahora el filtro por <code>idUsuario</code> ya aplica tanto al formulario como a las consultas base.</p>
-    </div>
-
     <form action="index.php" method="get" name="formCiclo" class="form-horizontal ciclo-card">
         <input type="hidden" name="doc" value="ciclo" />
 
@@ -229,31 +230,44 @@ if ($PSN3->next_record()) {
 
         <div class="ciclo-card__body">
             <div class="form-group">
-                <div class="col-sm-5">
+                <div class="col-sm-4">
                     <strong>Facilitador Satura:</strong>
-                    <select name="idUsuario" onchange="this.form.submit()" class="form-control">
-                        <?php if ($_SESSION['perfil'] != 163) { ?>
-                            <option value="">Ver todos</option>
-                        <?php } ?>
-
-                        <?php foreach ($usuarios as $usuario) { ?>
-                            <option value="<?=$usuario['id']; ?>" <?php if ((string)$buscar_idUsuario === (string)$usuario['id']) { ?>selected="selected"<?php } ?>>
-                                <?=$usuario['nombre']; ?>
-                            </option>
-                        <?php } ?>
-                    </select>
+                    <?php if ($esFacilitador) { ?>
+                        <input type="hidden" name="idUsuario" value="<?=$buscar_idUsuario; ?>" />
+                        <div class="form-control" style="background:#f8fafc;"><?=$nombreUsuarioSeleccionado; ?></div>
+                    <?php } else { ?>
+                        <select name="idUsuario" onchange="document.getElementById('nombreGrupo_txt').value=''; this.form.submit()" class="form-control">
+                            <option value="">Seleccione un facilitador</option>
+                            <?php foreach ($usuarios as $usuario) { ?>
+                                <option value="<?=$usuario['id']; ?>" <?php if ((string)$buscar_idUsuario === (string)$usuario['id']) { ?>selected="selected"<?php } ?>>
+                                    <?=$usuario['nombre']; ?>
+                                </option>
+                            <?php } ?>
+                        </select>
+                    <?php } ?>
                 </div>
 
-                <div class="col-sm-3">
-                    <strong>Filtro activo:</strong>
-                    <div class="form-control" style="background:#f8fafc;"><?=$nombreUsuarioSeleccionado; ?></div>
+                <div class="col-sm-4">
+                    <strong>Grupo IPG:</strong>
+                    <select name="nombreGrupo_txt" id="nombreGrupo_txt" onchange="this.form.submit()" class="form-control" <?php if ($requiereSeleccionFacilitador) { ?>disabled="disabled"<?php } ?>>
+                        <?php if ($requiereSeleccionFacilitador) { ?>
+                            <option value="">Primero seleccione un facilitador</option>
+                        <?php } else { ?>
+                            <option value="">Seleccione un grupo</option>
+                            <?php foreach ($gruposIpg as $nombreGrupo) { ?>
+                                <option value="<?=htmlspecialchars($nombreGrupo, ENT_QUOTES, 'UTF-8'); ?>" <?php if ($buscar_nombreGrupo === $nombreGrupo) { ?>selected="selected"<?php } ?>>
+                                    <?=htmlspecialchars($nombreGrupo, ENT_QUOTES, 'UTF-8'); ?>
+                                </option>
+                            <?php } ?>
+                        <?php } ?>
+                    </select>
                 </div>
 
                 <div class="col-sm-4 ciclo-actions">
                     <div>
                         <input type="submit" value="Filtrar" class="btn btn-success" />
                     </div>
-                    <?php if ($_SESSION['perfil'] != 163) { ?>
+                    <?php if (!$esFacilitador) { ?>
                         <div>
                             <a href="index.php?doc=ciclo" class="btn btn-default">Limpiar</a>
                         </div>
@@ -265,46 +279,23 @@ if ($PSN3->next_record()) {
 
     <div class="ciclo-card">
         <div class="ciclo-card__head">
-            <h3>Validacion del filtro</h3>
-        </div>
-
-        <div class="ciclo-card__body">
-            <div class="ciclo-grid">
-                <div class="ciclo-stat">
-                    <span class="ciclo-stat__label">Registros encontrados</span>
-                    <span class="ciclo-stat__value"><?=$totalReportes; ?></span>
-                </div>
-
-                <div class="ciclo-stat">
-                    <span class="ciclo-stat__label">Facilitadores con datos</span>
-                    <span class="ciclo-stat__value"><?=$totalFacilitadoresConDatos; ?></span>
-                </div>
-
-                <div class="ciclo-stat">
-                    <span class="ciclo-stat__label">Primer reporte</span>
-                    <span class="ciclo-stat__value"><?=($primerReporte != '' ? $primerReporte : 'Sin datos'); ?></span>
-                </div>
-
-                <div class="ciclo-stat">
-                    <span class="ciclo-stat__label">Ultimo reporte</span>
-                    <span class="ciclo-stat__value"><?=($ultimoReporte != '' ? $ultimoReporte : 'Sin datos'); ?></span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="ciclo-card">
-        <div class="ciclo-card__head">
             <h3>Espacio de la nueva grafica</h3>
         </div>
 
         <div class="ciclo-card__body">
             <div class="ciclo-placeholder">
                 <div>
-                    <strong>Filtro por idUsuario listo</strong>
-                    <div class="ciclo-muted">
-                        El siguiente paso es conectar aqui la nueva grafica usando la variable <code>$sqlFiltroUsuario</code>.
-                    </div>
+                    <?php if ($requiereSeleccionFacilitador) { ?>
+                        <strong>Seleccion de facilitador requerida</strong>
+                        <div class="ciclo-muted">
+                            La nueva grafica se habilitara cuando el admin elija un facilitador especifico.
+                        </div>
+                    <?php } else { ?>
+                        <strong>Filtros listos</strong>
+                        <div class="ciclo-muted">
+                            El siguiente paso es conectar aqui la nueva grafica usando <code>$sqlFiltroUsuario</code> y <code>$sqlFiltroGrupo</code>.
+                        </div>
+                    <?php } ?>
                 </div>
             </div>
         </div>
