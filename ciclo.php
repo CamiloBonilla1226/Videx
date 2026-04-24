@@ -307,9 +307,9 @@ if (!$requiereSeleccionFacilitador) {
 
     .ciclo-segment .ciclo-label {
         fill: #ffffff;
-        font-size: 27px;
+        font-size: 32px;
         font-weight: 800;
-        letter-spacing: 5px;
+        letter-spacing: 5.5px;
     }
 
     .ciclo-segment.is-active .ciclo-ring {
@@ -322,12 +322,12 @@ if (!$requiereSeleccionFacilitador) {
     }
 
     .ciclo-heart {
-        filter: drop-shadow(0 12px 20px rgba(173, 16, 35, 0.28));
+        filter: drop-shadow(0 10px 18px rgba(173, 16, 35, 0.22));
     }
 
     .ciclo-heart text {
         fill: #ffffff;
-        font-size: 29px;
+        font-size: 25px;
         font-weight: 800;
     }
 
@@ -420,7 +420,7 @@ if (!$requiereSeleccionFacilitador) {
         }
 
         .ciclo-segment .ciclo-label {
-            font-size: 20px;
+            font-size: 24px;
             letter-spacing: 3px;
         }
 
@@ -445,7 +445,7 @@ if (!$requiereSeleccionFacilitador) {
         }
 
         .ciclo-heart text {
-            font-size: 21px;
+            font-size: 18px;
         }
     }
 </style>
@@ -788,9 +788,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     svgMarkup += '' +
-        '<g class="ciclo-heart" transform="translate(380 340) scale(0.68) translate(-380 -340)">' +
+        '<g class="ciclo-heart" transform="translate(380 380) scale(0.42) translate(-380 -340)">' +
             '<path d="M380 460 C309 414 252 364 252 297 C252 253 286 222 329 222 C355 222 373 234 380 253 C387 234 405 222 431 222 C474 222 508 253 508 297 C508 364 451 414 380 460 Z" fill="#d51f2d"></path>' +
-            '<text x="380" y="374" text-anchor="middle">Amor</text>' +
+            '<text x="380" y="342" text-anchor="middle" dominant-baseline="middle">Amor</text>' +
         '</g>';
 
     svg.innerHTML = svgMarkup;
