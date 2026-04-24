@@ -184,6 +184,23 @@ if (!$requiereSeleccionFacilitador) {
         padding: 22px;
     }
 
+    .ciclo-filter-row {
+        display: flex;
+        align-items: flex-end;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .ciclo-filter-field {
+        flex: 1 1 280px;
+    }
+
+    .ciclo-filter-field strong {
+        display: block;
+        margin-bottom: 8px;
+        color: #1f2d3d;
+    }
+
     .ciclo-muted {
         color: #607284;
         font-size: 14px;
@@ -210,13 +227,21 @@ if (!$requiereSeleccionFacilitador) {
 
     .ciclo-actions {
         display: flex;
-        align-items: end;
+        align-items: flex-end;
         gap: 10px;
         flex-wrap: wrap;
+        flex: 0 1 auto;
+        padding-top: 24px;
     }
 
     .ciclo-actions .btn {
         min-width: 120px;
+    }
+
+    @media (max-width: 767px) {
+        .ciclo-actions {
+            padding-top: 0;
+        }
     }
 </style>
 
@@ -229,8 +254,8 @@ if (!$requiereSeleccionFacilitador) {
         </div>
 
         <div class="ciclo-card__body">
-            <div class="form-group">
-                <div class="col-sm-4">
+            <div class="ciclo-filter-row">
+                <div class="ciclo-filter-field">
                     <strong>Facilitador Satura:</strong>
                     <?php if ($esFacilitador) { ?>
                         <input type="hidden" name="idUsuario" value="<?=$buscar_idUsuario; ?>" />
@@ -247,7 +272,7 @@ if (!$requiereSeleccionFacilitador) {
                     <?php } ?>
                 </div>
 
-                <div class="col-sm-4">
+                <div class="ciclo-filter-field">
                     <strong>Grupo IPG:</strong>
                     <select name="nombreGrupo_txt" id="nombreGrupo_txt" onchange="this.form.submit()" class="form-control" <?php if ($requiereSeleccionFacilitador) { ?>disabled="disabled"<?php } ?>>
                         <?php if ($requiereSeleccionFacilitador) { ?>
@@ -263,7 +288,7 @@ if (!$requiereSeleccionFacilitador) {
                     </select>
                 </div>
 
-                <div class="col-sm-4 ciclo-actions">
+                <div class="ciclo-actions">
                     <div>
                         <input type="submit" value="Filtrar" class="btn btn-success" />
                     </div>
