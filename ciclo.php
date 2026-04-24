@@ -307,7 +307,7 @@ if (!$requiereSeleccionFacilitador) {
 
     .ciclo-segment .ciclo-label {
         fill: #ffffff;
-        font-size: 23px;
+        font-size: 27px;
         font-weight: 800;
         letter-spacing: 5px;
     }
@@ -327,15 +327,15 @@ if (!$requiereSeleccionFacilitador) {
 
     .ciclo-heart text {
         fill: #ffffff;
-        font-size: 31px;
+        font-size: 29px;
         font-weight: 800;
     }
 
     .ciclo-node {
         position: absolute;
         transform: translate(-50%, -50%);
-        width: 148px;
-        padding: 10px 8px;
+        width: 132px;
+        padding: 8px 6px;
         border: 0;
         background: transparent;
         color: #2f4ea2;
@@ -350,9 +350,9 @@ if (!$requiereSeleccionFacilitador) {
     }
 
     .ciclo-node__icon {
-        width: 58px;
-        height: 58px;
-        margin: 0 auto 8px;
+        width: 54px;
+        height: 54px;
+        margin: 0 auto 6px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -363,15 +363,15 @@ if (!$requiereSeleccionFacilitador) {
     }
 
     .ciclo-node__icon svg {
-        width: 42px;
-        height: 42px;
+        width: 38px;
+        height: 38px;
         display: block;
     }
 
     .ciclo-node__text {
         display: block;
-        font-size: 14px;
-        line-height: 1.2;
+        font-size: 13px;
+        line-height: 1.15;
         font-weight: 600;
     }
 
@@ -420,32 +420,32 @@ if (!$requiereSeleccionFacilitador) {
         }
 
         .ciclo-segment .ciclo-label {
-            font-size: 18px;
+            font-size: 20px;
             letter-spacing: 3px;
         }
 
         .ciclo-node {
-            width: 116px;
-            padding: 8px 6px;
+            width: 104px;
+            padding: 6px 4px;
         }
 
         .ciclo-node__icon {
-            width: 46px;
-            height: 46px;
-            margin-bottom: 6px;
+            width: 40px;
+            height: 40px;
+            margin-bottom: 5px;
         }
 
         .ciclo-node__icon svg {
-            width: 32px;
-            height: 32px;
+            width: 28px;
+            height: 28px;
         }
 
         .ciclo-node__text {
-            font-size: 11px;
+            font-size: 10px;
         }
 
         .ciclo-heart text {
-            font-size: 24px;
+            font-size: 21px;
         }
     }
 </style>
@@ -625,8 +625,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     icon: 'training',
                     lines: ['Inscriba y entrene', 'a los obreros'],
                     angle: 0,
-                    radius: 152,
-                    width: 170
+                    radius: 142,
+                    width: 148
                 }
             ]
         },
@@ -638,16 +638,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 {
                     icon: 'pray',
                     lines: ['Prepárese', 'y ore'],
-                    angle: 54,
-                    radius: 166,
-                    width: 132
+                    angle: 56,
+                    radius: 150,
+                    width: 118
                 },
                 {
                     icon: 'search',
                     lines: ['Encuentre', 'personas de paz'],
-                    angle: 98,
-                    radius: 178,
-                    width: 146
+                    angle: 100,
+                    radius: 158,
+                    width: 126
                 }
             ]
         },
@@ -659,23 +659,23 @@ document.addEventListener('DOMContentLoaded', function () {
                 {
                     icon: 'share',
                     lines: ['Comparta', 'las buenas nuevas'],
-                    angle: 135,
-                    radius: 188,
-                    width: 150
+                    angle: 136,
+                    radius: 170,
+                    width: 130
                 },
                 {
                     icon: 'book',
                     lines: ['Enseñe a obedecer', 'a Jesús'],
                     angle: 194,
-                    radius: 156,
-                    width: 152
+                    radius: 146,
+                    width: 134
                 },
                 {
                     icon: 'water',
                     lines: ['Bautice a', 'los nuevos creyentes'],
-                    angle: 244,
-                    radius: 188,
-                    width: 160
+                    angle: 242,
+                    radius: 170,
+                    width: 136
                 }
             ]
         },
@@ -687,9 +687,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 {
                     icon: 'church',
                     lines: ['Establezca', 'la iglesia'],
-                    angle: 308,
-                    radius: 168,
-                    width: 132
+                    angle: 306,
+                    radius: 154,
+                    width: 122
                 }
             ]
         }
@@ -788,7 +788,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     svgMarkup += '' +
-        '<g class="ciclo-heart">' +
+        '<g class="ciclo-heart" transform="translate(380 340) scale(0.68) translate(-380 -340)">' +
             '<path d="M380 460 C309 414 252 364 252 297 C252 253 286 222 329 222 C355 222 373 234 380 253 C387 234 405 222 431 222 C474 222 508 253 508 297 C508 364 451 414 380 460 Z" fill="#d51f2d"></path>' +
             '<text x="380" y="374" text-anchor="middle">Amor</text>' +
         '</g>';
