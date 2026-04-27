@@ -163,6 +163,8 @@ if (!$requiereSeleccionFacilitador) {
         max-width: 1200px;
         margin: 0 auto;
         padding: 20px 15px 35px;
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
     }
 
     .ciclo-hero {
@@ -274,6 +276,7 @@ if (!$requiereSeleccionFacilitador) {
         border: 1px solid #d9e4f2;
         border-radius: 22px;
         padding: 18px;
+        overflow: hidden;
     }
 
     .ciclo-preload {
@@ -290,32 +293,40 @@ if (!$requiereSeleccionFacilitador) {
         width: min(100%, 760px);
         margin: 0 auto;
         aspect-ratio: 1 / 1;
+        isolation: isolate;
     }
 
     .ciclo-chart-stage svg {
         width: 100%;
         height: 100%;
         display: block;
+        transform: translateZ(0);
     }
 
     .ciclo-node-layer {
         position: absolute;
         inset: 0;
+        overflow: hidden;
+        pointer-events: none;
+        transform: translateZ(0);
     }
 
     .ciclo-segment .ciclo-ring {
         fill: #2f4ea2;
         stroke: #ffffff;
         stroke-width: 4;
-        transition: fill 0.25s ease, transform 0.25s ease;
+        transition: transform 0.25s ease;
         transform-origin: 380px 380px;
+        will-change: transform;
     }
 
     .ciclo-segment .ciclo-region {
         fill: #ffffff;
         stroke: #2f4ea2;
         stroke-width: 2.5;
-        transition: fill 0.25s ease, filter 0.25s ease;
+        transition: transform 0.25s ease, filter 0.25s ease;
+        transform-origin: 380px 380px;
+        will-change: transform;
     }
 
     .ciclo-segment .ciclo-hit {
@@ -328,15 +339,16 @@ if (!$requiereSeleccionFacilitador) {
         font-size: 27px;
         font-weight: 800;
         letter-spacing: 1.4px;
-    }
-
-    .ciclo-segment.is-active .ciclo-ring {
-        fill: #203f96;
+        pointer-events: none;
     }
 
     .ciclo-segment.is-active .ciclo-region {
-        fill: #f4f7ff;
+        transform: scale(1.015);
         filter: drop-shadow(0 14px 20px rgba(47, 78, 162, 0.14));
+    }
+
+    .ciclo-segment.is-active .ciclo-ring {
+        transform: scale(1.015);
     }
 
     .ciclo-segment.is-disabled .ciclo-ring,
@@ -353,6 +365,7 @@ if (!$requiereSeleccionFacilitador) {
 
     .ciclo-heart {
         filter: drop-shadow(0 10px 18px rgba(173, 16, 35, 0.22));
+        pointer-events: none;
     }
 
     .ciclo-heart text {
@@ -373,6 +386,7 @@ if (!$requiereSeleccionFacilitador) {
         cursor: pointer;
         pointer-events: auto;
         transition: transform 0.2s ease, opacity 0.2s ease, color 0.2s ease;
+        will-change: transform;
     }
 
     .ciclo-node:focus {
@@ -390,6 +404,7 @@ if (!$requiereSeleccionFacilitador) {
         background: transparent;
         box-shadow: none;
         transition: transform 0.25s ease;
+        will-change: transform;
     }
 
     .ciclo-node__icon-stack {
@@ -397,6 +412,7 @@ if (!$requiereSeleccionFacilitador) {
         width: 100%;
         height: 100%;
         display: block;
+        pointer-events: none;
     }
 
     .ciclo-node__icon-fallback {
@@ -406,6 +422,7 @@ if (!$requiereSeleccionFacilitador) {
         align-items: center;
         justify-content: center;
         transition: opacity 0.18s ease;
+        pointer-events: none;
     }
 
     .ciclo-node__icon svg {
@@ -425,6 +442,7 @@ if (!$requiereSeleccionFacilitador) {
         display: block;
         object-fit: contain;
         transform: translateY(-34px);
+        pointer-events: none;
     }
 
     .ciclo-node--image {
@@ -446,15 +464,17 @@ if (!$requiereSeleccionFacilitador) {
         line-height: 1.18;
         font-weight: 500;
         text-shadow: 0 1px 0 rgba(255, 255, 255, 0.85);
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
     }
 
     .ciclo-node__text span {
         display: block;
+        white-space: nowrap;
     }
 
     .ciclo-node.is-active {
-        transform: translate(-50%, -50%) scale(1.03);
-        color: #1f3f97;
+        transform: translate(-50%, -50%) scale(1.06);
     }
 
     .ciclo-node.is-disabled,
@@ -504,6 +524,15 @@ if (!$requiereSeleccionFacilitador) {
             padding: 16px;
         }
 
+        .ciclo-visual {
+            padding: 10px;
+        }
+
+        .ciclo-node-layer {
+            transform: scale(0.76);
+            transform-origin: center center;
+        }
+
         .ciclo-actions {
             padding-top: 0;
         }
@@ -514,41 +543,47 @@ if (!$requiereSeleccionFacilitador) {
         }
 
         .ciclo-node {
-            width: 92px;
+            width: 108px !important;
             padding: 0;
         }
 
         .ciclo-node__icon {
-            width: 46px;
-            height: 46px;
-            margin-bottom: 3px;
+            width: 40px;
+            height: 40px;
+            margin-bottom: 2px;
         }
 
         .ciclo-node__icon svg {
-            width: 36px;
-            height: 36px;
+            width: 30px;
+            height: 30px;
         }
 
         .ciclo-node__icon img {
-            max-width: 72px;
-            max-height: 72px;
-            transform: translateY(-24px);
+            max-width: 60px;
+            max-height: 60px;
+            transform: translateY(-14px);
         }
 
         .ciclo-node--image {
-            width: clamp(58px, 18%, 78px);
+            width: 82px !important;
         }
 
         .ciclo-node--image .ciclo-node__text {
-            margin-top: -8px;
+            margin-top: -10px;
         }
 
         .ciclo-node__text {
-            font-size: 9px;
+            font-size: 7px;
+            line-height: 1.12;
         }
 
         .ciclo-heart text {
-            font-size: 18px;
+            font-size: 16px;
+        }
+
+        .ciclo-help {
+            font-size: 12px;
+            margin-top: 10px;
         }
     }
 </style>
@@ -961,11 +996,19 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    var pinnedSegment = 'multiplicar';
+    var svgSegments = svg.querySelectorAll('.ciclo-segment');
+    var nodes = nodeLayer.querySelectorAll('.ciclo-node');
+    var pinnedSegment = null;
+    var hoveredSegment = null;
+    var activeSegment = null;
+    var interactiveSelector = '.ciclo-segment, .ciclo-node';
 
-    function setActiveSegment(segmentId) {
-        var svgSegments = svg.querySelectorAll('.ciclo-segment');
-        var nodes = nodeLayer.querySelectorAll('.ciclo-node');
+    function applyActiveSegment(segmentId) {
+        if (activeSegment === segmentId) {
+            return;
+        }
+
+        activeSegment = segmentId;
 
         for (var iSeg = 0; iSeg < svgSegments.length; iSeg++) {
             svgSegments[iSeg].classList.toggle('is-active', svgSegments[iSeg].getAttribute('data-segment') === segmentId);
@@ -976,38 +1019,78 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    var segmentTargets = svg.querySelectorAll('.ciclo-segment');
-    for (var t = 0; t < segmentTargets.length; t++) {
-        (function (segmentId, target) {
-            target.addEventListener('mouseenter', function () {
-                setActiveSegment(segmentId);
-            });
+    function getSegmentIdFromTarget(target) {
+        if (!target || typeof target.closest !== 'function') {
+            return null;
+        }
 
-            target.addEventListener('click', function () {
-                pinnedSegment = segmentId;
-                setActiveSegment(segmentId);
-            });
-        })(segmentTargets[t].getAttribute('data-segment'), segmentTargets[t]);
+        var interactiveTarget = target.closest(interactiveSelector);
+        if (!interactiveTarget || !stage.contains(interactiveTarget)) {
+            return null;
+        }
+
+        return interactiveTarget.getAttribute('data-segment');
     }
 
-    var nodeTargets = nodeLayer.querySelectorAll('.ciclo-node');
-    for (var k = 0; k < nodeTargets.length; k++) {
-        (function (segmentId, target) {
-            target.addEventListener('mouseenter', function () {
-                setActiveSegment(segmentId);
-            });
-
-            target.addEventListener('click', function () {
-                pinnedSegment = segmentId;
-                setActiveSegment(segmentId);
-            });
-        })(nodeTargets[k].getAttribute('data-segment'), nodeTargets[k]);
+    function refreshActiveSegment() {
+        applyActiveSegment(hoveredSegment || pinnedSegment);
     }
 
-    stage.addEventListener('mouseleave', function () {
-        setActiveSegment(pinnedSegment);
+    function updateHoveredSegment(target) {
+        var nextHoveredSegment = getSegmentIdFromTarget(target);
+        if (hoveredSegment === nextHoveredSegment) {
+            return;
+        }
+
+        hoveredSegment = nextHoveredSegment;
+        refreshActiveSegment();
+    }
+
+    stage.addEventListener('pointermove', function (event) {
+        updateHoveredSegment(event.target);
     });
 
-    setActiveSegment(pinnedSegment);
+    stage.addEventListener('pointerleave', function () {
+        hoveredSegment = null;
+        refreshActiveSegment();
+    });
+
+    stage.addEventListener('click', function (event) {
+        var segmentId = getSegmentIdFromTarget(event.target);
+
+        if (!segmentId) {
+            if (pinnedSegment !== null) {
+                pinnedSegment = null;
+                refreshActiveSegment();
+            }
+            return;
+        }
+
+        pinnedSegment = (pinnedSegment === segmentId) ? null : segmentId;
+        hoveredSegment = segmentId;
+        refreshActiveSegment();
+    });
+
+    stage.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && pinnedSegment !== null) {
+            pinnedSegment = null;
+            refreshActiveSegment();
+        }
+    });
+
+    nodeLayer.addEventListener('focusin', function (event) {
+        updateHoveredSegment(event.target);
+    });
+
+    nodeLayer.addEventListener('focusout', function (event) {
+        if (nodeLayer.contains(event.relatedTarget)) {
+            return;
+        }
+
+        hoveredSegment = null;
+        refreshActiveSegment();
+    });
+
+    applyActiveSegment(null);
 });
 </script>
