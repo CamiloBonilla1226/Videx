@@ -353,13 +353,13 @@ if (!$requiereSeleccionFacilitador) {
 
     .ciclo-segment.is-disabled .ciclo-ring,
     .ciclo-segment.is-disabled.is-active .ciclo-ring {
-        fill: #b8bfcb;
+        fill: #8e98ab;
     }
 
     .ciclo-segment.is-disabled .ciclo-region,
     .ciclo-segment.is-disabled.is-active .ciclo-region {
-        fill: #f7f8fb;
-        stroke: #aab2c0;
+        fill: #e3e7ee;
+        stroke: #7f8a9d;
         filter: none;
     }
 
@@ -376,7 +376,8 @@ if (!$requiereSeleccionFacilitador) {
 
     .ciclo-node {
         position: absolute;
-        transform: translate(-50%, -50%);
+        --ciclo-node-shift-y: -50%;
+        transform: translate(-50%, var(--ciclo-node-shift-y));
         width: 120px;
         padding: 2px 2px;
         border: 0;
@@ -474,12 +475,12 @@ if (!$requiereSeleccionFacilitador) {
     }
 
     .ciclo-node.is-active {
-        transform: translate(-50%, -50%) scale(1.06);
+        transform: translate(-50%, var(--ciclo-node-shift-y)) scale(1.06);
     }
 
     .ciclo-node.is-disabled,
     .ciclo-node.is-disabled.is-active {
-        color: #98a2b3;
+        color: #6c778c;
     }
 
     .ciclo-node.is-active .ciclo-node__icon {
@@ -494,7 +495,7 @@ if (!$requiereSeleccionFacilitador) {
 
     .ciclo-node.is-disabled .ciclo-node__text,
     .ciclo-node.is-disabled.is-active .ciclo-node__text {
-        color: #98a2b3;
+        color: #6c778c;
         text-shadow: none;
     }
 
@@ -525,11 +526,16 @@ if (!$requiereSeleccionFacilitador) {
         }
 
         .ciclo-visual {
-            padding: 10px;
+            padding: 20px 4px 8px;
+        }
+
+        .ciclo-chart-stage,
+        .ciclo-node-layer {
+            overflow: visible;
         }
 
         .ciclo-node-layer {
-            transform: scale(0.76);
+            transform: scale(0.7);
             transform-origin: center center;
         }
 
@@ -538,43 +544,50 @@ if (!$requiereSeleccionFacilitador) {
         }
 
         .ciclo-segment .ciclo-label {
-            font-size: 19px;
-            letter-spacing: 0.8px;
+            font-size: 17px;
+            letter-spacing: 0.55px;
         }
 
         .ciclo-node {
-            width: 108px !important;
+            --ciclo-node-shift-y: -78%;
+            width: 92px !important;
             padding: 0;
         }
 
         .ciclo-node__icon {
-            width: 40px;
-            height: 40px;
+            width: 34px;
+            height: 34px;
             margin-bottom: 2px;
         }
 
         .ciclo-node__icon svg {
-            width: 30px;
-            height: 30px;
+            width: 24px;
+            height: 24px;
         }
 
         .ciclo-node__icon img {
-            max-width: 60px;
-            max-height: 60px;
-            transform: translateY(-14px);
+            max-width: 46px;
+            max-height: 46px;
+            transform: translateY(-9px);
         }
 
         .ciclo-node--image {
-            width: 82px !important;
+            width: 64px !important;
         }
 
         .ciclo-node--image .ciclo-node__text {
-            margin-top: -10px;
+            margin-top: -6px;
         }
 
         .ciclo-node__text {
-            font-size: 7px;
-            line-height: 1.12;
+            font-size: 6px;
+            line-height: 1.08;
+            letter-spacing: -0.01em;
+        }
+
+        .ciclo-node__text span {
+            white-space: normal;
+            overflow-wrap: anywhere;
         }
 
         .ciclo-heart text {
@@ -584,6 +597,68 @@ if (!$requiereSeleccionFacilitador) {
         .ciclo-help {
             font-size: 12px;
             margin-top: 10px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .ciclo-card__body {
+            padding: 12px;
+        }
+
+        .ciclo-visual {
+            padding: 24px 0 4px;
+        }
+
+        .ciclo-chart-stage,
+        .ciclo-node-layer {
+            overflow: visible;
+        }
+
+        .ciclo-node-layer {
+            transform: scale(0.62);
+        }
+
+        .ciclo-segment .ciclo-label {
+            font-size: 15px;
+            letter-spacing: 0.35px;
+        }
+
+        .ciclo-node {
+            --ciclo-node-shift-y: -88%;
+            width: 82px !important;
+        }
+
+        .ciclo-node__icon {
+            width: 30px;
+            height: 30px;
+        }
+
+        .ciclo-node__icon svg {
+            width: 21px;
+            height: 21px;
+        }
+
+        .ciclo-node__icon img {
+            max-width: 40px;
+            max-height: 40px;
+            transform: translateY(-7px);
+        }
+
+        .ciclo-node--image {
+            width: 56px !important;
+        }
+
+        .ciclo-node--image .ciclo-node__text {
+            margin-top: -4px;
+        }
+
+        .ciclo-node__text {
+            font-size: 5px;
+            line-height: 1.05;
+        }
+
+        .ciclo-heart text {
+            font-size: 14px;
         }
     }
 </style>
