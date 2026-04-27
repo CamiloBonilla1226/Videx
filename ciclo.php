@@ -117,6 +117,8 @@ $sqlFiltroUsuario = ciclo_build_filtro_sat($buscar_idUsuario);
 $sqlFiltroGrupo = ciclo_build_filtro_grupo($buscar_nombreGrupo);
 $grupoSeleccionado = ($buscar_nombreGrupo !== '');
 $estadoMultiplicar = false;
+$imgMultiplicarAzul = 'multiplicar_azul.png';
+$imgMultiplicarGris = 'multiplicar_gris.png';
 
 $totalReportes = 0;
 $primerReporte = '';
@@ -274,6 +276,15 @@ if (!$requiereSeleccionFacilitador) {
         padding: 18px;
     }
 
+    .ciclo-preload {
+        position: absolute;
+        width: 0;
+        height: 0;
+        overflow: hidden;
+        opacity: 0;
+        pointer-events: none;
+    }
+
     .ciclo-chart-stage {
         position: relative;
         width: min(100%, 760px);
@@ -381,6 +392,22 @@ if (!$requiereSeleccionFacilitador) {
         transition: transform 0.25s ease;
     }
 
+    .ciclo-node__icon-stack {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        display: block;
+    }
+
+    .ciclo-node__icon-fallback {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.18s ease;
+    }
+
     .ciclo-node__icon svg {
         width: 50px;
         height: 50px;
@@ -388,11 +415,29 @@ if (!$requiereSeleccionFacilitador) {
     }
 
     .ciclo-node__icon img {
-        width: 108px;
-        height: 108px;
+        position: absolute;
+        inset: 0;
+        margin: auto;
+        width: 100%;
+        max-width: 108px;
+        height: auto;
+        max-height: 108px;
         display: block;
         object-fit: contain;
-        transform: translateY(-24px);
+        transform: translateY(-34px);
+    }
+
+    .ciclo-node--image {
+        width: clamp(74px, 15%, 108px);
+    }
+
+    .ciclo-node--image .ciclo-node__icon {
+        width: 100%;
+        height: auto;
+    }
+
+    .ciclo-node--image .ciclo-node__text {
+        margin-top: -10px;
     }
 
     .ciclo-node__text {
@@ -485,9 +530,17 @@ if (!$requiereSeleccionFacilitador) {
         }
 
         .ciclo-node__icon img {
-            width: 80px;
-            height: 80px;
-            transform: translateY(-16px);
+            max-width: 72px;
+            max-height: 72px;
+            transform: translateY(-24px);
+        }
+
+        .ciclo-node--image {
+            width: clamp(58px, 18%, 78px);
+        }
+
+        .ciclo-node--image .ciclo-node__text {
+            margin-top: -8px;
         }
 
         .ciclo-node__text {
@@ -568,6 +621,10 @@ if (!$requiereSeleccionFacilitador) {
 
         <div class="ciclo-card__body">
             <div class="ciclo-visual">
+                <div class="ciclo-preload" aria-hidden="true">
+                    <img src="<?=$imgMultiplicarAzul; ?>" alt="" loading="eager" decoding="sync" fetchpriority="high" />
+                    <img src="<?=$imgMultiplicarGris; ?>" alt="" loading="eager" decoding="sync" fetchpriority="high" />
+                </div>
                 <div class="ciclo-chart-stage" id="cicloChartStage">
                     <svg id="cicloChartSvg" viewBox="0 0 760 760" aria-label="Ciclo de multiplicacion"></svg>
                     <div class="ciclo-node-layer" id="cicloNodeLayer"></div>
@@ -588,8 +645,11 @@ document.addEventListener('DOMContentLoaded', function () {
     var segmentStatus = <?=json_encode(array(
         'multiplicar' => $estadoMultiplicar,
     ));?>;
-    var disabledSegmentImages = {
-        multiplicar: 'multiplicar_gris.png'
+    var segmentImages = {
+        multiplicar: {
+            active: <?=json_encode($imgMultiplicarAzul); ?>,
+            disabled: <?=json_encode($imgMultiplicarGris); ?>
+        }
     };
 
     if (!svg || !nodeLayer || !stage) {
@@ -861,13 +921,16 @@ document.addEventListener('DOMContentLoaded', function () {
         for (var n = 0; n < currentSegment.actions.length; n++) {
             var action = currentSegment.actions[n];
             var position = pointAt(action.angle, action.radius);
+            var hasStateImage = !!segmentImages[currentSegment.id];
             var button = document.createElement('button');
             button.type = 'button';
-            button.className = 'ciclo-node' + ((segmentStatus[currentSegment.id] === false) ? ' is-disabled' : '');
+            button.className = 'ciclo-node' + (hasStateImage ? ' ciclo-node--image' : '') + ((segmentStatus[currentSegment.id] === false) ? ' is-disabled' : '');
             button.setAttribute('data-segment', currentSegment.id);
             button.style.left = (position.x / 760 * 100) + '%';
             button.style.top = (position.y / 760 * 100) + '%';
-            button.style.width = (action.width || 148) + 'px';
+            if (!hasStateImage) {
+                button.style.width = (action.width || 148) + 'px';
+            }
             button.setAttribute('aria-label', action.lines.join(' '));
 
             var textMarkup = '';
@@ -876,8 +939,18 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             var iconMarkup = icons[action.icon];
-            if (segmentStatus[currentSegment.id] === false && disabledSegmentImages[currentSegment.id]) {
-                iconMarkup = '<img src="' + disabledSegmentImages[currentSegment.id] + '" alt="' + escapeHtml(action.lines.join(' ')) + '">';
+            if (segmentImages[currentSegment.id]) {
+                var imagePath = (segmentStatus[currentSegment.id] === false)
+                    ? segmentImages[currentSegment.id].disabled
+                    : segmentImages[currentSegment.id].active;
+
+                if (imagePath) {
+                    iconMarkup = '' +
+                        '<span class="ciclo-node__icon-stack">' +
+                            '<span class="ciclo-node__icon-fallback">' + icons[action.icon] + '</span>' +
+                            '<img src="' + imagePath + '" alt="' + escapeHtml(action.lines.join(' ')) + '" loading="eager" decoding="sync" fetchpriority="high" onload="this.previousElementSibling.style.opacity=0" onerror="this.style.display=\'none\'">' +
+                        '</span>';
+                }
             }
 
             button.innerHTML = '' +
