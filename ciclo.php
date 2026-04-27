@@ -117,8 +117,13 @@ $sqlFiltroUsuario = ciclo_build_filtro_sat($buscar_idUsuario);
 $sqlFiltroGrupo = ciclo_build_filtro_grupo($buscar_nombreGrupo);
 $grupoSeleccionado = ($buscar_nombreGrupo !== '');
 $estadoMultiplicar = false;
+$estadoEncontrarPersonasPaz = false;
+$estadoPrepararseOrar = false;
 $imgMultiplicarAzul = 'multiplicar_azul.png';
 $imgMultiplicarGris = 'multiplicar_gris.png';
+$imgEncontrarAzul = 'encontrar_a.png';
+$imgEncontrarGris = 'encontrar_g.png';
+$imgEncontrarNaranja = 'encontrar_n.png';
 
 $totalReportes = 0;
 $primerReporte = '';
@@ -136,6 +141,28 @@ if (!$requiereSeleccionFacilitador && $grupoSeleccionado) {
     $PSN4->query($sql);
     if ($PSN4->next_record()) {
         $estadoMultiplicar = ((int)$PSN4->f('conteo') > 0);
+    }
+
+    $sql = "SELECT
+                SUM(CASE
+                        WHEN sat_reportes.plantador IS NOT NULL
+                         AND TRIM(sat_reportes.plantador) <> ''
+                        THEN 1 ELSE 0
+                    END) AS conteoPlantador,
+                SUM(CASE
+                        WHEN sat_reportes.generacionNumero = 0
+                         AND sat_reportes.fechaInicio IS NOT NULL
+                         AND sat_reportes.fechaInicio <> ''
+                         AND sat_reportes.fechaInicio <> '0000-00-00'
+                        THEN 1 ELSE 0
+                    END) AS conteoFechaInicio
+            FROM sat_reportes
+            WHERE 1 ".$sqlFiltroUsuario.$sqlFiltroGrupo;
+
+    $PSN4->query($sql);
+    if ($PSN4->next_record()) {
+        $estadoEncontrarPersonasPaz = ((int)$PSN4->f('conteoPlantador') > 0);
+        $estadoPrepararseOrar = ((int)$PSN4->f('conteoFechaInicio') > 0);
     }
 }
 
@@ -155,6 +182,23 @@ if (!$requiereSeleccionFacilitador) {
         $primerReporte = $PSN3->f('primerReporte');
         $ultimoReporte = $PSN3->f('ultimoReporte');
     }
+}
+
+$estadoSegmentoMultiplicar = $estadoMultiplicar ? 'active' : 'disabled';
+$estadoAccionMultiplicar = $estadoMultiplicar ? 'active' : 'disabled';
+
+$estadoSegmentoEncontrar = 'disabled';
+$estadoAccionPrepararse = 'disabled';
+$estadoAccionPersonasPaz = 'disabled';
+
+if ($estadoPrepararseOrar && $estadoEncontrarPersonasPaz) {
+    $estadoSegmentoEncontrar = 'active';
+    $estadoAccionPrepararse = 'active';
+    $estadoAccionPersonasPaz = 'active';
+} elseif ($estadoPrepararseOrar || $estadoEncontrarPersonasPaz) {
+    $estadoSegmentoEncontrar = 'partial';
+    $estadoAccionPrepararse = $estadoPrepararseOrar ? 'active' : 'warning';
+    $estadoAccionPersonasPaz = $estadoEncontrarPersonasPaz ? 'active' : 'warning';
 }
 ?>
 
@@ -353,13 +397,25 @@ if (!$requiereSeleccionFacilitador) {
 
     .ciclo-segment.is-disabled .ciclo-ring,
     .ciclo-segment.is-disabled.is-active .ciclo-ring {
-        fill: #8e98ab;
+        fill: #b8bfcb;
     }
 
     .ciclo-segment.is-disabled .ciclo-region,
     .ciclo-segment.is-disabled.is-active .ciclo-region {
-        fill: #e3e7ee;
-        stroke: #7f8a9d;
+        fill: #fbfcfe;
+        stroke: #aab2c0;
+        filter: none;
+    }
+
+    .ciclo-segment.is-partial .ciclo-ring,
+    .ciclo-segment.is-partial.is-active .ciclo-ring {
+        fill: #f39b2f;
+    }
+
+    .ciclo-segment.is-partial .ciclo-region,
+    .ciclo-segment.is-partial.is-active .ciclo-region {
+        fill: #fff8ef;
+        stroke: #f39b2f;
         filter: none;
     }
 
@@ -455,6 +511,10 @@ if (!$requiereSeleccionFacilitador) {
         height: auto;
     }
 
+    .ciclo-node--image .ciclo-node__icon img {
+        transform: translateY(-40px);
+    }
+
     .ciclo-node--image .ciclo-node__text {
         margin-top: -10px;
     }
@@ -480,7 +540,7 @@ if (!$requiereSeleccionFacilitador) {
 
     .ciclo-node.is-disabled,
     .ciclo-node.is-disabled.is-active {
-        color: #6c778c;
+        color: #98a2b3;
     }
 
     .ciclo-node.is-active .ciclo-node__icon {
@@ -495,7 +555,18 @@ if (!$requiereSeleccionFacilitador) {
 
     .ciclo-node.is-disabled .ciclo-node__text,
     .ciclo-node.is-disabled.is-active .ciclo-node__text {
-        color: #6c778c;
+        color: #98a2b3;
+        text-shadow: none;
+    }
+
+    .ciclo-node.is-warning,
+    .ciclo-node.is-warning.is-active {
+        color: #f39b2f;
+    }
+
+    .ciclo-node.is-warning .ciclo-node__text,
+    .ciclo-node.is-warning.is-active .ciclo-node__text {
+        color: #f39b2f;
         text-shadow: none;
     }
 
@@ -571,6 +642,10 @@ if (!$requiereSeleccionFacilitador) {
             transform: translateY(-9px);
         }
 
+        .ciclo-node--image .ciclo-node__icon img {
+            transform: translateY(-14px);
+        }
+
         .ciclo-node--image {
             width: 64px !important;
         }
@@ -642,6 +717,10 @@ if (!$requiereSeleccionFacilitador) {
             max-width: 40px;
             max-height: 40px;
             transform: translateY(-7px);
+        }
+
+        .ciclo-node--image .ciclo-node__icon img {
+            transform: translateY(-12px);
         }
 
         .ciclo-node--image {
@@ -734,6 +813,9 @@ if (!$requiereSeleccionFacilitador) {
                 <div class="ciclo-preload" aria-hidden="true">
                     <img src="<?=$imgMultiplicarAzul; ?>" alt="" loading="eager" decoding="sync" fetchpriority="high" />
                     <img src="<?=$imgMultiplicarGris; ?>" alt="" loading="eager" decoding="sync" fetchpriority="high" />
+                    <img src="<?=$imgEncontrarAzul; ?>" alt="" loading="eager" decoding="sync" fetchpriority="high" />
+                    <img src="<?=$imgEncontrarGris; ?>" alt="" loading="eager" decoding="sync" fetchpriority="high" />
+                    <img src="<?=$imgEncontrarNaranja; ?>" alt="" loading="eager" decoding="sync" fetchpriority="high" />
                 </div>
                 <div class="ciclo-chart-stage" id="cicloChartStage">
                     <svg id="cicloChartSvg" viewBox="0 0 760 760" aria-label="Ciclo de multiplicacion"></svg>
@@ -753,12 +835,23 @@ document.addEventListener('DOMContentLoaded', function () {
     var nodeLayer = document.getElementById('cicloNodeLayer');
     var stage = document.getElementById('cicloChartStage');
     var segmentStatus = <?=json_encode(array(
-        'multiplicar' => $estadoMultiplicar,
+        'multiplicar' => $estadoSegmentoMultiplicar,
+        'encontrar' => $estadoSegmentoEncontrar,
     ));?>;
-    var segmentImages = {
-        multiplicar: {
+    var actionStatus = <?=json_encode(array(
+        'multiplicar_training' => $estadoAccionMultiplicar,
+        'encontrar_pray' => $estadoAccionPrepararse,
+        'encontrar_search' => $estadoAccionPersonasPaz,
+    ));?>;
+    var actionImages = {
+        multiplicar_training: {
             active: <?=json_encode($imgMultiplicarAzul); ?>,
             disabled: <?=json_encode($imgMultiplicarGris); ?>
+        },
+        encontrar_pray: {
+            active: <?=json_encode($imgEncontrarAzul); ?>,
+            disabled: <?=json_encode($imgEncontrarGris); ?>,
+            warning: <?=json_encode($imgEncontrarNaranja); ?>
         }
     };
 
@@ -848,6 +941,7 @@ document.addEventListener('DOMContentLoaded', function () {
             share: 1,
             actions: [
                 {
+                    actionId: 'multiplicar_training',
                     icon: 'training',
                     lines: ['Inscriba y entrene', 'a los obreros'],
                     angle: 0,
@@ -862,6 +956,7 @@ document.addEventListener('DOMContentLoaded', function () {
             share: 2,
             actions: [
                 {
+                    actionId: 'encontrar_pray',
                     icon: 'pray',
                     lines: ['Prepárese', 'y ore'],
                     angle: 58,
@@ -869,6 +964,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     width: 110
                 },
                 {
+                    actionId: 'encontrar_search',
                     icon: 'search',
                     lines: ['Encuentre', 'personas de paz'],
                     angle: 102,
@@ -1004,8 +1100,15 @@ document.addEventListener('DOMContentLoaded', function () {
             labelPath = arcPath(labelRadius, labelStartAngle, labelEndAngle, 1);
         }
 
+        var segmentStateClass = '';
+        if (segmentStatus[segment.id] === 'disabled') {
+            segmentStateClass = ' is-disabled';
+        } else if (segmentStatus[segment.id] === 'partial') {
+            segmentStateClass = ' is-partial';
+        }
+
         svgMarkup += '' +
-            '<g class="ciclo-segment' + ((segmentStatus[segment.id] === false) ? ' is-disabled' : '') + '" data-segment="' + segment.id + '">' +
+            '<g class="ciclo-segment' + segmentStateClass + '" data-segment="' + segment.id + '">' +
                 '<path class="ciclo-ring" d="' + ringPath(ringInnerRadius, outerRadius, segment.startAngle, segment.endAngle) + '"></path>' +
                 '<path class="ciclo-region" d="' + wedgePath(regionRadius, segment.startAngle, segment.endAngle) + '"></path>' +
                 '<path class="ciclo-hit" d="' + wedgePath(outerRadius, segment.startAngle, segment.endAngle) + '"></path>' +
@@ -1031,10 +1134,16 @@ document.addEventListener('DOMContentLoaded', function () {
         for (var n = 0; n < currentSegment.actions.length; n++) {
             var action = currentSegment.actions[n];
             var position = pointAt(action.angle, action.radius);
-            var hasStateImage = !!segmentImages[currentSegment.id];
+            var hasStateImage = !!actionImages[action.actionId];
+            var currentActionStatus = actionStatus[action.actionId] || 'active';
             var button = document.createElement('button');
             button.type = 'button';
-            button.className = 'ciclo-node' + (hasStateImage ? ' ciclo-node--image' : '') + ((segmentStatus[currentSegment.id] === false) ? ' is-disabled' : '');
+            button.className = 'ciclo-node' + (hasStateImage ? ' ciclo-node--image' : '');
+            if (currentActionStatus === 'disabled') {
+                button.className += ' is-disabled';
+            } else if (currentActionStatus === 'warning') {
+                button.className += ' is-warning';
+            }
             button.setAttribute('data-segment', currentSegment.id);
             button.style.left = (position.x / 760 * 100) + '%';
             button.style.top = (position.y / 760 * 100) + '%';
@@ -1049,10 +1158,9 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             var iconMarkup = icons[action.icon];
-            if (segmentImages[currentSegment.id]) {
-                var imagePath = (segmentStatus[currentSegment.id] === false)
-                    ? segmentImages[currentSegment.id].disabled
-                    : segmentImages[currentSegment.id].active;
+            if (actionImages[action.actionId]) {
+                var imageSet = actionImages[action.actionId];
+                var imagePath = imageSet[currentActionStatus] || imageSet.active;
 
                 if (imagePath) {
                     iconMarkup = '' +
