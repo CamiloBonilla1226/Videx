@@ -90,21 +90,11 @@ $grupoSeleccionadoValido = false;
 
 if (!$requiereSeleccionFacilitador) {
     $sql = "SELECT DISTINCT nombreGrupo_txt
-            FROM sat_reportes
-            WHERE idUsuario = '" . $buscar_idUsuario . "'
-              AND nombreGrupo_txt IS NOT NULL
-              AND TRIM(nombreGrupo_txt) <> ''
-              AND nombreGrupo_txt IN (
-                    SELECT nombreGrupo_txt
-                    FROM sat_reportes
-                    WHERE idUsuario = '" . $buscar_idUsuario . "'
-                      AND nombreGrupo_txt IS NOT NULL
-                      AND TRIM(nombreGrupo_txt) <> ''
-                    GROUP BY nombreGrupo_txt
-                    HAVING COUNT(*) > 1
-              )
-            ORDER BY nombreGrupo_txt ASC";
-
+FROM sat_reportes
+WHERE idUsuario = '" . $buscar_idUsuario . "'
+AND nombreGrupo_txt IS NOT NULL
+AND TRIM(nombreGrupo_txt) <> '';
+ORDER BY nombreGrupo_txt ASC";
     $PSN3->query($sql);
     if ($PSN3->num_rows() > 0) {
         while ($PSN3->next_record()) {
@@ -307,9 +297,9 @@ if (!$requiereSeleccionFacilitador) {
 
     .ciclo-segment .ciclo-label {
         fill: #ffffff;
-        font-size: 32px;
+        font-size: 27px;
         font-weight: 800;
-        letter-spacing: 5.5px;
+        letter-spacing: 1.4px;
     }
 
     .ciclo-segment.is-active .ciclo-ring {
@@ -334,15 +324,15 @@ if (!$requiereSeleccionFacilitador) {
     .ciclo-node {
         position: absolute;
         transform: translate(-50%, -50%);
-        width: 132px;
-        padding: 8px 6px;
+        width: 120px;
+        padding: 2px 2px;
         border: 0;
         background: transparent;
         color: #2f4ea2;
         text-align: center;
         cursor: pointer;
         pointer-events: auto;
-        transition: transform 0.2s ease, opacity 0.2s ease;
+        transition: transform 0.2s ease, opacity 0.2s ease, color 0.2s ease;
     }
 
     .ciclo-node:focus {
@@ -350,29 +340,30 @@ if (!$requiereSeleccionFacilitador) {
     }
 
     .ciclo-node__icon {
-        width: 54px;
-        height: 54px;
-        margin: 0 auto 6px;
+        width: 62px;
+        height: 62px;
+        margin: 0 auto 4px;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 18px;
-        background: rgba(47, 78, 162, 0.08);
-        box-shadow: inset 0 0 0 1px rgba(47, 78, 162, 0.08);
-        transition: transform 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+        transition: transform 0.25s ease;
     }
 
     .ciclo-node__icon svg {
-        width: 38px;
-        height: 38px;
+        width: 50px;
+        height: 50px;
         display: block;
     }
 
     .ciclo-node__text {
         display: block;
-        font-size: 13px;
-        line-height: 1.15;
-        font-weight: 600;
+        font-size: 11px;
+        line-height: 1.18;
+        font-weight: 500;
+        text-shadow: 0 1px 0 rgba(255, 255, 255, 0.85);
     }
 
     .ciclo-node__text span {
@@ -380,13 +371,12 @@ if (!$requiereSeleccionFacilitador) {
     }
 
     .ciclo-node.is-active {
-        transform: translate(-50%, -50%) scale(1.05);
+        transform: translate(-50%, -50%) scale(1.03);
+        color: #1f3f97;
     }
 
     .ciclo-node.is-active .ciclo-node__icon {
-        background: rgba(47, 78, 162, 0.14);
-        box-shadow: inset 0 0 0 1px rgba(47, 78, 162, 0.16), 0 10px 20px rgba(47, 78, 162, 0.14);
-        transform: translateY(-2px);
+        transform: translateY(-1px);
     }
 
     .ciclo-actions {
@@ -420,28 +410,28 @@ if (!$requiereSeleccionFacilitador) {
         }
 
         .ciclo-segment .ciclo-label {
-            font-size: 24px;
-            letter-spacing: 3px;
+            font-size: 19px;
+            letter-spacing: 0.8px;
         }
 
         .ciclo-node {
-            width: 104px;
-            padding: 6px 4px;
+            width: 92px;
+            padding: 0;
         }
 
         .ciclo-node__icon {
-            width: 40px;
-            height: 40px;
-            margin-bottom: 5px;
+            width: 46px;
+            height: 46px;
+            margin-bottom: 3px;
         }
 
         .ciclo-node__icon svg {
-            width: 28px;
-            height: 28px;
+            width: 36px;
+            height: 36px;
         }
 
         .ciclo-node__text {
-            font-size: 10px;
+            font-size: 9px;
         }
 
         .ciclo-heart text {
@@ -625,8 +615,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     icon: 'training',
                     lines: ['Inscriba y entrene', 'a los obreros'],
                     angle: 0,
-                    radius: 142,
-                    width: 148
+                    radius: 170,
+                    width: 136
                 }
             ]
         },
@@ -638,16 +628,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 {
                     icon: 'pray',
                     lines: ['Prepárese', 'y ore'],
-                    angle: 56,
-                    radius: 150,
-                    width: 118
+                    angle: 58,
+                    radius: 168,
+                    width: 110
                 },
                 {
                     icon: 'search',
                     lines: ['Encuentre', 'personas de paz'],
-                    angle: 100,
-                    radius: 158,
-                    width: 126
+                    angle: 102,
+                    radius: 188,
+                    width: 122
                 }
             ]
         },
@@ -659,23 +649,23 @@ document.addEventListener('DOMContentLoaded', function () {
                 {
                     icon: 'share',
                     lines: ['Comparta', 'las buenas nuevas'],
-                    angle: 136,
-                    radius: 170,
-                    width: 130
+                    angle: 135,
+                    radius: 194,
+                    width: 126
                 },
                 {
                     icon: 'book',
                     lines: ['Enseñe a obedecer', 'a Jesús'],
-                    angle: 194,
-                    radius: 146,
-                    width: 134
+                    angle: 192,
+                    radius: 160,
+                    width: 126
                 },
                 {
                     icon: 'water',
                     lines: ['Bautice a', 'los nuevos creyentes'],
-                    angle: 242,
-                    radius: 170,
-                    width: 136
+                    angle: 244,
+                    radius: 194,
+                    width: 126
                 }
             ]
         },
@@ -687,9 +677,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 {
                     icon: 'church',
                     lines: ['Establezca', 'la iglesia'],
-                    angle: 306,
-                    radius: 154,
-                    width: 122
+                    angle: 308,
+                    radius: 178,
+                    width: 116
                 }
             ]
         }
@@ -768,11 +758,14 @@ document.addEventListener('DOMContentLoaded', function () {
         segment.middleAngle = segment.startAngle + (segmentAngle / 2);
         cursor = segment.endAngle;
 
+        var labelPadding = Math.min(10, segmentAngle * 0.12);
+        var labelStartAngle = segment.startAngle + labelPadding;
+        var labelEndAngle = segment.endAngle - labelPadding;
         var labelPath;
         if (segment.id === 'discipular') {
-            labelPath = arcPath(labelRadius, segment.endAngle, segment.startAngle, 0);
+            labelPath = arcPath(labelRadius, labelEndAngle, labelStartAngle, 0);
         } else {
-            labelPath = arcPath(labelRadius, segment.startAngle, segment.endAngle, 1);
+            labelPath = arcPath(labelRadius, labelStartAngle, labelEndAngle, 1);
         }
 
         svgMarkup += '' +
