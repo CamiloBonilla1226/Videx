@@ -319,8 +319,8 @@ if ($estadoPrepararseOrar && $estadoEncontrarPersonasPaz) {
         background: radial-gradient(circle at top, #f6f9ff 0%, #eef4ff 42%, #f9fbff 100%);
         border: 1px solid #d9e4f2;
         border-radius: 22px;
-        padding: 18px;
-        overflow: hidden;
+        padding: 34px 18px 18px;
+        overflow: visible;
     }
 
     .ciclo-preload {
@@ -334,10 +334,11 @@ if ($estadoPrepararseOrar && $estadoEncontrarPersonasPaz) {
 
     .ciclo-chart-stage {
         position: relative;
-        width: min(100%, 760px);
+        width: min(100%, 840px);
         margin: 0 auto;
         aspect-ratio: 1 / 1;
         isolation: isolate;
+        overflow: visible;
     }
 
     .ciclo-chart-stage svg {
@@ -350,7 +351,7 @@ if ($estadoPrepararseOrar && $estadoEncontrarPersonasPaz) {
     .ciclo-node-layer {
         position: absolute;
         inset: 0;
-        overflow: hidden;
+        overflow: visible;
         pointer-events: none;
         transform: translateZ(0);
     }
@@ -494,15 +495,24 @@ if ($estadoPrepararseOrar && $estadoEncontrarPersonasPaz) {
     }
 
     .ciclo-node--image .ciclo-node__icon img {
-        transform: translateY(-40px);
+        transform: translateY(-24px);
     }
 
     .ciclo-node--image .ciclo-node__text {
-        margin-top: -10px;
+        margin-top: 34px;
+    }
+
+    .ciclo-node--multiplicar-training .ciclo-node__text,
+    .ciclo-node--encontrar-pray .ciclo-node__text {
+        margin-top: 40px;
     }
 
     .ciclo-node--encontrar-pray .ciclo-node__icon img {
-        transform: translate(10px, -34px);
+        transform: translate(4px, -16px);
+    }
+
+    .ciclo-node--encontrar-pray {
+        width: 104px !important;
     }
 
     .ciclo-node__text {
@@ -583,12 +593,7 @@ if ($estadoPrepararseOrar && $estadoEncontrarPersonasPaz) {
         }
 
         .ciclo-visual {
-            padding: 20px 4px 8px;
-        }
-
-        .ciclo-chart-stage,
-        .ciclo-node-layer {
-            overflow: visible;
+            padding: 28px 6px 10px;
         }
 
         .ciclo-node-layer {
@@ -629,11 +634,11 @@ if ($estadoPrepararseOrar && $estadoEncontrarPersonasPaz) {
         }
 
     .ciclo-node--image .ciclo-node__icon img {
-        transform: translateY(-14px);
+        transform: translateY(-8px);
     }
 
     .ciclo-node--encontrar-pray .ciclo-node__icon img {
-        transform: translate(8px, -14px);
+        transform: translate(4px, -6px);
     }
 
         .ciclo-node--image {
@@ -641,7 +646,12 @@ if ($estadoPrepararseOrar && $estadoEncontrarPersonasPaz) {
         }
 
         .ciclo-node--image .ciclo-node__text {
-            margin-top: -6px;
+            margin-top: 16px;
+        }
+
+        .ciclo-node--multiplicar-training .ciclo-node__text,
+        .ciclo-node--encontrar-pray .ciclo-node__text {
+            margin-top: 20px;
         }
 
         .ciclo-node__text {
@@ -671,12 +681,7 @@ if ($estadoPrepararseOrar && $estadoEncontrarPersonasPaz) {
         }
 
         .ciclo-visual {
-            padding: 24px 0 4px;
-        }
-
-        .ciclo-chart-stage,
-        .ciclo-node-layer {
-            overflow: visible;
+            padding: 26px 0 6px;
         }
 
         .ciclo-node-layer {
@@ -710,11 +715,11 @@ if ($estadoPrepararseOrar && $estadoEncontrarPersonasPaz) {
         }
 
         .ciclo-node--image .ciclo-node__icon img {
-            transform: translateY(-12px);
+            transform: translateY(-6px);
         }
 
         .ciclo-node--encontrar-pray .ciclo-node__icon img {
-            transform: translate(6px, -12px);
+            transform: translate(3px, -4px);
         }
 
         .ciclo-node--image {
@@ -722,7 +727,12 @@ if ($estadoPrepararseOrar && $estadoEncontrarPersonasPaz) {
         }
 
         .ciclo-node--image .ciclo-node__text {
-            margin-top: -4px;
+            margin-top: 12px;
+        }
+
+        .ciclo-node--multiplicar-training .ciclo-node__text,
+        .ciclo-node--encontrar-pray .ciclo-node__text {
+            margin-top: 16px;
         }
 
         .ciclo-node__text {
@@ -854,10 +864,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     var center = 380;
-    var outerRadius = 340;
-    var ringInnerRadius = 286;
-    var regionRadius = 286;
-    var labelRadius = 314;
+    var outerRadius = 352;
+    var ringInnerRadius = 300;
+    var regionRadius = 300;
+    var labelRadius = 326;
 
     var icons = {
         training: '' +
