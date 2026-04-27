@@ -45,6 +45,7 @@ function ciclo_build_filtro_grupo($nombreGrupo)
 $PSN = new DBbase_Sql;
 $PSN2 = new DBbase_Sql;
 $PSN3 = new DBbase_Sql;
+$PSN4 = new DBbase_Sql;
 $esFacilitador = ($_SESSION['perfil'] == 163);
 
 if ($esFacilitador) {
@@ -93,7 +94,7 @@ if (!$requiereSeleccionFacilitador) {
 FROM sat_reportes
 WHERE idUsuario = '" . $buscar_idUsuario . "'
 AND nombreGrupo_txt IS NOT NULL
-AND TRIM(nombreGrupo_txt) <> '';
+AND TRIM(nombreGrupo_txt) <> ''
 ORDER BY nombreGrupo_txt ASC";
     $PSN3->query($sql);
     if ($PSN3->num_rows() > 0) {
@@ -114,11 +115,27 @@ if (!$grupoSeleccionadoValido) {
 
 $sqlFiltroUsuario = ciclo_build_filtro_sat($buscar_idUsuario);
 $sqlFiltroGrupo = ciclo_build_filtro_grupo($buscar_nombreGrupo);
+$grupoSeleccionado = ($buscar_nombreGrupo !== '');
+$estadoMultiplicar = false;
 
 $totalReportes = 0;
 $primerReporte = '';
 $ultimoReporte = '';
 $totalFacilitadoresConDatos = 0;
+
+if (!$requiereSeleccionFacilitador && $grupoSeleccionado) {
+    $sql = "SELECT COUNT(sat_reportes.id) AS conteo
+            FROM sat_reportes
+            WHERE 1 ".$sqlFiltroUsuario.$sqlFiltroGrupo."
+              AND sat_reportes.generacionNumero IN (1, 2, 3, 4, 5)
+              AND sat_reportes.plantador IS NOT NULL
+              AND TRIM(sat_reportes.plantador) <> ''";
+
+    $PSN4->query($sql);
+    if ($PSN4->next_record()) {
+        $estadoMultiplicar = ((int)$PSN4->f('conteo') > 0);
+    }
+}
 
 if (!$requiereSeleccionFacilitador) {
     $sql = "SELECT
@@ -311,6 +328,18 @@ if (!$requiereSeleccionFacilitador) {
         filter: drop-shadow(0 14px 20px rgba(47, 78, 162, 0.14));
     }
 
+    .ciclo-segment.is-disabled .ciclo-ring,
+    .ciclo-segment.is-disabled.is-active .ciclo-ring {
+        fill: #b8bfcb;
+    }
+
+    .ciclo-segment.is-disabled .ciclo-region,
+    .ciclo-segment.is-disabled.is-active .ciclo-region {
+        fill: #f7f8fb;
+        stroke: #aab2c0;
+        filter: none;
+    }
+
     .ciclo-heart {
         filter: drop-shadow(0 10px 18px rgba(173, 16, 35, 0.22));
     }
@@ -358,6 +387,14 @@ if (!$requiereSeleccionFacilitador) {
         display: block;
     }
 
+    .ciclo-node__icon img {
+        width: 108px;
+        height: 108px;
+        display: block;
+        object-fit: contain;
+        transform: translateY(-24px);
+    }
+
     .ciclo-node__text {
         display: block;
         font-size: 11px;
@@ -375,8 +412,25 @@ if (!$requiereSeleccionFacilitador) {
         color: #1f3f97;
     }
 
+    .ciclo-node.is-disabled,
+    .ciclo-node.is-disabled.is-active {
+        color: #98a2b3;
+    }
+
     .ciclo-node.is-active .ciclo-node__icon {
         transform: translateY(-1px);
+    }
+
+    .ciclo-node.is-disabled .ciclo-node__icon,
+    .ciclo-node.is-disabled.is-active .ciclo-node__icon {
+        opacity: 0.68;
+        transform: none;
+    }
+
+    .ciclo-node.is-disabled .ciclo-node__text,
+    .ciclo-node.is-disabled.is-active .ciclo-node__text {
+        color: #98a2b3;
+        text-shadow: none;
     }
 
     .ciclo-actions {
@@ -428,6 +482,12 @@ if (!$requiereSeleccionFacilitador) {
         .ciclo-node__icon svg {
             width: 36px;
             height: 36px;
+        }
+
+        .ciclo-node__icon img {
+            width: 80px;
+            height: 80px;
+            transform: translateY(-16px);
         }
 
         .ciclo-node__text {
@@ -525,6 +585,12 @@ document.addEventListener('DOMContentLoaded', function () {
     var svg = document.getElementById('cicloChartSvg');
     var nodeLayer = document.getElementById('cicloNodeLayer');
     var stage = document.getElementById('cicloChartStage');
+    var segmentStatus = <?=json_encode(array(
+        'multiplicar' => $estadoMultiplicar,
+    ));?>;
+    var disabledSegmentImages = {
+        multiplicar: 'multiplicar_gris.png'
+    };
 
     if (!svg || !nodeLayer || !stage) {
         return;
@@ -769,7 +835,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         svgMarkup += '' +
-            '<g class="ciclo-segment" data-segment="' + segment.id + '">' +
+            '<g class="ciclo-segment' + ((segmentStatus[segment.id] === false) ? ' is-disabled' : '') + '" data-segment="' + segment.id + '">' +
                 '<path class="ciclo-ring" d="' + ringPath(ringInnerRadius, outerRadius, segment.startAngle, segment.endAngle) + '"></path>' +
                 '<path class="ciclo-region" d="' + wedgePath(regionRadius, segment.startAngle, segment.endAngle) + '"></path>' +
                 '<path class="ciclo-hit" d="' + wedgePath(outerRadius, segment.startAngle, segment.endAngle) + '"></path>' +
@@ -797,7 +863,7 @@ document.addEventListener('DOMContentLoaded', function () {
             var position = pointAt(action.angle, action.radius);
             var button = document.createElement('button');
             button.type = 'button';
-            button.className = 'ciclo-node';
+            button.className = 'ciclo-node' + ((segmentStatus[currentSegment.id] === false) ? ' is-disabled' : '');
             button.setAttribute('data-segment', currentSegment.id);
             button.style.left = (position.x / 760 * 100) + '%';
             button.style.top = (position.y / 760 * 100) + '%';
@@ -809,8 +875,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 textMarkup += '<span>' + escapeHtml(action.lines[l]) + '</span>';
             }
 
+            var iconMarkup = icons[action.icon];
+            if (segmentStatus[currentSegment.id] === false && disabledSegmentImages[currentSegment.id]) {
+                iconMarkup = '<img src="' + disabledSegmentImages[currentSegment.id] + '" alt="' + escapeHtml(action.lines.join(' ')) + '">';
+            }
+
             button.innerHTML = '' +
-                '<span class="ciclo-node__icon">' + icons[action.icon] + '</span>' +
+                '<span class="ciclo-node__icon">' + iconMarkup + '</span>' +
                 '<span class="ciclo-node__text">' + textMarkup + '</span>';
 
             nodeLayer.appendChild(button);
