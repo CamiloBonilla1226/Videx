@@ -464,24 +464,6 @@ if ($estadoPrepararseOrar && $estadoEncontrarPersonasPaz) {
         will-change: transform;
     }
 
-    .ciclo-node__icon-stack {
-        position: relative;
-        width: 100%;
-        height: 100%;
-        display: block;
-        pointer-events: none;
-    }
-
-    .ciclo-node__icon-fallback {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: opacity 0.18s ease;
-        pointer-events: none;
-    }
-
     .ciclo-node__icon svg {
         width: 50px;
         height: 50px;
@@ -517,6 +499,10 @@ if ($estadoPrepararseOrar && $estadoEncontrarPersonasPaz) {
 
     .ciclo-node--image .ciclo-node__text {
         margin-top: -10px;
+    }
+
+    .ciclo-node--encontrar-pray .ciclo-node__icon img {
+        transform: translate(10px, -34px);
     }
 
     .ciclo-node__text {
@@ -642,9 +628,13 @@ if ($estadoPrepararseOrar && $estadoEncontrarPersonasPaz) {
             transform: translateY(-9px);
         }
 
-        .ciclo-node--image .ciclo-node__icon img {
-            transform: translateY(-14px);
-        }
+    .ciclo-node--image .ciclo-node__icon img {
+        transform: translateY(-14px);
+    }
+
+    .ciclo-node--encontrar-pray .ciclo-node__icon img {
+        transform: translate(8px, -14px);
+    }
 
         .ciclo-node--image {
             width: 64px !important;
@@ -721,6 +711,10 @@ if ($estadoPrepararseOrar && $estadoEncontrarPersonasPaz) {
 
         .ciclo-node--image .ciclo-node__icon img {
             transform: translateY(-12px);
+        }
+
+        .ciclo-node--encontrar-pray .ciclo-node__icon img {
+            transform: translate(6px, -12px);
         }
 
         .ciclo-node--image {
@@ -1139,6 +1133,9 @@ document.addEventListener('DOMContentLoaded', function () {
             var button = document.createElement('button');
             button.type = 'button';
             button.className = 'ciclo-node' + (hasStateImage ? ' ciclo-node--image' : '');
+            if (action.actionId) {
+                button.className += ' ciclo-node--' + action.actionId.replace(/_/g, '-');
+            }
             if (currentActionStatus === 'disabled') {
                 button.className += ' is-disabled';
             } else if (currentActionStatus === 'warning') {
@@ -1163,11 +1160,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 var imagePath = imageSet[currentActionStatus] || imageSet.active;
 
                 if (imagePath) {
-                    iconMarkup = '' +
-                        '<span class="ciclo-node__icon-stack">' +
-                            '<span class="ciclo-node__icon-fallback">' + icons[action.icon] + '</span>' +
-                            '<img src="' + imagePath + '" alt="' + escapeHtml(action.lines.join(' ')) + '" loading="eager" decoding="sync" fetchpriority="high" onload="this.previousElementSibling.style.opacity=0" onerror="this.style.display=\'none\'">' +
-                        '</span>';
+                    iconMarkup = '<img src="' + imagePath + '" alt="' + escapeHtml(action.lines.join(' ')) + '" loading="eager" decoding="sync" fetchpriority="high" onerror="this.style.display=\'none\'">';
                 }
             }
 
