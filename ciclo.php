@@ -119,11 +119,14 @@ $grupoSeleccionado = ($buscar_nombreGrupo !== '');
 $estadoMultiplicar = false;
 $estadoEncontrarPersonasPaz = false;
 $estadoPrepararseOrar = false;
-$imgMultiplicarAzul = 'multiplicar_azul.png';
-$imgMultiplicarGris = 'multiplicar_gris.png';
-$imgEncontrarAzul = 'encontrar_a.png';
-$imgEncontrarGris = 'encontrar_g.png';
-$imgEncontrarNaranja = 'encontrar_n.png';
+$imgMultiplicarAzul = 'img/multiplicar_azul.png';
+$imgMultiplicarGris = 'img/multiplicar_gris.png';
+$imgEncontrarAzul = 'img/encontrar_a.png';
+$imgEncontrarGris = 'img/encontrar_g.png';
+$imgEncontrarNaranja = 'img/encontrar_n.png';
+$imgPazAzul = 'img/paz_a.png';
+$imgPazNaranja = 'img/paz_n.png';
+$imgPazGris = 'img/paz_n.png';
 
 $totalReportes = 0;
 $primerReporte = '';
@@ -415,7 +418,7 @@ if ($estadoPrepararseOrar && $estadoEncontrarPersonasPaz) {
 
     .ciclo-segment.is-partial .ciclo-region,
     .ciclo-segment.is-partial.is-active .ciclo-region {
-        fill: #fff8ef;
+        fill: #fffdf8;
         stroke: #f39b2f;
         filter: none;
     }
@@ -503,7 +506,8 @@ if ($estadoPrepararseOrar && $estadoEncontrarPersonasPaz) {
     }
 
     .ciclo-node--multiplicar-training .ciclo-node__text,
-    .ciclo-node--encontrar-pray .ciclo-node__text {
+    .ciclo-node--encontrar-pray .ciclo-node__text,
+    .ciclo-node--encontrar-search .ciclo-node__text {
         margin-top: 40px;
     }
 
@@ -513,6 +517,14 @@ if ($estadoPrepararseOrar && $estadoEncontrarPersonasPaz) {
 
     .ciclo-node--encontrar-pray {
         width: 104px !important;
+    }
+
+    .ciclo-node--encontrar-search .ciclo-node__icon img {
+        transform: translate(0, -10px);
+    }
+
+    .ciclo-node--encontrar-search {
+        width: 102px !important;
     }
 
     .ciclo-node__text {
@@ -650,8 +662,13 @@ if ($estadoPrepararseOrar && $estadoEncontrarPersonasPaz) {
         }
 
         .ciclo-node--multiplicar-training .ciclo-node__text,
-        .ciclo-node--encontrar-pray .ciclo-node__text {
+        .ciclo-node--encontrar-pray .ciclo-node__text,
+        .ciclo-node--encontrar-search .ciclo-node__text {
             margin-top: 20px;
+        }
+
+        .ciclo-node--encontrar-search .ciclo-node__icon img {
+            transform: translate(0, -5px);
         }
 
         .ciclo-node__text {
@@ -731,8 +748,13 @@ if ($estadoPrepararseOrar && $estadoEncontrarPersonasPaz) {
         }
 
         .ciclo-node--multiplicar-training .ciclo-node__text,
-        .ciclo-node--encontrar-pray .ciclo-node__text {
+        .ciclo-node--encontrar-pray .ciclo-node__text,
+        .ciclo-node--encontrar-search .ciclo-node__text {
             margin-top: 16px;
+        }
+
+        .ciclo-node--encontrar-search .ciclo-node__icon img {
+            transform: translate(0, -3px);
         }
 
         .ciclo-node__text {
@@ -820,6 +842,9 @@ if ($estadoPrepararseOrar && $estadoEncontrarPersonasPaz) {
                     <img src="<?=$imgEncontrarAzul; ?>" alt="" loading="eager" decoding="sync" fetchpriority="high" />
                     <img src="<?=$imgEncontrarGris; ?>" alt="" loading="eager" decoding="sync" fetchpriority="high" />
                     <img src="<?=$imgEncontrarNaranja; ?>" alt="" loading="eager" decoding="sync" fetchpriority="high" />
+                    <img src="<?=$imgPazAzul; ?>" alt="" loading="eager" decoding="sync" fetchpriority="high" />
+                    <img src="<?=$imgPazNaranja; ?>" alt="" loading="eager" decoding="sync" fetchpriority="high" />
+                    <img src="<?=$imgPazGris; ?>" alt="" loading="eager" decoding="sync" fetchpriority="high" />
                 </div>
                 <div class="ciclo-chart-stage" id="cicloChartStage">
                     <svg id="cicloChartSvg" viewBox="0 0 760 760" aria-label="Ciclo de multiplicacion"></svg>
@@ -856,6 +881,11 @@ document.addEventListener('DOMContentLoaded', function () {
             active: <?=json_encode($imgEncontrarAzul); ?>,
             disabled: <?=json_encode($imgEncontrarGris); ?>,
             warning: <?=json_encode($imgEncontrarNaranja); ?>
+        },
+        encontrar_search: {
+            active: <?=json_encode($imgPazAzul); ?>,
+            disabled: <?=json_encode($imgPazGris); ?>,
+            warning: <?=json_encode($imgPazNaranja); ?>
         }
     };
 
