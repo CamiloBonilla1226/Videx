@@ -126,7 +126,7 @@ $imgEncontrarGris = 'img/encontrar_g.png';
 $imgEncontrarNaranja = 'img/encontrar_n.png';
 $imgPazAzul = 'img/paz_a.png';
 $imgPazNaranja = 'img/paz_n.png';
-$imgPazGris = 'img/paz_n.png';
+$imgPazGris = 'img/paz_g.png';
 
 $totalReportes = 0;
 $primerReporte = '';
