@@ -430,7 +430,7 @@ if ($estadoPrepararseOrar && $estadoEncontrarPersonasPaz) {
 
     .ciclo-heart text {
         fill: #ffffff;
-        font-size: 25px;
+        font-size: 18px;
         font-weight: 800;
     }
 
@@ -683,7 +683,7 @@ if ($estadoPrepararseOrar && $estadoEncontrarPersonasPaz) {
         }
 
         .ciclo-heart text {
-            font-size: 16px;
+            font-size: 12px;
         }
 
         .ciclo-help {
@@ -763,7 +763,7 @@ if ($estadoPrepararseOrar && $estadoEncontrarPersonasPaz) {
         }
 
         .ciclo-heart text {
-            font-size: 14px;
+            font-size: 10px;
         }
     }
 </style>
@@ -1154,7 +1154,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     svgMarkup += '' +
-        '<g class="ciclo-heart" transform="translate(380 380) scale(0.42) translate(-380 -340)">' +
+        '<g class="ciclo-heart" transform="translate(380 380) scale(0.26) translate(-380 -366)">' +
             '<path d="M380 460 C309 414 252 364 252 297 C252 253 286 222 329 222 C355 222 373 234 380 253 C387 234 405 222 431 222 C474 222 508 253 508 297 C508 364 451 414 380 460 Z" fill="#d51f2d"></path>' +
             '<text x="380" y="342" text-anchor="middle" dominant-baseline="middle">Amor</text>' +
         '</g>';
