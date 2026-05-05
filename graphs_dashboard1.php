@@ -216,7 +216,9 @@ $sql = "SELECT
             SUM(sat_reportes.asistencia_jov) as asistencia_jov,
             SUM(sat_reportes.asistencia_nin) as asistencia_nin
         FROM sat_reportes
-        WHERE 1 ".$sqlFiltroBase;
+        WHERE 1 ".$sqlFiltroBase."
+          AND sat_reportes.generacionNumero != 0
+          AND sat_reportes.generacionNumero != 77";
 
 if($row = db_first_row($PSN, $sql)){
     $hom = (int)$row->f('asistencia_hom');
