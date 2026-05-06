@@ -663,28 +663,45 @@ if ($totalActividadesDiscipular === 3) {
         width: 102px !important;
     }
 
-    .ciclo-node--discipular-share,
-    .ciclo-node--discipular-obey,
-    .ciclo-node--discipular-baptize {
-        width: 96px !important;
+    /* Tarjetas independientes para DISCIPULAR: el icono y su texto viajan juntos. */
+    .ciclo-node--activity-card {
+        --x: 50%;
+        --y: 50%;
+        --icon-size: 74px;
+        --text-width: 112px;
+        left: var(--x);
+        top: var(--y);
+        width: var(--text-width) !important;
+        min-height: 116px;
+        padding: 6px 4px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 6px;
+        transform: translate(-50%, -50%);
     }
 
-    .ciclo-node--discipular-share .ciclo-node__icon img,
-    .ciclo-node--discipular-obey .ciclo-node__icon img,
-    .ciclo-node--discipular-baptize .ciclo-node__icon img {
-        max-width: 88px;
-        max-height: 88px;
-        transform: translate(0, -6px);
+    .ciclo-node--activity-card .ciclo-node__icon {
+        width: var(--icon-size);
+        height: var(--icon-size);
+        margin: 0;
+        flex: 0 0 var(--icon-size);
     }
 
-    .ciclo-node--discipular-obey .ciclo-node__icon img {
-        transform: translate(-1px, -6px);
+    .ciclo-node--activity-card .ciclo-node__icon img {
+        position: static;
+        width: var(--icon-size);
+        max-width: var(--icon-size);
+        height: var(--icon-size);
+        max-height: var(--icon-size);
+        transform: none;
     }
 
-    .ciclo-node--discipular-share .ciclo-node__text,
-    .ciclo-node--discipular-obey .ciclo-node__text,
-    .ciclo-node--discipular-baptize .ciclo-node__text {
-        margin-top: 32px;
+    .ciclo-node--activity-card .ciclo-node__text {
+        width: var(--text-width);
+        margin-top: 0;
+        line-height: 1.22;
     }
 
     .ciclo-node__text {
@@ -704,6 +721,10 @@ if ($totalActividadesDiscipular === 3) {
 
     .ciclo-node.is-active {
         transform: translate(-50%, var(--ciclo-node-shift-y)) scale(1.06);
+    }
+
+    .ciclo-node--activity-card.is-active {
+        transform: translate(-50%, -50%) scale(1.04);
     }
 
     .ciclo-node.is-disabled,
@@ -823,10 +844,7 @@ if ($totalActividadesDiscipular === 3) {
 
         .ciclo-node--multiplicar-training .ciclo-node__text,
         .ciclo-node--encontrar-pray .ciclo-node__text,
-        .ciclo-node--encontrar-search .ciclo-node__text,
-        .ciclo-node--discipular-share .ciclo-node__text,
-        .ciclo-node--discipular-obey .ciclo-node__text,
-        .ciclo-node--discipular-baptize .ciclo-node__text {
+        .ciclo-node--encontrar-search .ciclo-node__text {
             margin-top: 20px;
         }
 
@@ -834,22 +852,18 @@ if ($totalActividadesDiscipular === 3) {
             transform: translate(0, -5px);
         }
 
-        .ciclo-node--discipular-share .ciclo-node__icon img,
-        .ciclo-node--discipular-obey .ciclo-node__icon img,
-        .ciclo-node--discipular-baptize .ciclo-node__icon img {
-            max-width: 40px;
-            max-height: 40px;
-            transform: translate(0, -3px);
+        .ciclo-node--activity-card {
+            --icon-size: 42px;
+            --text-width: 72px;
+            width: var(--text-width) !important;
+            min-height: 72px;
+            gap: 3px;
+            padding: 2px;
         }
 
-        .ciclo-node--discipular-obey .ciclo-node__icon img {
-            transform: translate(-1px, -3px);
-        }
-
-        .ciclo-node--discipular-share .ciclo-node__text,
-        .ciclo-node--discipular-obey .ciclo-node__text,
-        .ciclo-node--discipular-baptize .ciclo-node__text {
-            margin-top: 14px;
+        .ciclo-node--activity-card .ciclo-node__text {
+            width: var(--text-width);
+            margin-top: 0;
         }
 
         .ciclo-node__text {
@@ -930,10 +944,7 @@ if ($totalActividadesDiscipular === 3) {
 
         .ciclo-node--multiplicar-training .ciclo-node__text,
         .ciclo-node--encontrar-pray .ciclo-node__text,
-        .ciclo-node--encontrar-search .ciclo-node__text,
-        .ciclo-node--discipular-share .ciclo-node__text,
-        .ciclo-node--discipular-obey .ciclo-node__text,
-        .ciclo-node--discipular-baptize .ciclo-node__text {
+        .ciclo-node--encontrar-search .ciclo-node__text {
             margin-top: 16px;
         }
 
@@ -941,22 +952,18 @@ if ($totalActividadesDiscipular === 3) {
             transform: translate(0, -3px);
         }
 
-        .ciclo-node--discipular-share .ciclo-node__icon img,
-        .ciclo-node--discipular-obey .ciclo-node__icon img,
-        .ciclo-node--discipular-baptize .ciclo-node__icon img {
-            max-width: 36px;
-            max-height: 36px;
-            transform: translate(0, -2px);
+        .ciclo-node--activity-card {
+            --icon-size: 36px;
+            --text-width: 62px;
+            width: var(--text-width) !important;
+            min-height: 62px;
+            gap: 2px;
+            padding: 1px;
         }
 
-        .ciclo-node--discipular-obey .ciclo-node__icon img {
-            transform: translate(-1px, -2px);
-        }
-
-        .ciclo-node--discipular-share .ciclo-node__text,
-        .ciclo-node--discipular-obey .ciclo-node__text,
-        .ciclo-node--discipular-baptize .ciclo-node__text {
-            margin-top: 10px;
+        .ciclo-node--activity-card .ciclo-node__text {
+            width: var(--text-width);
+            margin-top: 0;
         }
 
         .ciclo-node__text {
@@ -1246,24 +1253,36 @@ document.addEventListener('DOMContentLoaded', function () {
                     actionId: 'discipular_share',
                     icon: 'share',
                     lines: ['Comparta', 'las buenas nuevas'],
-                    angle: 170,
-                    radius: 124,
+                    card: {
+                        angle: 160,
+                        radius: 205,
+                        iconSize: 72,
+                        textWidth: 112
+                    },
                     width: 126
                 },
                 {
                     actionId: 'discipular_obey',
                     icon: 'book',
                     lines: ['Enseñe a obedecer', 'a Jesús'],
-                    angle: 205,
-                    radius: 104,
+                    card: {
+                        angle: 205,
+                        radius: 205,
+                        iconSize: 72,
+                        textWidth: 112
+                    },
                     width: 126
                 },
                 {
                     actionId: 'discipular_baptize',
                     icon: 'water',
                     lines: ['Bautice a', 'los nuevos creyentes'],
-                    angle: 240,
-                    radius: 124,
+                    card: {
+                        angle: 250,
+                        radius: 205,
+                        iconSize: 72,
+                        textWidth: 112
+                    },
                     width: 126
                 }
             ]
@@ -1297,6 +1316,17 @@ document.addEventListener('DOMContentLoaded', function () {
             x: center + radius * Math.sin(radians),
             y: center - radius * Math.cos(radians)
         };
+    }
+
+    function viewBoxPointToPercent(point) {
+        return {
+            x: (point.x / 760 * 100),
+            y: (point.y / 760 * 100)
+        };
+    }
+
+    function cssLength(value) {
+        return (typeof value === 'number') ? value + 'px' : value;
     }
 
     function angleSpan(startAngle, endAngle) {
@@ -1427,12 +1457,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
         for (var n = 0; n < currentSegment.actions.length; n++) {
             var action = currentSegment.actions[n];
-            var position = pointAt(action.angle, action.radius);
+            var position = action.card ? null : pointAt(action.angle, action.radius);
             var hasStateImage = !!actionImages[action.actionId];
             var currentActionStatus = actionStatus[action.actionId] || 'active';
             var button = document.createElement('button');
             button.type = 'button';
             button.className = 'ciclo-node' + (hasStateImage ? ' ciclo-node--image' : '');
+            if (action.card) {
+                button.className += ' ciclo-node--activity-card';
+            }
             if (action.actionId) {
                 button.className += ' ciclo-node--' + action.actionId.replace(/_/g, '-');
             }
@@ -1442,8 +1475,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 button.className += ' is-warning';
             }
             button.setAttribute('data-segment', currentSegment.id);
-            button.style.left = (position.x / 760 * 100) + '%';
-            button.style.top = (position.y / 760 * 100) + '%';
+            if (action.card) {
+                // Coordenadas polares con radio amplio y margen angular dentro de DISCIPULAR.
+                var cardPoint = pointAt(action.card.angle, action.card.radius);
+                var cardPercent = viewBoxPointToPercent(cardPoint);
+                button.style.setProperty('--x', cardPercent.x + '%');
+                button.style.setProperty('--y', cardPercent.y + '%');
+                button.style.setProperty('--icon-size', cssLength(action.card.iconSize));
+                button.style.setProperty('--text-width', cssLength(action.card.textWidth));
+            } else {
+                var positionPercent = viewBoxPointToPercent(position);
+                button.style.left = positionPercent.x + '%';
+                button.style.top = positionPercent.y + '%';
+            }
             if (!hasStateImage) {
                 button.style.width = (action.width || 148) + 'px';
             }
