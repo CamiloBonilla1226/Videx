@@ -197,6 +197,10 @@ if(isset($_REQUEST["excelXML"])){
         $_REQUEST["idUsuario"] = $_SESSION["id"];
     }
 
+    $sqlFiltro = "";
+    $sqlFiltroBase = "";
+    $sqlFiltroAsistencia = "";
+
     //  YA GENERACION 0 NO CUENTA
     $sqlFiltro .= " AND sat_reportes.generacionNumero != 0";
     $sqlFiltro .= " AND sat_reportes.generacionNumero != 77";
@@ -205,35 +209,57 @@ if(isset($_REQUEST["excelXML"])){
     if(!empty($_REQUEST["empresa_paisid"])){
         $empresa_paisid = soloNumeros($_REQUEST["empresa_paisid"]);
         $sqlFiltro .= " AND usuario_empresa.empresa_paisid = '".$empresa_paisid."'";
+        $sqlFiltroBase .= " AND EXISTS (
+            SELECT 1
+            FROM usuario_empresa
+            WHERE usuario_empresa.idUsuario = sat_reportes.idUsuario
+              AND usuario_empresa.empresa_paisid = '".$empresa_paisid."'
+        )";
+        $sqlFiltroAsistencia .= " AND EXISTS (
+            SELECT 1
+            FROM usuario_empresa AS usuario_empresa_asistencia
+            WHERE usuario_empresa_asistencia.idUsuario = sat_reportes_asistencia.idUsuario
+              AND usuario_empresa_asistencia.empresa_paisid = '".$empresa_paisid."'
+        )";
     }
     
     //
     if(isset($_REQUEST["idUsuario"]) && soloNumeros($_REQUEST["idUsuario"]) != ""){
         $buscar_idUsuario = soloNumeros($_REQUEST["idUsuario"]);
         $sqlFiltro .= " AND sat_reportes.idUsuario = '".$buscar_idUsuario."'";
+        $sqlFiltroBase .= " AND sat_reportes.idUsuario = '".$buscar_idUsuario."'";
+        $sqlFiltroAsistencia .= " AND sat_reportes_asistencia.idUsuario = '".$buscar_idUsuario."'";
     }
     //
     if(isset($_REQUEST["idGrupoMadre"]) && soloNumeros($_REQUEST["idGrupoMadre"]) != ""){
         $buscar_idGrupoMadre = soloNumeros($_REQUEST["idGrupoMadre"]);
         $sqlFiltro .= " AND sat_reportes.idGrupoMadre = '".$buscar_idGrupoMadre."'";
+        $sqlFiltroBase .= " AND sat_reportes.idGrupoMadre = '".$buscar_idGrupoMadre."'";
+        $sqlFiltroAsistencia .= " AND sat_reportes_asistencia.idGrupoMadre = '".$buscar_idGrupoMadre."'";
     }
     //
     if(isset($_REQUEST["nombre"]) && eliminarInvalidos($_REQUEST["nombre"]) != ""){
         $buscar_nombre = eliminarInvalidos($_REQUEST["nombre"]);
         $sqlFiltro .= " AND sat_reportes.plantador LIKE '%".$buscar_nombre."%'";
+        $sqlFiltroBase .= " AND sat_reportes.plantador LIKE '%".$buscar_nombre."%'";
+        $sqlFiltroAsistencia .= " AND sat_reportes_asistencia.plantador LIKE '%".$buscar_nombre."%'";
     }
     //
     if(isset($_REQUEST["fechaInicial"]) && eliminarInvalidos($_REQUEST["fechaInicial"]) != ""){
         $fechaInicial = eliminarInvalidos($_REQUEST["fechaInicial"]);
         $sqlFiltro .= " AND sat_reportes.fechaReporte >= '".$fechaInicial."'";
+        $sqlFiltroBase .= " AND sat_reportes.fechaReporte >= '".$fechaInicial."'";
+        $sqlFiltroAsistencia .= " AND sat_reportes_asistencia.fechaReporte >= '".$fechaInicial."'";
     }
     //
     if(isset($_REQUEST["fechaFinal"]) && eliminarInvalidos($_REQUEST["fechaFinal"]) != ""){
         $fechaFinal = eliminarInvalidos($_REQUEST["fechaFinal"]);
         $sqlFiltro .= " AND sat_reportes.fechaReporte <= '".$fechaFinal."'";
+        $sqlFiltroBase .= " AND sat_reportes.fechaReporte <= '".$fechaFinal."'";
+        $sqlFiltroAsistencia .= " AND sat_reportes_asistencia.fechaReporte <= '".$fechaFinal."'";
     }
     //    
-    $sql .= $sqlFiltro." ORDER BY sat_reportes.id DESC";
+    $sql .= $sqlFiltroBase." ORDER BY sat_reportes.id DESC";
     //
 
     $PSN1->query($sql);
@@ -247,23 +273,39 @@ if(isset($_REQUEST["excelXML"])){
     $total_paginas = ceil($total_registros / $registros); 
 
     //GRupos nuevos es el conteo de grupos cuya generación sea mayor a 0.
+    $sqlGenIncluidaReporte = "(sat_reportes.generacionNumero != 0 AND sat_reportes.generacionNumero != 77)";
     $sql = "SELECT
                 sat_reportes.idUsuario,
-                COUNT(sat_reportes.generacionNumero) AS gruposConteo,
+                SUM(CASE WHEN ".$sqlGenIncluidaReporte." THEN 1 ELSE 0 END) AS gruposConteo,
                 
-                SUM(sat_reportes.asistencia_total) as asistencia_total,
-                SUM(sat_reportes.asistencia_hom) as asistencia_hom,
-                SUM(sat_reportes.asistencia_muj) as asistencia_muj,
-                SUM(sat_reportes.asistencia_jov) as asistencia_jov,
-                SUM(sat_reportes.asistencia_nin) as asistencia_nin,
+                (SELECT SUM(sat_reportes_asistencia.asistencia_total)
+                 FROM sat_reportes AS sat_reportes_asistencia
+                 WHERE sat_reportes_asistencia.idUsuario = sat_reportes.idUsuario
+                 ".$sqlFiltroAsistencia.") as asistencia_total,
+                (SELECT SUM(sat_reportes_asistencia.asistencia_hom)
+                 FROM sat_reportes AS sat_reportes_asistencia
+                 WHERE sat_reportes_asistencia.idUsuario = sat_reportes.idUsuario
+                 ".$sqlFiltroAsistencia.") as asistencia_hom,
+                (SELECT SUM(sat_reportes_asistencia.asistencia_muj)
+                 FROM sat_reportes AS sat_reportes_asistencia
+                 WHERE sat_reportes_asistencia.idUsuario = sat_reportes.idUsuario
+                 ".$sqlFiltroAsistencia.") as asistencia_muj,
+                (SELECT SUM(sat_reportes_asistencia.asistencia_jov)
+                 FROM sat_reportes AS sat_reportes_asistencia
+                 WHERE sat_reportes_asistencia.idUsuario = sat_reportes.idUsuario
+                 ".$sqlFiltroAsistencia.") as asistencia_jov,
+                (SELECT SUM(sat_reportes_asistencia.asistencia_nin)
+                 FROM sat_reportes AS sat_reportes_asistencia
+                 WHERE sat_reportes_asistencia.idUsuario = sat_reportes.idUsuario
+                 ".$sqlFiltroAsistencia.") as asistencia_nin,
                 
-                SUM(sat_reportes.bautizados) as bautizados,
-                SUM(sat_reportes.bautizadosPeriodo) as bautizadosPeriodo,                
-                SUM(sat_reportes.discipulado) as discipulado,
-                SUM(sat_reportes.desiciones) as desiciones,
-                SUM(sat_reportes.preparandose) as preparandose,
-                SUM(sat_reportes.iglesias_reconocidas) as iglesias_reconocidas,
-                SUM(sat_reportes.bautizados) as bautizados,
+                SUM(CASE WHEN ".$sqlGenIncluidaReporte." THEN sat_reportes.bautizados ELSE 0 END) as bautizados,
+                SUM(CASE WHEN ".$sqlGenIncluidaReporte." THEN sat_reportes.bautizadosPeriodo ELSE 0 END) as bautizadosPeriodo,
+                SUM(CASE WHEN ".$sqlGenIncluidaReporte." THEN sat_reportes.discipulado ELSE 0 END) as discipulado,
+                SUM(CASE WHEN ".$sqlGenIncluidaReporte." THEN sat_reportes.desiciones ELSE 0 END) as desiciones,
+                SUM(CASE WHEN ".$sqlGenIncluidaReporte." THEN sat_reportes.preparandose ELSE 0 END) as preparandose,
+                SUM(CASE WHEN ".$sqlGenIncluidaReporte." THEN sat_reportes.iglesias_reconocidas ELSE 0 END) as iglesias_reconocidas,
+                SUM(CASE WHEN ".$sqlGenIncluidaReporte." THEN sat_reportes.bautizados ELSE 0 END) as bautizados,
                 usuario.nombre as nombreUsuario,
                 usuario_empresa.empresa_sitio,
                 usuario_empresa.empresa_rm,
@@ -273,7 +315,7 @@ if(isset($_REQUEST["excelXML"])){
     $sql .= " LEFT JOIN usuario ON usuario.id = sat_reportes.idUsuario";
     $sql .= " LEFT JOIN usuario_empresa ON usuario_empresa.idUsuario = sat_reportes.idUsuario";
     //
-    $sql.=" WHERE 1 ".$sqlFiltro." GROUP BY sat_reportes.idUsuario ORDER BY usuario.nombre ASC";
+    $sql.=" WHERE 1 ".$sqlFiltroBase." GROUP BY sat_reportes.idUsuario ORDER BY usuario.nombre ASC";
     $sql.= " LIMIT ".$inicio.", ".$registros;
     //
     $PSN1->query($sql);
@@ -509,20 +551,36 @@ if(isset($_REQUEST["excelXML"])){
                     $preparandose  = $PSN1->f("preparandose");
                     $iglesias_reconocidas = $PSN1->f("iglesias_reconocidas");  
                     
-                    $lideresCapacitandose = 0;                        
-                    
-                    $sql = "SELECT SUM(asistencia_total) as total, COUNT(sat_reportes.id) as conteo ";
+                    $lideresCapacitandose = 0;
+
+                    $sqlFiltroCapacitacion = "";
+                    if(isset($_REQUEST["fechaInicial"]) && eliminarInvalidos($_REQUEST["fechaInicial"]) != ""){
+                        $sqlFiltroCapacitacion .= " AND sat_reportes.fechaReporte >= '".$fechaInicial."'";
+                    }
+                    if(isset($_REQUEST["fechaFinal"]) && eliminarInvalidos($_REQUEST["fechaFinal"]) != ""){
+                        $sqlFiltroCapacitacion .= " AND sat_reportes.fechaReporte <= '".$fechaFinal."'";
+                    }
+                    if(!empty($_REQUEST["empresa_paisid"])) {
+                        $empresa_paisid_cap = soloNumeros($_REQUEST["empresa_paisid"]);
+                        $sqlFiltroCapacitacion .= " AND EXISTS (
+                            SELECT 1
+                            FROM usuario_empresa
+                            WHERE usuario_empresa.idUsuario = sat_reportes.idUsuario
+                              AND usuario_empresa.empresa_paisid = '".$empresa_paisid_cap."'
+                        )";
+                    }
+
+                    $sqlGenEsCeroCapacitacion = "(sat_reportes.generacionNumero = 0 OR sat_reportes.generacionNumero IS NULL OR sat_reportes.generacionNumero = '')";
+                    $sql = "SELECT COUNT(sat_reportes.id) as conteo, SUM(sat_reportes.asistencia_total) as asistencia_total ";
                     $sql.=" FROM sat_reportes ";
-                    $sql .= " LEFT JOIN usuario ON usuario.id = sat_reportes.idUsuario";
-                    $sql .= " LEFT JOIN usuario_empresa ON usuario_empresa.idUsuario = sat_reportes.idUsuario";
-                    //
-                    $sql.=" WHERE 1 ".$sqlFiltro." AND  sat_reportes.idUsuario = '".$idUsuario."' AND sat_reportes.generacionNumero = 0 GROUP BY sat_reportes.idUsuario";
+                    $sql.=" WHERE ".$sqlGenEsCeroCapacitacion." ".$sqlFiltroCapacitacion." AND sat_reportes.idUsuario = '".$idUsuario."'";
                     $PSN2->query($sql);
                     if($PSN2->num_rows() > 0)
                     {
                         if($PSN2->next_record())
                         {
-                            $lideresCapacitandose = ($PSN2->f('total')-$PSN2->f('conteo'));
+                            $lideresCapacitandose = (int)$PSN2->f('asistencia_total');
+                            if($lideresCapacitandose < 0){ $lideresCapacitandose = 0; }
                         }
                     }
                     //
