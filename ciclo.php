@@ -178,6 +178,9 @@ $grupoSeleccionado = ($buscar_nombreGrupo !== '');
 $estadoMultiplicar = false;
 $estadoEncontrarPersonasPaz = false;
 $estadoPrepararseOrar = false;
+$estadoDiscipularComparta = false;
+$estadoDiscipularObedecer = false;
+$estadoDiscipularBautice = false;
 $imgMultiplicarAzul = 'img/multiplicar_azul.png';
 $imgMultiplicarGris = 'img/multiplicar_gris.png';
 $imgEncontrarAzul = 'img/encontrar_a.png';
@@ -186,6 +189,15 @@ $imgEncontrarNaranja = 'img/encontrar_n.png';
 $imgPazAzul = 'img/paz_a.png';
 $imgPazNaranja = 'img/paz_n.png';
 $imgPazGris = 'img/paz_g.png';
+$imgCompartaAzul = 'img/comparta_a.png';
+$imgCompartaNaranja = 'img/comparta_n.png';
+$imgCompartaGris = 'img/comparta_g.png';
+$imgObedecerAzul = 'img/obedecer_a.png';
+$imgObedecerNaranja = 'img/obedecer_n.png';
+$imgObedecerGris = 'img/obedecer_g.png';
+$imgBauticeAzul = 'img/bautice_a.png';
+$imgBauticeNaranja = 'img/bautice_n.png';
+$imgBauticeGris = 'img/bautice_g.png';
 
 $totalReportes = 0;
 $primerReporte = '';
@@ -233,6 +245,39 @@ if (!$requiereSeleccionFacilitador && $grupoSeleccionado) {
             }
         }
     }
+
+    $sql = "SELECT
+                SUM(CASE
+                        WHEN sat_reportes.generacionNumero = 77
+                        THEN 1 ELSE 0
+                    END) AS conteoComparta,
+                SUM(CASE
+                        WHEN sat_reportes.mapeo_comprometido IN (3, 4)
+                         AND sat_reportes.mapeo_oracion IN (3, 4)
+                         AND sat_reportes.mapeo_companerismo IN (3, 4)
+                         AND sat_reportes.mapeo_adoracion IN (3, 4)
+                         AND sat_reportes.mapeo_biblia IN (3, 4)
+                         AND sat_reportes.mapeo_evangelizar IN (3, 4)
+                         AND sat_reportes.mapeo_cena IN (3, 4)
+                         AND sat_reportes.mapeo_dar IN (3, 4)
+                         AND sat_reportes.mapeo_bautizar IN (3, 4)
+                         AND sat_reportes.mapeo_trabajadores IN (3, 4)
+                        THEN 1 ELSE 0
+                    END) AS conteoObedecer,
+                SUM(CASE
+                        WHEN sat_reportes.generacionNumero IN (1, 2, 3, 4, 5)
+                         AND sat_reportes.bautizadosPeriodo <> 0
+                        THEN 1 ELSE 0
+                    END) AS conteoBautice
+            FROM sat_reportes
+            WHERE 1 ".$sqlFiltroUsuario.$sqlFiltroGrupo;
+
+    $PSN4->query($sql);
+    if ($PSN4->next_record()) {
+        $estadoDiscipularComparta = ((int)$PSN4->f('conteoComparta') > 0);
+        $estadoDiscipularObedecer = ((int)$PSN4->f('conteoObedecer') > 0);
+        $estadoDiscipularBautice = ((int)$PSN4->f('conteoBautice') > 0);
+    }
 }
 
 if (!$requiereSeleccionFacilitador) {
@@ -268,6 +313,28 @@ if ($estadoPrepararseOrar && $estadoEncontrarPersonasPaz) {
     $estadoSegmentoEncontrar = 'partial';
     $estadoAccionPrepararse = $estadoPrepararseOrar ? 'active' : 'warning';
     $estadoAccionPersonasPaz = $estadoEncontrarPersonasPaz ? 'active' : 'warning';
+}
+
+$totalActividadesDiscipular = 0;
+$totalActividadesDiscipular += $estadoDiscipularComparta ? 1 : 0;
+$totalActividadesDiscipular += $estadoDiscipularObedecer ? 1 : 0;
+$totalActividadesDiscipular += $estadoDiscipularBautice ? 1 : 0;
+
+$estadoSegmentoDiscipular = 'disabled';
+$estadoAccionDiscipularComparta = 'disabled';
+$estadoAccionDiscipularObedecer = 'disabled';
+$estadoAccionDiscipularBautice = 'disabled';
+
+if ($totalActividadesDiscipular === 3) {
+    $estadoSegmentoDiscipular = 'active';
+    $estadoAccionDiscipularComparta = 'active';
+    $estadoAccionDiscipularObedecer = 'active';
+    $estadoAccionDiscipularBautice = 'active';
+} elseif ($totalActividadesDiscipular > 0) {
+    $estadoSegmentoDiscipular = 'partial';
+    $estadoAccionDiscipularComparta = 'warning';
+    $estadoAccionDiscipularObedecer = 'warning';
+    $estadoAccionDiscipularBautice = 'warning';
 }
 ?>
 
@@ -911,6 +978,15 @@ if ($estadoPrepararseOrar && $estadoEncontrarPersonasPaz) {
                     <img src="<?=$imgPazAzul; ?>" alt="" loading="eager" decoding="sync" fetchpriority="high" />
                     <img src="<?=$imgPazNaranja; ?>" alt="" loading="eager" decoding="sync" fetchpriority="high" />
                     <img src="<?=$imgPazGris; ?>" alt="" loading="eager" decoding="sync" fetchpriority="high" />
+                    <img src="<?=$imgCompartaAzul; ?>" alt="" loading="eager" decoding="sync" fetchpriority="high" />
+                    <img src="<?=$imgCompartaNaranja; ?>" alt="" loading="eager" decoding="sync" fetchpriority="high" />
+                    <img src="<?=$imgCompartaGris; ?>" alt="" loading="eager" decoding="sync" fetchpriority="high" />
+                    <img src="<?=$imgObedecerAzul; ?>" alt="" loading="eager" decoding="sync" fetchpriority="high" />
+                    <img src="<?=$imgObedecerNaranja; ?>" alt="" loading="eager" decoding="sync" fetchpriority="high" />
+                    <img src="<?=$imgObedecerGris; ?>" alt="" loading="eager" decoding="sync" fetchpriority="high" />
+                    <img src="<?=$imgBauticeAzul; ?>" alt="" loading="eager" decoding="sync" fetchpriority="high" />
+                    <img src="<?=$imgBauticeNaranja; ?>" alt="" loading="eager" decoding="sync" fetchpriority="high" />
+                    <img src="<?=$imgBauticeGris; ?>" alt="" loading="eager" decoding="sync" fetchpriority="high" />
                 </div>
                 <div class="ciclo-chart-stage" id="cicloChartStage">
                     <svg id="cicloChartSvg" viewBox="0 0 760 760" aria-label="Ciclo de multiplicacion"></svg>
@@ -932,11 +1008,15 @@ document.addEventListener('DOMContentLoaded', function () {
     var segmentStatus = <?=json_encode(array(
         'multiplicar' => $estadoSegmentoMultiplicar,
         'encontrar' => $estadoSegmentoEncontrar,
+        'discipular' => $estadoSegmentoDiscipular,
     ));?>;
     var actionStatus = <?=json_encode(array(
         'multiplicar_training' => $estadoAccionMultiplicar,
         'encontrar_pray' => $estadoAccionPrepararse,
         'encontrar_search' => $estadoAccionPersonasPaz,
+        'discipular_share' => $estadoAccionDiscipularComparta,
+        'discipular_obey' => $estadoAccionDiscipularObedecer,
+        'discipular_baptize' => $estadoAccionDiscipularBautice,
     ));?>;
     var actionImages = {
         multiplicar_training: {
@@ -952,6 +1032,21 @@ document.addEventListener('DOMContentLoaded', function () {
             active: <?=json_encode($imgPazAzul); ?>,
             disabled: <?=json_encode($imgPazGris); ?>,
             warning: <?=json_encode($imgPazNaranja); ?>
+        },
+        discipular_share: {
+            active: <?=json_encode($imgCompartaAzul); ?>,
+            disabled: <?=json_encode($imgCompartaGris); ?>,
+            warning: <?=json_encode($imgCompartaNaranja); ?>
+        },
+        discipular_obey: {
+            active: <?=json_encode($imgObedecerAzul); ?>,
+            disabled: <?=json_encode($imgObedecerGris); ?>,
+            warning: <?=json_encode($imgObedecerNaranja); ?>
+        },
+        discipular_baptize: {
+            active: <?=json_encode($imgBauticeAzul); ?>,
+            disabled: <?=json_encode($imgBauticeGris); ?>,
+            warning: <?=json_encode($imgBauticeNaranja); ?>
         }
     };
 
@@ -1079,6 +1174,7 @@ document.addEventListener('DOMContentLoaded', function () {
             share: 3,
             actions: [
                 {
+                    actionId: 'discipular_share',
                     icon: 'share',
                     lines: ['Comparta', 'las buenas nuevas'],
                     angle: 135,
@@ -1086,6 +1182,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     width: 126
                 },
                 {
+                    actionId: 'discipular_obey',
                     icon: 'book',
                     lines: ['Enseñe a obedecer', 'a Jesús'],
                     angle: 192,
@@ -1093,6 +1190,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     width: 126
                 },
                 {
+                    actionId: 'discipular_baptize',
                     icon: 'water',
                     lines: ['Bautice a', 'los nuevos creyentes'],
                     angle: 244,
