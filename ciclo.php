@@ -189,15 +189,15 @@ $imgEncontrarNaranja = 'img/encontrar_n.png';
 $imgPazAzul = 'img/paz_a.png';
 $imgPazNaranja = 'img/paz_n.png';
 $imgPazGris = 'img/paz_g.png';
-$imgCompartaAzul = 'img/comparta_a.png';
-$imgCompartaNaranja = 'img/comparta_n.png';
-$imgCompartaGris = 'img/comparta_g.png';
-$imgObedecerAzul = 'img/obedecer_a.png';
-$imgObedecerNaranja = 'img/obedecer_n.png';
-$imgObedecerGris = 'img/obedecer_g.png';
-$imgBauticeAzul = 'img/bautice_a.png';
-$imgBauticeNaranja = 'img/bautice_n.png';
-$imgBauticeGris = 'img/bautice_g.png';
+$imgCompartaAzul = 'comparta_a.png';
+$imgCompartaNaranja = 'comparta_n.png';
+$imgCompartaGris = 'comparta_g.png';
+$imgObedecerAzul = 'obedecer_a.png';
+$imgObedecerNaranja = 'obedecer_n.png';
+$imgObedecerGris = 'obedecer_g.png';
+$imgBauticeAzul = 'bautice_a.png';
+$imgBauticeNaranja = 'bautice_n.png';
+$imgBauticeGris = 'bautice_g.png';
 
 $totalReportes = 0;
 $primerReporte = '';
@@ -332,9 +332,9 @@ if ($totalActividadesDiscipular === 3) {
     $estadoAccionDiscipularBautice = 'active';
 } elseif ($totalActividadesDiscipular > 0) {
     $estadoSegmentoDiscipular = 'partial';
-    $estadoAccionDiscipularComparta = 'warning';
-    $estadoAccionDiscipularObedecer = 'warning';
-    $estadoAccionDiscipularBautice = 'warning';
+    $estadoAccionDiscipularComparta = $estadoDiscipularComparta ? 'active' : 'warning';
+    $estadoAccionDiscipularObedecer = $estadoDiscipularObedecer ? 'active' : 'warning';
+    $estadoAccionDiscipularBautice = $estadoDiscipularBautice ? 'active' : 'warning';
 }
 ?>
 
@@ -640,7 +640,10 @@ if ($totalActividadesDiscipular === 3) {
 
     .ciclo-node--multiplicar-training .ciclo-node__text,
     .ciclo-node--encontrar-pray .ciclo-node__text,
-    .ciclo-node--encontrar-search .ciclo-node__text {
+    .ciclo-node--encontrar-search .ciclo-node__text,
+    .ciclo-node--discipular-share .ciclo-node__text,
+    .ciclo-node--discipular-obey .ciclo-node__text,
+    .ciclo-node--discipular-baptize .ciclo-node__text {
         margin-top: 40px;
     }
 
@@ -658,6 +661,30 @@ if ($totalActividadesDiscipular === 3) {
 
     .ciclo-node--encontrar-search {
         width: 102px !important;
+    }
+
+    .ciclo-node--discipular-share,
+    .ciclo-node--discipular-obey,
+    .ciclo-node--discipular-baptize {
+        width: 96px !important;
+    }
+
+    .ciclo-node--discipular-share .ciclo-node__icon img,
+    .ciclo-node--discipular-obey .ciclo-node__icon img,
+    .ciclo-node--discipular-baptize .ciclo-node__icon img {
+        max-width: 88px;
+        max-height: 88px;
+        transform: translate(0, -6px);
+    }
+
+    .ciclo-node--discipular-obey .ciclo-node__icon img {
+        transform: translate(-1px, -6px);
+    }
+
+    .ciclo-node--discipular-share .ciclo-node__text,
+    .ciclo-node--discipular-obey .ciclo-node__text,
+    .ciclo-node--discipular-baptize .ciclo-node__text {
+        margin-top: 32px;
     }
 
     .ciclo-node__text {
@@ -796,12 +823,33 @@ if ($totalActividadesDiscipular === 3) {
 
         .ciclo-node--multiplicar-training .ciclo-node__text,
         .ciclo-node--encontrar-pray .ciclo-node__text,
-        .ciclo-node--encontrar-search .ciclo-node__text {
+        .ciclo-node--encontrar-search .ciclo-node__text,
+        .ciclo-node--discipular-share .ciclo-node__text,
+        .ciclo-node--discipular-obey .ciclo-node__text,
+        .ciclo-node--discipular-baptize .ciclo-node__text {
             margin-top: 20px;
         }
 
         .ciclo-node--encontrar-search .ciclo-node__icon img {
             transform: translate(0, -5px);
+        }
+
+        .ciclo-node--discipular-share .ciclo-node__icon img,
+        .ciclo-node--discipular-obey .ciclo-node__icon img,
+        .ciclo-node--discipular-baptize .ciclo-node__icon img {
+            max-width: 40px;
+            max-height: 40px;
+            transform: translate(0, -3px);
+        }
+
+        .ciclo-node--discipular-obey .ciclo-node__icon img {
+            transform: translate(-1px, -3px);
+        }
+
+        .ciclo-node--discipular-share .ciclo-node__text,
+        .ciclo-node--discipular-obey .ciclo-node__text,
+        .ciclo-node--discipular-baptize .ciclo-node__text {
+            margin-top: 14px;
         }
 
         .ciclo-node__text {
@@ -882,12 +930,33 @@ if ($totalActividadesDiscipular === 3) {
 
         .ciclo-node--multiplicar-training .ciclo-node__text,
         .ciclo-node--encontrar-pray .ciclo-node__text,
-        .ciclo-node--encontrar-search .ciclo-node__text {
+        .ciclo-node--encontrar-search .ciclo-node__text,
+        .ciclo-node--discipular-share .ciclo-node__text,
+        .ciclo-node--discipular-obey .ciclo-node__text,
+        .ciclo-node--discipular-baptize .ciclo-node__text {
             margin-top: 16px;
         }
 
         .ciclo-node--encontrar-search .ciclo-node__icon img {
             transform: translate(0, -3px);
+        }
+
+        .ciclo-node--discipular-share .ciclo-node__icon img,
+        .ciclo-node--discipular-obey .ciclo-node__icon img,
+        .ciclo-node--discipular-baptize .ciclo-node__icon img {
+            max-width: 36px;
+            max-height: 36px;
+            transform: translate(0, -2px);
+        }
+
+        .ciclo-node--discipular-obey .ciclo-node__icon img {
+            transform: translate(-1px, -2px);
+        }
+
+        .ciclo-node--discipular-share .ciclo-node__text,
+        .ciclo-node--discipular-obey .ciclo-node__text,
+        .ciclo-node--discipular-baptize .ciclo-node__text {
+            margin-top: 10px;
         }
 
         .ciclo-node__text {
@@ -1177,24 +1246,24 @@ document.addEventListener('DOMContentLoaded', function () {
                     actionId: 'discipular_share',
                     icon: 'share',
                     lines: ['Comparta', 'las buenas nuevas'],
-                    angle: 135,
-                    radius: 194,
+                    angle: 170,
+                    radius: 124,
                     width: 126
                 },
                 {
                     actionId: 'discipular_obey',
                     icon: 'book',
                     lines: ['Enseñe a obedecer', 'a Jesús'],
-                    angle: 192,
-                    radius: 160,
+                    angle: 205,
+                    radius: 104,
                     width: 126
                 },
                 {
                     actionId: 'discipular_baptize',
                     icon: 'water',
                     lines: ['Bautice a', 'los nuevos creyentes'],
-                    angle: 244,
-                    radius: 194,
+                    angle: 240,
+                    radius: 124,
                     width: 126
                 }
             ]
@@ -1276,6 +1345,33 @@ document.addEventListener('DOMContentLoaded', function () {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#039;');
     }
+
+    function imagePathOptions(imagePath) {
+        var paths = [imagePath];
+
+        if (/\.png$/i.test(imagePath)) {
+            paths.push(imagePath.replace(/\.png$/i, '.jpg'));
+            paths.push(imagePath.replace(/\.png$/i, '.jpeg'));
+            paths.push(imagePath.replace(/\.png$/i, '.webp'));
+            paths.push(imagePath.replace(/\.png$/i, ''));
+        }
+
+        return paths;
+    }
+
+    window.cicloTryNextImage = function (image) {
+        var sources = (image.getAttribute('data-ciclo-sources') || '').split('|');
+        var currentIndex = parseInt(image.getAttribute('data-ciclo-source-index') || '0', 10);
+        var nextIndex = currentIndex + 1;
+
+        if (sources[nextIndex]) {
+            image.setAttribute('data-ciclo-source-index', nextIndex);
+            image.src = sources[nextIndex];
+            return;
+        }
+
+        image.style.display = 'none';
+    };
 
     var svgMarkup = '' +
         '<circle cx="' + center + '" cy="' + center + '" r="' + (ringInnerRadius - 2) + '" fill="#ffffff"></circle>';
@@ -1364,7 +1460,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 var imagePath = imageSet[currentActionStatus] || imageSet.active;
 
                 if (imagePath) {
-                    iconMarkup = '<img src="' + imagePath + '" alt="' + escapeHtml(action.lines.join(' ')) + '" loading="eager" decoding="sync" fetchpriority="high" onerror="this.style.display=\'none\'">';
+                    var imageSources = imagePathOptions(imagePath);
+                    iconMarkup = '<img src="' + escapeHtml(imageSources[0]) + '" data-ciclo-sources="' + escapeHtml(imageSources.join('|')) + '" data-ciclo-source-index="0" alt="' + escapeHtml(action.lines.join(' ')) + '" loading="eager" decoding="sync" fetchpriority="high" onerror="window.cicloTryNextImage(this)">';
                 }
             }
 
