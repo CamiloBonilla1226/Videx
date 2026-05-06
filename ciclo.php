@@ -42,6 +42,65 @@ function ciclo_build_filtro_grupo($nombreGrupo)
     return $sqlFiltro;
 }
 
+function ciclo_normalizar_nombre_persona($nombre)
+{
+    $nombre = trim((string)$nombre);
+    $nombre = strtr($nombre, array(
+        'Á' => 'A', 'É' => 'E', 'Í' => 'I', 'Ó' => 'O', 'Ú' => 'U', 'Ü' => 'U', 'Ñ' => 'N',
+        'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u', 'ñ' => 'n',
+    ));
+    $nombre = strtolower($nombre);
+    $nombre = preg_replace('/[^a-z0-9\s]/', ' ', $nombre);
+    $nombre = preg_replace('/\b(de|del|la|las|los|el|y)\b/', ' ', $nombre);
+    $nombre = preg_replace('/\s+/', ' ', $nombre);
+
+    return trim($nombre);
+}
+
+function ciclo_nombre_tokens($nombre)
+{
+    $normalizado = ciclo_normalizar_nombre_persona($nombre);
+
+    if ($normalizado === '') {
+        return array();
+    }
+
+    return array_values(array_unique(explode(' ', $normalizado)));
+}
+
+function ciclo_es_misma_persona_por_nombre($nombreA, $nombreB)
+{
+    $normalizadoA = ciclo_normalizar_nombre_persona($nombreA);
+    $normalizadoB = ciclo_normalizar_nombre_persona($nombreB);
+
+    if ($normalizadoA === '' || $normalizadoB === '') {
+        return false;
+    }
+
+    if ($normalizadoA === $normalizadoB) {
+        return true;
+    }
+
+    $tokensA = ciclo_nombre_tokens($normalizadoA);
+    $tokensB = ciclo_nombre_tokens($normalizadoB);
+
+    if (count($tokensA) < 2 || count($tokensB) < 2) {
+        return false;
+    }
+
+    $tokensCortos = (count($tokensA) <= count($tokensB)) ? $tokensA : $tokensB;
+    $tokensLargos = (count($tokensA) <= count($tokensB)) ? $tokensB : $tokensA;
+    $mapaTokensLargos = array_flip($tokensLargos);
+
+    foreach ($tokensCortos as $token) {
+        if (!isset($mapaTokensLargos[$token])) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 $PSN = new DBbase_Sql;
 $PSN2 = new DBbase_Sql;
 $PSN3 = new DBbase_Sql;
@@ -147,25 +206,32 @@ if (!$requiereSeleccionFacilitador && $grupoSeleccionado) {
     }
 
     $sql = "SELECT
-                SUM(CASE
-                        WHEN sat_reportes.plantador IS NOT NULL
-                         AND TRIM(sat_reportes.plantador) <> ''
-                        THEN 1 ELSE 0
-                    END) AS conteoPlantador,
-                SUM(CASE
-                        WHEN sat_reportes.generacionNumero = 0
-                         AND sat_reportes.fechaInicio IS NOT NULL
-                         AND sat_reportes.fechaInicio <> ''
-                         AND sat_reportes.fechaInicio <> '0000-00-00'
-                        THEN 1 ELSE 0
-                    END) AS conteoFechaInicio
+                sat_reportes.plantador,
+                usuario.nombre AS nombreUsuario,
+                sat_reportes.generacionNumero,
+                sat_reportes.fechaInicio
             FROM sat_reportes
+            LEFT JOIN usuario ON usuario.id = sat_reportes.idUsuario
             WHERE 1 ".$sqlFiltroUsuario.$sqlFiltroGrupo;
 
     $PSN4->query($sql);
-    if ($PSN4->next_record()) {
-        $estadoEncontrarPersonasPaz = ((int)$PSN4->f('conteoPlantador') > 0);
-        $estadoPrepararseOrar = ((int)$PSN4->f('conteoFechaInicio') > 0);
+    if ($PSN4->num_rows() > 0) {
+        while ($PSN4->next_record()) {
+            $plantadorReporte = trim($PSN4->f('plantador'));
+            $nombreUsuarioReporte = trim($PSN4->f('nombreUsuario'));
+            $fechaInicioReporte = trim($PSN4->f('fechaInicio'));
+
+            if ((int)$PSN4->f('generacionNumero') === 0
+                && $fechaInicioReporte !== ''
+                && $fechaInicioReporte !== '0000-00-00') {
+                $estadoPrepararseOrar = true;
+            }
+
+            if ($plantadorReporte !== ''
+                && !ciclo_es_misma_persona_por_nombre($plantadorReporte, $nombreUsuarioReporte)) {
+                $estadoEncontrarPersonasPaz = true;
+            }
+        }
     }
 }
 
