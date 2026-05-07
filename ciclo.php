@@ -563,7 +563,7 @@ if ($totalActividadesDiscipular === 3) {
 
     .ciclo-heart text {
         fill: #ffffff;
-        font-size: 18px;
+        font-size: 48px;
         font-weight: 800;
     }
 
