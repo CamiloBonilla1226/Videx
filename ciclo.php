@@ -638,36 +638,11 @@ if ($totalActividadesDiscipular === 3) {
         margin-top: 34px;
     }
 
-    .ciclo-node--multiplicar-training .ciclo-node__text,
-    .ciclo-node--encontrar-pray .ciclo-node__text,
-    .ciclo-node--encontrar-search .ciclo-node__text,
-    .ciclo-node--discipular-share .ciclo-node__text,
-    .ciclo-node--discipular-obey .ciclo-node__text,
-    .ciclo-node--discipular-baptize .ciclo-node__text {
-        margin-top: 40px;
-    }
-
-    .ciclo-node--encontrar-pray .ciclo-node__icon img {
-        transform: translate(4px, -16px);
-    }
-
-    .ciclo-node--encontrar-pray {
-        width: 104px !important;
-    }
-
-    .ciclo-node--encontrar-search .ciclo-node__icon img {
-        transform: translate(0, -10px);
-    }
-
-    .ciclo-node--encontrar-search {
-        width: 102px !important;
-    }
-
-    /* Tarjetas independientes para DISCIPULAR: el icono y su texto viajan juntos. */
+    /* Tarjetas radiales: todas las acciones quedan sobre una misma circunferencia invisible. */
     .ciclo-node--activity-card {
         --x: 50%;
         --y: 50%;
-        --icon-size: 74px;
+        --icon-size: 72px;
         --text-width: 112px;
         left: var(--x);
         top: var(--y);
@@ -826,30 +801,12 @@ if ($totalActividadesDiscipular === 3) {
             transform: translateY(-9px);
         }
 
-    .ciclo-node--image .ciclo-node__icon img {
-        transform: translateY(-8px);
-    }
-
-    .ciclo-node--encontrar-pray .ciclo-node__icon img {
-        transform: translate(4px, -6px);
-    }
-
         .ciclo-node--image {
             width: 64px !important;
         }
 
         .ciclo-node--image .ciclo-node__text {
             margin-top: 16px;
-        }
-
-        .ciclo-node--multiplicar-training .ciclo-node__text,
-        .ciclo-node--encontrar-pray .ciclo-node__text,
-        .ciclo-node--encontrar-search .ciclo-node__text {
-            margin-top: 20px;
-        }
-
-        .ciclo-node--encontrar-search .ciclo-node__icon img {
-            transform: translate(0, -5px);
         }
 
         .ciclo-node--activity-card {
@@ -926,30 +883,12 @@ if ($totalActividadesDiscipular === 3) {
             transform: translateY(-7px);
         }
 
-        .ciclo-node--image .ciclo-node__icon img {
-            transform: translateY(-6px);
-        }
-
-        .ciclo-node--encontrar-pray .ciclo-node__icon img {
-            transform: translate(3px, -4px);
-        }
-
         .ciclo-node--image {
             width: 56px !important;
         }
 
         .ciclo-node--image .ciclo-node__text {
             margin-top: 12px;
-        }
-
-        .ciclo-node--multiplicar-training .ciclo-node__text,
-        .ciclo-node--encontrar-pray .ciclo-node__text,
-        .ciclo-node--encontrar-search .ciclo-node__text {
-            margin-top: 16px;
-        }
-
-        .ciclo-node--encontrar-search .ciclo-node__icon img {
-            transform: translate(0, -3px);
         }
 
         .ciclo-node--activity-card {
@@ -1135,6 +1074,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var ringInnerRadius = 300;
     var regionRadius = 300;
     var labelRadius = 326;
+    var activityOrbitRadius = 205;
 
     var icons = {
         training: '' +
@@ -1215,9 +1155,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     actionId: 'multiplicar_training',
                     icon: 'training',
                     lines: ['Inscriba y entrene', 'a los obreros'],
-                    angle: 0,
-                    radius: 170,
-                    width: 136
+                    card: {
+                        angle: 0,
+                        iconSize: 72,
+                        textWidth: 128
+                    }
                 }
             ]
         },
@@ -1230,17 +1172,21 @@ document.addEventListener('DOMContentLoaded', function () {
                     actionId: 'encontrar_pray',
                     icon: 'pray',
                     lines: ['Prepárese', 'y ore'],
-                    angle: 58,
-                    radius: 168,
-                    width: 110
+                    card: {
+                        angle: 52,
+                        iconSize: 72,
+                        textWidth: 112
+                    }
                 },
                 {
                     actionId: 'encontrar_search',
                     icon: 'search',
                     lines: ['Encuentre', 'personas de paz'],
-                    angle: 102,
-                    radius: 188,
-                    width: 122
+                    card: {
+                        angle: 104,
+                        iconSize: 72,
+                        textWidth: 116
+                    }
                 }
             ]
         },
@@ -1254,36 +1200,30 @@ document.addEventListener('DOMContentLoaded', function () {
                     icon: 'share',
                     lines: ['Comparta', 'las buenas nuevas'],
                     card: {
-                        angle: 160,
-                        radius: 205,
+                        angle: 158,
                         iconSize: 72,
                         textWidth: 112
-                    },
-                    width: 126
+                    }
                 },
                 {
                     actionId: 'discipular_obey',
                     icon: 'book',
                     lines: ['Enseñe a obedecer', 'a Jesús'],
                     card: {
-                        angle: 205,
-                        radius: 205,
+                        angle: 210,
                         iconSize: 72,
                         textWidth: 112
-                    },
-                    width: 126
+                    }
                 },
                 {
                     actionId: 'discipular_baptize',
                     icon: 'water',
                     lines: ['Bautice a', 'los nuevos creyentes'],
                     card: {
-                        angle: 250,
-                        radius: 205,
+                        angle: 255,
                         iconSize: 72,
                         textWidth: 112
-                    },
-                    width: 126
+                    }
                 }
             ]
         },
@@ -1295,9 +1235,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 {
                     icon: 'church',
                     lines: ['Establezca', 'la iglesia'],
-                    angle: 308,
-                    radius: 178,
-                    width: 116
+                    card: {
+                        angle: 308,
+                        iconSize: 72,
+                        textWidth: 112
+                    }
                 }
             ]
         }
@@ -1476,8 +1418,8 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             button.setAttribute('data-segment', currentSegment.id);
             if (action.card) {
-                // Coordenadas polares con radio amplio y margen angular dentro de DISCIPULAR.
-                var cardPoint = pointAt(action.card.angle, action.card.radius);
+                // Todas las tarjetas usan el mismo radio para formar una circunferencia interior alineada.
+                var cardPoint = pointAt(action.card.angle, action.card.radius || activityOrbitRadius);
                 var cardPercent = viewBoxPointToPercent(cardPoint);
                 button.style.setProperty('--x', cardPercent.x + '%');
                 button.style.setProperty('--y', cardPercent.y + '%');
