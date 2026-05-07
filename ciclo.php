@@ -395,6 +395,10 @@ if ($totalActividadesDiscipular === 3) {
         font-weight: 700;
     }
 
+    .ciclo-card--interactive .ciclo-card__head h3 {
+        text-align: center;
+    }
+
     .ciclo-card__body {
         padding: 22px;
     }
@@ -455,7 +459,7 @@ if ($totalActividadesDiscipular === 3) {
         background: radial-gradient(circle at top, #f6f9ff 0%, #eef4ff 42%, #f9fbff 100%);
         border: 1px solid #d9e4f2;
         border-radius: 22px;
-        padding: 34px 18px 18px;
+        padding: 24px 14px 14px;
         overflow: visible;
     }
 
@@ -470,7 +474,7 @@ if ($totalActividadesDiscipular === 3) {
 
     .ciclo-chart-stage {
         position: relative;
-        width: min(100%, 840px);
+        width: min(100%, 700px);
         margin: 0 auto;
         aspect-ratio: 1 / 1;
         isolation: isolate;
@@ -517,9 +521,9 @@ if ($totalActividadesDiscipular === 3) {
 
     .ciclo-segment .ciclo-label {
         fill: #ffffff;
-        font-size: 27px;
+        font-size: 30px;
         font-weight: 800;
-        letter-spacing: 1.4px;
+        letter-spacing: 1.5px;
         pointer-events: none;
     }
 
@@ -642,18 +646,18 @@ if ($totalActividadesDiscipular === 3) {
     .ciclo-node--activity-card {
         --x: 50%;
         --y: 50%;
-        --icon-size: 72px;
+        --icon-size: 66px;
         --text-width: 112px;
         left: var(--x);
         top: var(--y);
         width: var(--text-width) !important;
-        min-height: 116px;
+        min-height: 104px;
         padding: 6px 4px;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: flex-start;
-        gap: 6px;
+        gap: 5px;
         transform: translate(-50%, -50%);
     }
 
@@ -679,11 +683,44 @@ if ($totalActividadesDiscipular === 3) {
         line-height: 1.22;
     }
 
+    /* Flechas de flujo: son decorativas y toman el color del estado del segmento. */
+    .ciclo-node--arrow {
+        width: 34px !important;
+        min-height: 34px;
+        padding: 0;
+        color: #2f4ea2;
+        opacity: 0.72;
+        pointer-events: none;
+        cursor: default;
+    }
+
+    .ciclo-node--arrow .ciclo-node__icon {
+        width: 34px;
+        height: 34px;
+        flex: 0 0 34px;
+    }
+
+    .ciclo-node--arrow .ciclo-node__icon svg {
+        width: 34px;
+        height: 34px;
+    }
+
+    .ciclo-node--arrow .ciclo-node__text {
+        display: none;
+    }
+
+    .ciclo-node--arrow.is-active .ciclo-node__icon,
+    .ciclo-node--arrow.is-disabled .ciclo-node__icon,
+    .ciclo-node--arrow.is-disabled.is-active .ciclo-node__icon {
+        transform: none;
+        opacity: 0.72;
+    }
+
     .ciclo-node__text {
         display: block;
-        font-size: 11px;
-        line-height: 1.18;
-        font-weight: 500;
+        font-size: 13px;
+        line-height: 1.2;
+        font-weight: 700;
         text-shadow: 0 1px 0 rgba(255, 255, 255, 0.85);
         -webkit-text-size-adjust: 100%;
         text-size-adjust: 100%;
@@ -765,7 +802,7 @@ if ($totalActividadesDiscipular === 3) {
         }
 
         .ciclo-node-layer {
-            transform: scale(0.7);
+            transform: none;
             transform-origin: center center;
         }
 
@@ -774,8 +811,8 @@ if ($totalActividadesDiscipular === 3) {
         }
 
         .ciclo-segment .ciclo-label {
-            font-size: 17px;
-            letter-spacing: 0.55px;
+            font-size: 20px;
+            letter-spacing: 0.75px;
         }
 
         .ciclo-node {
@@ -823,9 +860,18 @@ if ($totalActividadesDiscipular === 3) {
             margin-top: 0;
         }
 
+        .ciclo-node--arrow,
+        .ciclo-node--arrow .ciclo-node__icon,
+        .ciclo-node--arrow .ciclo-node__icon svg {
+            width: 26px !important;
+            height: 26px;
+            min-height: 26px;
+        }
+
         .ciclo-node__text {
-            font-size: 6px;
-            line-height: 1.08;
+            font-size: 7px;
+            line-height: 1.1;
+            font-weight: 700;
             letter-spacing: -0.01em;
         }
 
@@ -854,12 +900,12 @@ if ($totalActividadesDiscipular === 3) {
         }
 
         .ciclo-node-layer {
-            transform: scale(0.62);
+            transform: none;
         }
 
         .ciclo-segment .ciclo-label {
-            font-size: 15px;
-            letter-spacing: 0.35px;
+            font-size: 18px;
+            letter-spacing: 0.55px;
         }
 
         .ciclo-node {
@@ -895,7 +941,7 @@ if ($totalActividadesDiscipular === 3) {
             --icon-size: 36px;
             --text-width: 62px;
             width: var(--text-width) !important;
-            min-height: 62px;
+            min-height: 56px;
             gap: 2px;
             padding: 1px;
         }
@@ -905,9 +951,18 @@ if ($totalActividadesDiscipular === 3) {
             margin-top: 0;
         }
 
+        .ciclo-node--arrow,
+        .ciclo-node--arrow .ciclo-node__icon,
+        .ciclo-node--arrow .ciclo-node__icon svg {
+            width: 22px !important;
+            height: 22px;
+            min-height: 22px;
+        }
+
         .ciclo-node__text {
-            font-size: 5px;
-            line-height: 1.05;
+            font-size: 6px;
+            line-height: 1.08;
+            font-weight: 700;
         }
 
         .ciclo-heart text {
@@ -977,7 +1032,7 @@ if ($totalActividadesDiscipular === 3) {
 
     
 
-    <div class="ciclo-card">
+    <div class="ciclo-card ciclo-card--interactive">
         <div class="ciclo-card__head">
             <h3>Ciclo Interactivo</h3>
         </div>
@@ -1070,11 +1125,86 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     var center = 380;
-    var outerRadius = 352;
-    var ringInnerRadius = 300;
-    var regionRadius = 300;
-    var labelRadius = 326;
-    var activityOrbitRadius = 205;
+    var outerRadius = 332;
+    var ringInnerRadius = 284;
+    var regionRadius = 284;
+    var labelRadius = 308;
+    var desktopActivityOrbitRadius = 190;
+    var desktopArrowOrbitRadius = 224;
+    var activityOrbitRadius = desktopActivityOrbitRadius;
+    var arrowOrbitRadius = desktopArrowOrbitRadius;
+
+    function getResponsiveLayout() {
+        var viewportWidth = window.innerWidth || document.documentElement.clientWidth || 1024;
+
+        if (viewportWidth <= 480) {
+            return {
+                isMobile: true,
+                activityOrbitRadius: 235,
+                arrowOrbitRadius: 270,
+                actionScale: 0.50,
+                arrowScale: 0.65
+            };
+        }
+
+        if (viewportWidth <= 767) {
+            return {
+                isMobile: true,
+                activityOrbitRadius: 222,
+                arrowOrbitRadius: 252,
+                actionScale: 0.62,
+                arrowScale: 0.74
+            };
+        }
+
+        return {
+            isMobile: false,
+            activityOrbitRadius: desktopActivityOrbitRadius,
+            arrowOrbitRadius: desktopArrowOrbitRadius,
+            actionScale: 1,
+            arrowScale: 1
+        };
+    }
+
+    function getResponsiveCardAngle(action, layout) {
+        if (layout.isMobile && action.card && typeof action.card.mobileAngle === 'number') {
+            return action.card.mobileAngle;
+        }
+
+        return action.card ? action.card.angle : action.angle;
+    }
+
+    function getResponsiveCardRadius(action, layout) {
+        if (!action.card) {
+            return action.radius;
+        }
+
+        if (!layout.isMobile) {
+            return action.card.radius || (action.isArrow ? desktopArrowOrbitRadius : desktopActivityOrbitRadius);
+        }
+
+        if (action.card.mobileRadius) {
+            return action.card.mobileRadius;
+        }
+
+        if (action.isArrow) {
+            if (!action.card.radius || action.card.radius === desktopArrowOrbitRadius) {
+                return layout.arrowOrbitRadius;
+            }
+
+            return Math.min(action.card.radius + (layout.arrowOrbitRadius - desktopArrowOrbitRadius), 270);
+        }
+
+        return layout.activityOrbitRadius;
+    }
+
+    function responsiveCssLength(value, scale) {
+        if (typeof value === 'number') {
+            return Math.max(1, Math.round(value * scale)) + 'px';
+        }
+
+        return value;
+    }
 
     var icons = {
         training: '' +
@@ -1142,6 +1272,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 '<path d="M43 18c0-3 3-6 7-6s7 3 7 6c0 6-5 10-7 16-2-6-7-10-7-16z"></path>' +
                 '<path d="M47 18h6"></path>' +
                 '<path d="M50 15v6"></path>' +
+            '</svg>',
+        arrow: '' +
+            '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">' +
+                '<path d="M14 32h30"></path>' +
+                '<path d="M34 18l16 14-16 14"></path>' +
             '</svg>'
     };
 
@@ -1157,8 +1292,21 @@ document.addEventListener('DOMContentLoaded', function () {
                     lines: ['Inscriba y entrene', 'a los obreros'],
                     card: {
                         angle: 0,
-                        iconSize: 72,
-                        textWidth: 128
+                        mobileAngle: 0,
+                        iconSize: 66,
+                        textWidth: 120
+                    }
+                },
+                {
+                    icon: 'arrow',
+                    isArrow: true,
+                    lines: [],
+                    card: {
+                        angle: 14,
+                        mobileAngle: 20,
+                        radius: arrowOrbitRadius,
+                        iconSize: 34,
+                        textWidth: 42
                     }
                 }
             ]
@@ -1174,8 +1322,21 @@ document.addEventListener('DOMContentLoaded', function () {
                     lines: ['Prepárese', 'y ore'],
                     card: {
                         angle: 52,
-                        iconSize: 72,
+                        mobileAngle: 52,
+                        iconSize: 66,
                         textWidth: 112
+                    }
+                },
+                {
+                    icon: 'arrow',
+                    isArrow: true,
+                    lines: [],
+                    card: {
+                        angle: 79,
+                        mobileAngle: 78,
+                        radius: arrowOrbitRadius,
+                        iconSize: 34,
+                        textWidth: 42
                     }
                 },
                 {
@@ -1184,8 +1345,21 @@ document.addEventListener('DOMContentLoaded', function () {
                     lines: ['Encuentre', 'personas de paz'],
                     card: {
                         angle: 104,
-                        iconSize: 72,
-                        textWidth: 116
+                        mobileAngle: 105,
+                        iconSize: 66,
+                        textWidth: 110
+                    }
+                },
+                {
+                    icon: 'arrow',
+                    isArrow: true,
+                    lines: [],
+                    card: {
+                        angle: 119,
+                        mobileAngle: 121,
+                        radius: 255,
+                        iconSize: 34,
+                        textWidth: 42
                     }
                 }
             ]
@@ -1201,8 +1375,21 @@ document.addEventListener('DOMContentLoaded', function () {
                     lines: ['Comparta', 'las buenas nuevas'],
                     card: {
                         angle: 158,
-                        iconSize: 72,
+                        mobileAngle: 160,
+                        iconSize: 66,
                         textWidth: 112
+                    }
+                },
+                {
+                    icon: 'arrow',
+                    isArrow: true,
+                    lines: [],
+                    card: {
+                        angle: 184,
+                        mobileAngle: 188,
+                        radius: arrowOrbitRadius,
+                        iconSize: 34,
+                        textWidth: 42
                     }
                 },
                 {
@@ -1211,8 +1398,21 @@ document.addEventListener('DOMContentLoaded', function () {
                     lines: ['Enseñe a obedecer', 'a Jesús'],
                     card: {
                         angle: 210,
-                        iconSize: 72,
+                        mobileAngle: 218,
+                        iconSize: 66,
                         textWidth: 112
+                    }
+                },
+                {
+                    icon: 'arrow',
+                    isArrow: true,
+                    lines: [],
+                    card: {
+                        angle: 232,
+                        mobileAngle: 243,
+                        radius: arrowOrbitRadius,
+                        iconSize: 34,
+                        textWidth: 42
                     }
                 },
                 {
@@ -1221,8 +1421,21 @@ document.addEventListener('DOMContentLoaded', function () {
                     lines: ['Bautice a', 'los nuevos creyentes'],
                     card: {
                         angle: 255,
-                        iconSize: 72,
+                        mobileAngle: 270,
+                        iconSize: 66,
                         textWidth: 112
+                    }
+                },
+                {
+                    icon: 'arrow',
+                    isArrow: true,
+                    lines: [],
+                    card: {
+                        angle: 268,
+                        mobileAngle: 276,
+                        radius: arrowOrbitRadius,
+                        iconSize: 34,
+                        textWidth: 42
                     }
                 }
             ]
@@ -1237,8 +1450,21 @@ document.addEventListener('DOMContentLoaded', function () {
                     lines: ['Establezca', 'la iglesia'],
                     card: {
                         angle: 308,
-                        iconSize: 72,
+                        mobileAngle: 315,
+                        iconSize: 66,
                         textWidth: 112
+                    }
+                },
+                {
+                    icon: 'arrow',
+                    isArrow: true,
+                    lines: [],
+                    card: {
+                        angle: 320,
+                        mobileAngle: 326,
+                        radius: arrowOrbitRadius,
+                        iconSize: 34,
+                        textWidth: 42
                     }
                 }
             ]
@@ -1265,10 +1491,6 @@ document.addEventListener('DOMContentLoaded', function () {
             x: (point.x / 760 * 100),
             y: (point.y / 760 * 100)
         };
-    }
-
-    function cssLength(value) {
-        return (typeof value === 'number') ? value + 'px' : value;
     }
 
     function angleSpan(startAngle, endAngle) {
@@ -1386,7 +1608,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     svgMarkup += '' +
-        '<g class="ciclo-heart" transform="translate(380 380) scale(0.26) translate(-380 -366)">' +
+        '<g class="ciclo-heart" transform="translate(380 380) scale(0.24) translate(-380 -366)">' +
             '<path d="M380 460 C309 414 252 364 252 297 C252 253 286 222 329 222 C355 222 373 234 380 253 C387 234 405 222 431 222 C474 222 508 253 508 297 C508 364 451 414 380 460 Z" fill="#d51f2d"></path>' +
             '<text x="380" y="342" text-anchor="middle" dominant-baseline="middle">Amor</text>' +
         '</g>';
@@ -1402,11 +1624,23 @@ document.addEventListener('DOMContentLoaded', function () {
             var position = action.card ? null : pointAt(action.angle, action.radius);
             var hasStateImage = !!actionImages[action.actionId];
             var currentActionStatus = actionStatus[action.actionId] || 'active';
+            if (action.isArrow) {
+                if (segmentStatus[currentSegment.id] === 'disabled') {
+                    currentActionStatus = 'disabled';
+                } else if (segmentStatus[currentSegment.id] === 'partial') {
+                    currentActionStatus = 'warning';
+                } else {
+                    currentActionStatus = 'active';
+                }
+            }
             var button = document.createElement('button');
             button.type = 'button';
             button.className = 'ciclo-node' + (hasStateImage ? ' ciclo-node--image' : '');
             if (action.card) {
                 button.className += ' ciclo-node--activity-card';
+            }
+            if (action.isArrow) {
+                button.className += ' ciclo-node--arrow';
             }
             if (action.actionId) {
                 button.className += ' ciclo-node--' + action.actionId.replace(/_/g, '-');
@@ -1418,13 +1652,22 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             button.setAttribute('data-segment', currentSegment.id);
             if (action.card) {
-                // Todas las tarjetas usan el mismo radio para formar una circunferencia interior alineada.
-                var cardPoint = pointAt(action.card.angle, action.card.radius || activityOrbitRadius);
+                // En escritorio conserva la posicion actual.
+                // En celular aumenta la orbita y reduce cada tarjeta sin escalar toda la capa,
+                // evitando que las acciones se junten sobre el corazon.
+                var responsiveLayout = getResponsiveLayout();
+                var cardAngle = getResponsiveCardAngle(action, responsiveLayout);
+                var cardRadius = getResponsiveCardRadius(action, responsiveLayout);
+                var cardPoint = pointAt(cardAngle, cardRadius);
                 var cardPercent = viewBoxPointToPercent(cardPoint);
+                var sizeScale = action.isArrow ? responsiveLayout.arrowScale : responsiveLayout.actionScale;
                 button.style.setProperty('--x', cardPercent.x + '%');
                 button.style.setProperty('--y', cardPercent.y + '%');
-                button.style.setProperty('--icon-size', cssLength(action.card.iconSize));
-                button.style.setProperty('--text-width', cssLength(action.card.textWidth));
+                button.style.setProperty('--icon-size', responsiveCssLength(action.card.iconSize, sizeScale));
+                button.style.setProperty('--text-width', responsiveCssLength(action.card.textWidth, sizeScale));
+                if (action.isArrow) {
+                    button.style.transform = 'translate(-50%, -50%) rotate(' + cardAngle + 'deg)';
+                }
             } else {
                 var positionPercent = viewBoxPointToPercent(position);
                 button.style.left = positionPercent.x + '%';
@@ -1433,7 +1676,12 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!hasStateImage) {
                 button.style.width = (action.width || 148) + 'px';
             }
-            button.setAttribute('aria-label', action.lines.join(' '));
+            if (action.isArrow) {
+                button.setAttribute('aria-hidden', 'true');
+                button.setAttribute('tabindex', '-1');
+            } else {
+                button.setAttribute('aria-label', action.lines.join(' '));
+            }
 
             var textMarkup = '';
             for (var l = 0; l < action.lines.length; l++) {
