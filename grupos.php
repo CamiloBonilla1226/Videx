@@ -1676,6 +1676,31 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         clearAsistenciaError();
     }
 
+    function obtenerIdReporteGrupo(grupo) {
+        const ids = [];
+        ['id', 'id_reporte', 'idReporte', 'reporte_id'].forEach(campo => {
+            const valor = parseInt(grupo[campo], 10);
+            if (valor > 0) {
+                ids.push(valor);
+            }
+        });
+
+        if (Array.isArray(grupo.reportes_ids)) {
+            grupo.reportes_ids.forEach(id => {
+                const valor = parseInt(id, 10);
+                if (valor > 0) {
+                    ids.push(valor);
+                }
+            });
+        }
+
+        if (ids.length === 0) {
+            return '';
+        }
+
+        return Math.min(...ids);
+    }
+
     function normalizarNombreLider(nombre) {
         return (nombre || '').trim().replace(/\s+/g, ' ');
     }
@@ -2791,6 +2816,10 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                 gruposValidos.forEach(grupo => {
                     const option = document.createElement('option');
                     option.value = grupo.id_unico;
+                    const idGrupoMadre = obtenerIdReporteGrupo(grupo);
+                    if (idGrupoMadre) {
+                        option.dataset.idGrupoMadre = idGrupoMadre;
+                    }
                     const grupoMadreInfo = grupo.grupo_madre ? ` (${grupo.grupo_madre})` : ' (Raíz)';
                     option.textContent = `${grupo.nombre_exacto} (Gen ${grupo.generacion})${grupoMadreInfo} - ${grupo.lider}`;
                     option.dataset.generacion = grupo.generacion;
@@ -2937,7 +2966,10 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         const direccion = document.getElementById('newGroupDireccion').value.trim();
         const lider = normalizarNombreLider(document.getElementById('newGroupLider').value);
         const tieneGrupoMadre = document.querySelector('input[name="tieneGrupoMadre"]:checked').value;
-        const grupoMadreId = document.getElementById('grupoMadreDropdown').value;
+        const grupoMadreDropdown = document.getElementById('grupoMadreDropdown');
+        const grupoMadreOption = grupoMadreDropdown.options[grupoMadreDropdown.selectedIndex];
+        const grupoMadreHash = grupoMadreDropdown.value;
+        const grupoMadreId = grupoMadreOption ? (grupoMadreOption.dataset.idGrupoMadre || grupoMadreHash) : '';
 
         // Datos del primer reporte
         const actividad = 'reunion_cotidiana'; // Siempre es Coach
@@ -2988,6 +3020,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             lider: lider,
             tieneGrupoMadre: tieneGrupoMadre,
             grupoMadreId: grupoMadreId,
+            grupoMadreHash: grupoMadreHash,
             // Datos del primer reporte
             tipoActividad: actividad,
             fechaActividad: fecha,
