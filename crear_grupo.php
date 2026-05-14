@@ -30,8 +30,12 @@ try {
     $data = json_decode(file_get_contents('php://input'), true);
     error_log('DEBUG: crear_grupo.php - datos recibidos: ' . json_encode($data));
 
+    if (!is_array($data)) {
+        throw new Exception('Datos invalidos para crear el grupo');
+    }
+
     // Validar datos obligatorios del grupo
-    if (!$data['nombre']) {
+    if (!trim((string)($data['nombre'] ?? ''))) {
         throw new Exception('El nombre del grupo es obligatorio');
     }
 
@@ -41,8 +45,22 @@ try {
     $ciudad = $data['ciudad'] ?? '';
     $barrio = $data['barrio'] ?? '';
     $direccion = $data['direccion'] ?? '';
-    $lider = $data['lider'] ?? '';
-    $tieneGrupoMadre = $data['tieneGrupoMadre'] === 'si';
+    $lider = preg_replace('/\s+/', ' ', trim((string)($data['lider'] ?? '')));
+    $liderLongitud = function_exists('mb_strlen') ? mb_strlen($lider, 'UTF-8') : strlen($lider);
+
+    if ($lider === '') {
+        throw new Exception('El nombre del lider es obligatorio');
+    }
+
+    if ($liderLongitud < 10) {
+        throw new Exception('El nombre del lider debe tener minimo 10 caracteres');
+    }
+
+    if (!preg_match('/^[\p{L} ]+$/u', $lider)) {
+        throw new Exception('El nombre del lider solo debe contener letras y espacios');
+    }
+
+    $tieneGrupoMadre = ($data['tieneGrupoMadre'] ?? '') === 'si';
     $grupoMadreId = $data['grupoMadreId'] ?? '';
 
     // Datos del primer reporte
@@ -127,12 +145,18 @@ try {
     // Calcular asistencia total
     $asistencia_total = $asistencia_hom + $asistencia_muj + $asistencia_jov + $asistencia_nin;
 
+    if ($asistencia_total <= 1) {
+        throw new Exception('La asistencia total debe ser mayor a 1');
+    }
+
     // Crear reporte de generación 0 (creación del grupo)
     $hoy = date('Y-m-d');
     $ahora = date('Y-m-d H:i:s');
 
     $sqlInsert = "INSERT INTO sat_reportes (
         idUsuario,
+        id_grupo,
+        id_actividad,
         inactivo,
         idGrupoMadre,
         generacionNumero,
@@ -180,6 +204,8 @@ try {
         comentario
     ) VALUES (
         " . (int)$idFacilitador . ",
+        0,
+        2,
         0,
         " . (int)$idGrupoMadre . ",
         " . (int)$generacionNumero . ",

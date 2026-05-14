@@ -818,6 +818,23 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         min-height: 80px;
     }
 
+    .form-field-error {
+        display: none;
+        margin-top: 6px;
+        color: #c0392b;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .form-field-error.active {
+        display: block;
+    }
+
+    .form-field-invalid {
+        border-color: #c0392b !important;
+        box-shadow: 0 0 0 2px rgba(192, 57, 43, 0.12) !important;
+    }
+
     .edit-lider-tag {
         display: inline-block;
         background: #f5f5f5;
@@ -1215,9 +1232,10 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                 <label class="edit-form-label">Líderes</label>
                 <div class="edit-lideres-container" id="lideresContainer"></div>
                 <div class="edit-lider-input-group">
-                    <input type="text" id="liderInput" class="edit-form-input edit-lider-input" placeholder="Agregar nuevo líder">
+                    <input type="text" id="liderInput" class="edit-form-input edit-lider-input" placeholder="Agregar nuevo líder" oninput="clearFormError('liderInput', 'liderInputError')">
                     <button type="button" class="edit-lider-add-btn" onclick="addLider()">Agregar</button>
                 </div>
+                <div class="form-field-error" id="liderInputError"></div>
             </div>
 
             <div class="edit-modal-buttons">
@@ -1236,13 +1254,14 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             <button class="edit-modal-close" onclick="closeCreateGroupModal()">✕</button>
         </div>
 
-        <form id="createGroupForm" onsubmit="saveNewGroup(event)">
+        <form id="createGroupForm" onsubmit="saveNewGroup(event)" novalidate>
             <!-- INFORMACIÓN DEL GRUPO -->
             <h4 style="margin-top: 15px; margin-bottom: 10px; color: #333;">📋 Información del IPG</h4>
 
             <div class="edit-modal-section">
                 <label>Nombre del Grupo *</label>
-                <input type="text" id="newGroupName" name="nombre" required placeholder="Ej: Grupo de Jóvenes">
+                <input type="text" id="newGroupName" name="nombre" required placeholder="Ej: Grupo de Jóvenes" oninput="clearFormError('newGroupName', 'newGroupNameError')">
+                <div class="form-field-error" id="newGroupNameError"></div>
             </div>
 
             <div class="edit-modal-section">
@@ -1289,7 +1308,8 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
 
             <div class="edit-modal-section">
                 <label>Líder del Grupo</label>
-                <input type="text" id="newGroupLider" name="lider" placeholder="Nombre del líder">
+                <input type="text" id="newGroupLider" name="lider" placeholder="Nombre del líder" oninput="clearFormError('newGroupLider', 'newGroupLiderError')">
+                <div class="form-field-error" id="newGroupLiderError"></div>
             </div>
 
             <!-- DATOS DEL PRIMER REPORTE -->
@@ -1305,32 +1325,34 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
 
             <div class="edit-modal-section">
                 <label>Fecha del Primer Encuentro *</label>
-                <input type="date" id="newGroupFecha" name="fecha" required>
+                <input type="date" id="newGroupFecha" name="fecha" required onchange="clearFormError('newGroupFecha', 'newGroupFechaError')">
+                <div class="form-field-error" id="newGroupFechaError"></div>
             </div>
 
-            <div class="edit-modal-section">
+            <div class="edit-modal-section" id="newGroupAsistenciaSection">
                 <label>Asistencia en el Primer Encuentro</label>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <div>
                         <label style="font-size: 13px;">👨 Hombres</label>
-                        <input type="number" id="newGroupAsisHom" name="asistencia_hom" min="0" value="0" onchange="calculateTotalAsistencia()">
+                        <input type="number" id="newGroupAsisHom" name="asistencia_hom" min="0" value="0" onchange="calculateTotalAsistencia()" oninput="calculateTotalAsistencia()">
                     </div>
                     <div>
                         <label style="font-size: 13px;">👩 Mujeres</label>
-                        <input type="number" id="newGroupAsisMuj" name="asistencia_muj" min="0" value="0" onchange="calculateTotalAsistencia()">
+                        <input type="number" id="newGroupAsisMuj" name="asistencia_muj" min="0" value="0" onchange="calculateTotalAsistencia()" oninput="calculateTotalAsistencia()">
                     </div>
                     <div>
                         <label style="font-size: 13px;">👦 Jóvenes</label>
-                        <input type="number" id="newGroupAsisJov" name="asistencia_jov" min="0" value="0" onchange="calculateTotalAsistencia()">
+                        <input type="number" id="newGroupAsisJov" name="asistencia_jov" min="0" value="0" onchange="calculateTotalAsistencia()" oninput="calculateTotalAsistencia()">
                     </div>
                     <div>
                         <label style="font-size: 13px;">🧒 Niños</label>
-                        <input type="number" id="newGroupAsisNin" name="asistencia_nin" min="0" value="0" onchange="calculateTotalAsistencia()">
+                        <input type="number" id="newGroupAsisNin" name="asistencia_nin" min="0" value="0" onchange="calculateTotalAsistencia()" oninput="calculateTotalAsistencia()">
                     </div>
                 </div>
                 <div style="margin-top: 10px; padding: 10px; background: #f0f0f0; border-radius: 4px;">
                     <small style="color: #666;">Total: <strong id="totalAsistenciaDisplay">0</strong></small>
                 </div>
+                <div class="form-field-error" id="newGroupAsistenciaError"></div>
             </div>
 
             <div class="edit-modal-buttons">
@@ -1587,6 +1609,100 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         setTimeout(() => {
             statusDiv.className = 'status-message';
         }, 5000);
+    }
+
+    function showFormError(fieldId, errorId, message) {
+        const field = document.getElementById(fieldId);
+        const error = document.getElementById(errorId);
+
+        if (field) {
+            field.classList.add('form-field-invalid');
+        }
+
+        if (error) {
+            error.textContent = message;
+            error.classList.add('active');
+        }
+    }
+
+    function clearFormError(fieldId, errorId) {
+        const field = document.getElementById(fieldId);
+        const error = document.getElementById(errorId);
+
+        if (field) {
+            field.classList.remove('form-field-invalid');
+        }
+
+        if (error) {
+            error.textContent = '';
+            error.classList.remove('active');
+        }
+    }
+
+    function showAsistenciaError(message) {
+        ['newGroupAsisHom', 'newGroupAsisMuj', 'newGroupAsisJov', 'newGroupAsisNin'].forEach(id => {
+            const field = document.getElementById(id);
+            if (field) {
+                field.classList.add('form-field-invalid');
+            }
+        });
+
+        const error = document.getElementById('newGroupAsistenciaError');
+        if (error) {
+            error.textContent = message;
+            error.classList.add('active');
+        }
+    }
+
+    function clearAsistenciaError() {
+        ['newGroupAsisHom', 'newGroupAsisMuj', 'newGroupAsisJov', 'newGroupAsisNin'].forEach(id => {
+            const field = document.getElementById(id);
+            if (field) {
+                field.classList.remove('form-field-invalid');
+            }
+        });
+
+        const error = document.getElementById('newGroupAsistenciaError');
+        if (error) {
+            error.textContent = '';
+            error.classList.remove('active');
+        }
+    }
+
+    function clearCreateGroupFormErrors() {
+        clearFormError('newGroupName', 'newGroupNameError');
+        clearFormError('newGroupLider', 'newGroupLiderError');
+        clearFormError('newGroupFecha', 'newGroupFechaError');
+        clearAsistenciaError();
+    }
+
+    function normalizarNombreLider(nombre) {
+        return (nombre || '').trim().replace(/\s+/g, ' ');
+    }
+
+    function validarNombreLider(nombre) {
+        const lider = normalizarNombreLider(nombre);
+
+        if (!lider) {
+            return 'El nombre del lider es obligatorio';
+        }
+
+        if (Array.from(lider).length < 10) {
+            return 'El nombre del lider debe tener minimo 10 caracteres';
+        }
+
+        let esAlfabetico = false;
+        try {
+            esAlfabetico = new RegExp('^[\\p{L} ]+$', 'u').test(lider);
+        } catch (e) {
+            esAlfabetico = /^[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u024F ]+$/.test(lider);
+        }
+
+        if (!esAlfabetico) {
+            return 'El nombre del lider solo debe contener letras y espacios';
+        }
+
+        return '';
     }
 
     function formatearLider(lider) {
@@ -2559,6 +2675,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
 
         renderLideresUI();
         document.getElementById('liderInput').value = '';
+        clearFormError('liderInput', 'liderInputError');
 
         // Mostrar modal
         document.getElementById('editModal').classList.add('active');
@@ -2567,6 +2684,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
     function closeEditModal() {
         document.getElementById('editModal').classList.remove('active');
         editFormData.lideresArray = [];
+        clearFormError('liderInput', 'liderInputError');
     }
 
     function renderLideresUI() {
@@ -2581,7 +2699,14 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
 
     function addLider() {
         const liderInput = document.getElementById('liderInput');
-        const nuevoLider = liderInput.value.trim();
+        const nuevoLider = normalizarNombreLider(liderInput.value);
+        const errorLider = validarNombreLider(nuevoLider);
+
+        if (errorLider) {
+            showFormError('liderInput', 'liderInputError', errorLider);
+            liderInput.focus();
+            return;
+        }
 
         if (nuevoLider && !editFormData.lideresArray.includes(nuevoLider)) {
             editFormData.lideresArray.push(nuevoLider);
@@ -2610,12 +2735,16 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         // Limpiar formulario
         document.getElementById('createGroupForm').reset();
         document.getElementById('grupoMadreSelect').style.display = 'none';
+        clearCreateGroupFormErrors();
+        calculateTotalAsistencia();
     }
 
     function closeCreateGroupModal() {
         document.getElementById('createGroupModal').classList.remove('active');
         document.getElementById('createGroupForm').reset();
         document.getElementById('grupoMadreSelect').style.display = 'none';
+        clearCreateGroupFormErrors();
+        calculateTotalAsistencia();
     }
 
     function toggleGrupoMadreSelect() {
@@ -2777,18 +2906,28 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         }
     }
 
-    function calculateTotalAsistencia() {
+    function getTotalAsistenciaNuevoGrupo() {
         const hom = parseInt(document.getElementById('newGroupAsisHom').value) || 0;
         const muj = parseInt(document.getElementById('newGroupAsisMuj').value) || 0;
         const jov = parseInt(document.getElementById('newGroupAsisJov').value) || 0;
         const nin = parseInt(document.getElementById('newGroupAsisNin').value) || 0;
-        const total = hom + muj + jov + nin;
+
+        return hom + muj + jov + nin;
+    }
+
+    function calculateTotalAsistencia() {
+        const total = getTotalAsistenciaNuevoGrupo();
         document.getElementById('totalAsistenciaDisplay').textContent = total;
+
+        if (total > 1) {
+            clearAsistenciaError();
+        }
     }
 
     function saveNewGroup(event) {
         event.preventDefault();
         console.log('Guardando nuevo grupo');
+        clearCreateGroupFormErrors();
 
         // Datos del grupo
         const nombre = document.getElementById('newGroupName').value.trim();
@@ -2796,7 +2935,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         const ciudad = document.getElementById('newGroupCiudad').value.trim();
         const barrio = document.getElementById('newGroupBarrio').value.trim();
         const direccion = document.getElementById('newGroupDireccion').value.trim();
-        const lider = document.getElementById('newGroupLider').value.trim();
+        const lider = normalizarNombreLider(document.getElementById('newGroupLider').value);
         const tieneGrupoMadre = document.querySelector('input[name="tieneGrupoMadre"]:checked').value;
         const grupoMadreId = document.getElementById('grupoMadreDropdown').value;
 
@@ -2807,9 +2946,18 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         const asistencia_muj = parseInt(document.getElementById('newGroupAsisMuj').value) || 0;
         const asistencia_jov = parseInt(document.getElementById('newGroupAsisJov').value) || 0;
         const asistencia_nin = parseInt(document.getElementById('newGroupAsisNin').value) || 0;
+        const asistencia_total = asistencia_hom + asistencia_muj + asistencia_jov + asistencia_nin;
 
         if (!nombre) {
-            showStatusMessage('El nombre del grupo es obligatorio', 'error');
+            showFormError('newGroupName', 'newGroupNameError', 'El nombre del grupo es obligatorio');
+            document.getElementById('newGroupName').focus();
+            return;
+        }
+
+        const errorLider = validarNombreLider(lider);
+        if (errorLider) {
+            showFormError('newGroupLider', 'newGroupLiderError', errorLider);
+            document.getElementById('newGroupLider').focus();
             return;
         }
 
@@ -2819,7 +2967,14 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         }
 
         if (!fecha) {
-            showStatusMessage('Debes seleccionar la fecha del primer encuentro', 'error');
+            showFormError('newGroupFecha', 'newGroupFechaError', 'Debes seleccionar la fecha del primer encuentro');
+            document.getElementById('newGroupFecha').focus();
+            return;
+        }
+
+        if (asistencia_total <= 1) {
+            showAsistenciaError('La asistencia total debe ser mayor a 1');
+            document.getElementById('newGroupAsisHom').focus();
             return;
         }
 
@@ -2872,7 +3027,18 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                         loadGrupos();
                     }, 500);
                 } else {
-                    showStatusMessage('Error: ' + (data.message || 'No se pudo crear el grupo'), 'error');
+                    const mensajeError = data.message || 'No se pudo crear el grupo';
+                    const mensajeNormalizado = mensajeError.toLowerCase();
+
+                    if (mensajeNormalizado.includes('lider')) {
+                        showFormError('newGroupLider', 'newGroupLiderError', mensajeError.replace(/^Error:\s*/i, ''));
+                        document.getElementById('newGroupLider').focus();
+                    } else if (mensajeNormalizado.includes('asistencia')) {
+                        showAsistenciaError(mensajeError.replace(/^Error:\s*/i, ''));
+                        document.getElementById('newGroupAsisHom').focus();
+                    } else {
+                        showStatusMessage('Error: ' + mensajeError, 'error');
+                    }
                 }
             } catch (parseError) {
                 console.error('Error al parsear JSON:', parseError);
