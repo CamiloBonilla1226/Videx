@@ -1476,10 +1476,11 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
 
                 <!-- Sección de Evidencia Fotográfica -->
                 <div class="form-group">
-                    <label>📸 Evidencia Fotográfica (Opcional)</label>
-                    <input type="file" id="fotosEvidencia" multiple accept="image/jpeg,image/png,image/jpg,image/webp" required style="display: block; margin-top: 8px;">
-                    <small style="color: #666; display: block; margin-top: 8px;">Máximo 5 MB por imagen. Formatos: JPG, PNG, WebP</small>
+                    <label>📸 Evidencia Fotográfica (Mínimo 1 - Máximo 3 imágenes)</label>
+                    <input type="file" id="fotosEvidencia" multiple accept="image/jpeg,image/png,image/jpg,image/webp" style="display: block; margin-top: 8px;">
+                    <small style="color: #666; display: block; margin-top: 8px;">📌 Mínimo 1 imagen requerida para guardar el reporte • Máximo 3 imágenes • 5 MB por imagen • Formatos: JPG, PNG, WebP</small>
                     <div id="fotosPreview" style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px;"></div>
+                    <div id="fotosCountMsg" style="margin-top: 8px; font-size: 12px; color: #666;"></div>
                 </div>
 
                 <!-- Sección de Mapeos (solo para Coach) -->
@@ -2363,7 +2364,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         const fecha = reporte.fechaInicio
             ? new Date(reporte.fechaInicio).toLocaleDateString('es-CO', {
                 year: 'numeric',
-                month: 'short',
+                month: 'long',
                 day: 'numeric'
             })
             : 'Sin fecha';
@@ -2372,7 +2373,18 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         const desiciones = parseInt(reporte.desiciones || 0, 10);
         const preparandose = parseInt(reporte.preparandose || 0, 10);
 
-        return `<strong>${obtenerEtiquetaActividad(reporte)}</strong> â€¢ ${fecha} â€¢ Asistencia: ${asistencia} â€¢ Discipulado: ${discipulado} â€¢ Decisiones: ${desiciones} â€¢ Preparandose: ${preparandose}`;
+        return `
+            <div style="line-height: 1.6;">
+                <div style="font-weight: 600; color: #2c3e50; margin-bottom: 6px;">${obtenerEtiquetaActividad(reporte)}</div>
+                <div style="color: #555; font-size: 11px;">
+                    <span style="font-weight: 500;">📅 ${fecha}</span><br>
+                    <span>👥 Asistencia: <strong style="color: #2c3e50;">${asistencia}</strong></span> | 
+                    <span>📖 Discipulado: <strong style="color: #2c3e50;">${discipulado}</strong></span><br>
+                    <span>✝️ Decisiones: <strong style="color: #2c3e50;">${desiciones}</strong></span> | 
+                    <span>🎯 Preparándose: <strong style="color: #2c3e50;">${preparandose}</strong></span>
+                </div>
+            </div>
+        `;
     }
 
     function renderReportsListFast(grupoData, tabReports, reportes, imagenes = []) {
@@ -2734,7 +2746,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             const fotosLabel = fotosInput.closest('.form-group')?.querySelector('label');
             const fotosHelp = fotosInput.closest('.form-group')?.querySelector('small');
             if (fotosLabel) {
-                fotosLabel.textContent = 'Evidencia Fotográfica (Obligatoria)';
+                fotosLabel.textContent = 'Evidencia Fotográfica (Obligatoria) Min 1 Max 3';
             }
             if (fotosHelp) {
                 fotosHelp.textContent = 'Debe cargar al menos una imagen. Máximo 5 MB por imagen. Formatos: JPG, PNG, WebP';
@@ -2744,28 +2756,33 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         if (fotosInput) {
             fotosInput.addEventListener('change', function(e) {
                 fotosPreview.innerHTML = '';
+                const fotosCountMsg = document.getElementById('fotosCountMsg');
                 const files = Array.from(this.files);
                 const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
                 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+                let validCount = 0;
 
                 if (files.length > MAX_REPORT_IMAGES) {
-                    showStatusMessage(`Solo puedes cargar maximo ${MAX_REPORT_IMAGES} imagenes por reporte`, 'error');
+                    showStatusMessage(`❌ Solo puedes cargar máximo ${MAX_REPORT_IMAGES} imágenes por reporte. Seleccionaste ${files.length}.`, 'error');
                     this.value = '';
+                    fotosCountMsg.textContent = '';
                     return;
                 }
 
                 files.forEach((file, index) => {
                     // Validar tipo
                     if (!ALLOWED_TYPES.includes(file.type)) {
-                        showStatusMessage(`❌ Archivo ${file.name}: formato no permitido`, 'error');
+                        showStatusMessage(`❌ Archivo ${file.name}: formato no permitido. Solo JPG, PNG, WebP`, 'error');
                         return;
                     }
 
                     // Validar tamaño
                     if (file.size > MAX_SIZE) {
-                        showStatusMessage(`❌ Archivo ${file.name}: excede 5 MB`, 'error');
+                        showStatusMessage(`❌ Archivo ${file.name}: excede 5 MB (${(file.size / 1024 / 1024).toFixed(1)} MB)`, 'error');
                         return;
                     }
+
+                    validCount++;
 
                     // Crear vista previa
                     const reader = new FileReader();
@@ -2782,12 +2799,25 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                         `;
                         preview.innerHTML = `
                             <img src="${event.target.result}" style="width: 100%; height: 100%; object-fit: cover;">
-                            <div style="position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.6); color: white; font-size: 11px; padding: 2px 6px; border-radius: 3px;">${index + 1}</div>
+                            <div style="position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.6); color: white; font-size: 11px; padding: 2px 6px; border-radius: 3px;">${validCount}</div>
                         `;
                         fotosPreview.appendChild(preview);
                     };
                     reader.readAsDataURL(file);
                 });
+
+                // Mostrar contador
+                if (fotosCountMsg) {
+                    if (validCount === 0) {
+                        fotosCountMsg.textContent = '';
+                    } else if (validCount === 1) {
+                        fotosCountMsg.innerHTML = '✅ 1 imagen cargada (mínimo requerido)';
+                        fotosCountMsg.style.color = '#27ae60';
+                    } else {
+                        fotosCountMsg.innerHTML = `✅ ${validCount} imágenes cargadas (${MAX_REPORT_IMAGES - validCount} espacios disponibles)`;
+                        fotosCountMsg.style.color = '#27ae60';
+                    }
+                }
             });
         }
     });
@@ -2816,11 +2846,11 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
 
         const fotosValidas = obtenerFotosEvidenciaValidas();
         if (fotosValidas.length === 0) {
-            showStatusMessage('Debe cargar al menos una evidencia fotográfica válida para guardar el reporte', 'error');
+            showStatusMessage('❌ Debe cargar al menos 1 evidencia fotográfica para guardar el reporte (máximo 3)', 'error');
             return;
         }
         if (fotosValidas.length > MAX_REPORT_IMAGES) {
-            showStatusMessage(`Solo puedes cargar maximo ${MAX_REPORT_IMAGES} imagenes por reporte`, 'error');
+            showStatusMessage(`❌ Solo puedes cargar máximo ${MAX_REPORT_IMAGES} imágenes por reporte (cargaste ${fotosValidas.length})`, 'error');
             return;
         }
         if (!validarMetricasContraAsistencia()) {
@@ -2957,13 +2987,13 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         }
 
         if (validFiles === 0) {
-            showStatusMessage('No hay imágenes válidas para guardar', 'error');
+            showStatusMessage('❌ No hay imágenes válidas. Debe cargar al menos 1 imagen (máximo 3)', 'error');
             btnSubmit.textContent = textOriginal;
             btnSubmit.disabled = false;
             return;
         }
         if (validFiles > MAX_REPORT_IMAGES) {
-            showStatusMessage(`Solo puedes cargar maximo ${MAX_REPORT_IMAGES} imagenes por reporte`, 'error');
+            showStatusMessage(`❌ Solo puedes cargar máximo ${MAX_REPORT_IMAGES} imágenes por reporte (intentaste cargar ${validFiles})`, 'error');
             btnSubmit.textContent = textOriginal;
             btnSubmit.disabled = false;
             return;

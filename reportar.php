@@ -604,6 +604,13 @@ else if(isset($_POST["funcion"])){
 
         //Calculados:
         $asistencia_total  = $asistencia_hom+$asistencia_muj+$asistencia_jov+$asistencia_nin;
+        
+        // Validar asistencia total >= 1
+        if($asistencia_total < 1){
+            $error_datos = 1;
+            $mensaje_error = "La asistencia total debe ser mínimo 1 persona";
+        }
+        
         $discipulado  = soloNumeros($_REQUEST["final_discipulado"]);
         if(empty($discipulado)) $discipulado = 0;
         $desiciones  = soloNumeros($_REQUEST["final_desiciones"]);
@@ -875,6 +882,13 @@ else if(isset($_POST["funcion"])){
 
         //Calculados:
         $asistencia_total  = $asistencia_hom+$asistencia_muj+$asistencia_jov+$asistencia_nin;
+        
+        // Validar asistencia total >= 1
+        if($asistencia_total < 1){
+            $error_datos = 1;
+            $mensaje_error = "La asistencia total debe ser mínimo 1 persona";
+        }
+        
         $discipulado  = soloNumeros($_REQUEST["final_discipulado"]);
         $desiciones  = soloNumeros($_REQUEST["final_desiciones"]);
         $preparandose  = soloNumeros($_REQUEST["final_preparandose"]);
@@ -4750,15 +4764,20 @@ window.onclick = function(event) {
             <div class="form-group">
                 <div class="col-sm-4">
                     <strong>Foto 1:</strong>
-                    <input name="archivo1" type="file" id="archivo1" class="form-control" />
+                    <input name="archivo1" type="file" id="archivo1" class="form-control foto-input" />
                 </div>
-                <div class="col-sm-4">
+                <div class="col-sm-4" id="div-foto2" style="display:none;">
                     <strong>Foto 2:</strong>
-                    <input name="archivo2" type="file" id="archivo2" class="form-control" />
+                    <input name="archivo2" type="file" id="archivo2" class="form-control foto-input" />
                 </div>
-                <div class="col-sm-4">
+                <div class="col-sm-4" id="div-foto3" style="display:none;">
                     <strong>Foto 3:</strong>
-                    <input name="archivo3" type="file" id="archivo3" class="form-control" />
+                    <input name="archivo3" type="file" id="archivo3" class="form-control foto-input" />
+                </div>
+            </div>
+            <div class="form-group" id="btn-agregar-foto-container">
+                <div class="col-sm-12">
+                    <button type="button" id="btn-agregar-foto" class="btn btn-primary">+ Agregar otra foto</button>
                 </div>
             </div>
 

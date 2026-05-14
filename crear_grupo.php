@@ -196,8 +196,8 @@ try {
     // Calcular asistencia total
     $asistencia_total = $asistencia_hom + $asistencia_muj + $asistencia_jov + $asistencia_nin;
 
-    if ($asistencia_total <= 1) {
-        throw new Exception('La asistencia total debe ser mayor a 1');
+    if ($asistencia_total < 1) {
+        throw new Exception('La asistencia total debe ser mínimo 1');
     }
 
     // Crear reporte de generación 0 (creación del grupo)
