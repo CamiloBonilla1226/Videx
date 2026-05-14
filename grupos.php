@@ -1435,6 +1435,27 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                     </div>
                 </div>
 
+                <div class="form-group" id="metricasEvangelismoSection" style="display: none;">
+                    <label>Asistencia Total</label>
+                    <div style="padding: 10px; background: #f0f0f0; border-radius: 4px; margin-bottom: 12px;">
+                        <strong id="asistenciaTotalReporte">0</strong>
+                    </div>
+                    <div class="attendance-grid">
+                        <div class="attendance-input">
+                            <label>Discipulado</label>
+                            <input type="number" id="discipulado" min="0" value="0">
+                        </div>
+                        <div class="attendance-input">
+                            <label>Decisiones</label>
+                            <input type="number" id="desiciones_extra" min="0" value="0">
+                        </div>
+                        <div class="attendance-input">
+                            <label>Preparandose</label>
+                            <input type="number" id="preparandose" min="0" value="0">
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Campo opcional: Bautizados -->
                 <div class="form-group" id="bautizadosSection" style="display: none;">
                     <label>Cantidad de Bautizados</label>
@@ -1587,6 +1608,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
     let grupos = [];
     let filteredGrupos = [];
     let selectedGrupo = null;
+    const MAX_REPORT_IMAGES = 3;
 
     function toggleMobileMenu() {
         const mobileSlider = document.getElementById('mobileSlider');
@@ -1849,17 +1871,19 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         groupPanelTitle.textContent = `📋 ${grupoData.nombre_exacto}`;
 
         // Actualizar tab de información
-        updateInfoTab(grupoData, tabInfo);
+        updateInfoTab(grupoData, tabInfo, null, true);
 
         // Actualizar tab de reportes
         updateReportsTab(grupoData, tabReports);
     }
 
-    function updateInfoTab(grupoData, tabInfo) {
+    function updateInfoTab(grupoData, tabInfo, imagenesPrecargadas = null, cargandoReportes = false) {
         let generacionText = 'No especificada';
         if (grupoData.generacion) {
             generacionText = grupoData.generacion;
         }
+        const reportesIds = normalizarReportesIds(grupoData.reportes_mostrados_ids || grupoData.reportes_ids || []);
+        const totalReportes = cargandoReportes ? 'Cargando...' : reportesIds.length;
 
         let infoHTML = `
             <button class="btn btn-primary" style="width: 100%; margin-bottom: 20px;" onclick="openEditModal()" title="Editar información del grupo">
@@ -1896,12 +1920,12 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             </div>
             <div class="info-section">
                 <div class="info-label">Total de Reportes</div>
-                <div class="info-value">${grupoData.reportes || 0}</div>
+                <div class="info-value" id="totalReportesValue">${totalReportes}</div>
             </div>
         `;
 
         // Agregar sección de imágenes si hay reportes
-        if (grupoData.reportes_ids && grupoData.reportes_ids.length > 0) {
+        if (!cargandoReportes && reportesIds.length > 0) {
             infoHTML += `
                 <div class="info-divider"></div>
                 <div class="info-section">
@@ -1916,9 +1940,45 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         tabInfo.innerHTML = infoHTML;
 
         // Cargar imágenes si existen reportes
-        if (grupoData.reportes_ids && grupoData.reportes_ids.length > 0) {
-            loadImagesInInfoSection(grupoData.reportes_ids);
+        if (!cargandoReportes && reportesIds.length > 0) {
+            if (Array.isArray(imagenesPrecargadas)) {
+                renderImagesInInfoSection(imagenesPrecargadas);
+            } else {
+                loadImagesInInfoSection(reportesIds);
+            }
         }
+    }
+
+    function renderImagesInInfoSection(imagenes) {
+        const container = document.getElementById('imagesContainer');
+        if (!container) {
+            return;
+        }
+
+        if (!Array.isArray(imagenes) || imagenes.length === 0) {
+            container.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">No hay imÃ¡genes disponibles</div>';
+            return;
+        }
+
+        container.innerHTML = imagenes.map((img) => {
+            const thumbnail = img.rutaThumbnail || img.ruta;
+            return `
+                <div class="image-item" style="position: relative; width: 100%; aspect-ratio: 1; border-radius: 4px; overflow: hidden; cursor: pointer; border: 1px solid #ddd; background: #f5f5f5;">
+                    <img src="${thumbnail}" alt="${img.nombre}"
+                         style="width: 100%; height: 100%; object-fit: cover;"
+                         title="Reporte ${img.reporte_id}">
+                    <div style="position: absolute; inset: 0; background: rgba(0,0,0,0); transition: background 0.2s;"
+                         onmouseover="this.style.background='rgba(0,0,0,0.2)'"
+                         onmouseout="this.style.background='rgba(0,0,0,0)'"></div>
+                </div>
+            `;
+        }).join('');
+
+        container.querySelectorAll('.image-item').forEach((item, idx) => {
+            item.addEventListener('click', function() {
+                openImageModal(idx, imagenes.map(i => i.ruta));
+            });
+        });
     }
 
     function loadImagesInInfoSection(reporteIds) {
@@ -2287,6 +2347,141 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         }
     }
 
+    function agruparImagenesPorReporte(imagenes) {
+        const imagesByReport = {};
+        (imagenes || []).forEach(img => {
+            const reporteId = parseInt(img.reporte_id, 10);
+            if (!imagesByReport[reporteId]) {
+                imagesByReport[reporteId] = [];
+            }
+            imagesByReport[reporteId].push(img);
+        });
+        return imagesByReport;
+    }
+
+    function renderReporteResumen(reporte) {
+        const fecha = reporte.fechaInicio
+            ? new Date(reporte.fechaInicio).toLocaleDateString('es-CO', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            })
+            : 'Sin fecha';
+        const asistencia = parseInt(reporte.asistencia_total || 0, 10);
+        const discipulado = parseInt(reporte.discipulado || 0, 10);
+        const desiciones = parseInt(reporte.desiciones || 0, 10);
+        const preparandose = parseInt(reporte.preparandose || 0, 10);
+
+        return `<strong>${obtenerEtiquetaActividad(reporte)}</strong> â€¢ ${fecha} â€¢ Asistencia: ${asistencia} â€¢ Discipulado: ${discipulado} â€¢ Decisiones: ${desiciones} â€¢ Preparandose: ${preparandose}`;
+    }
+
+    function renderReportsListFast(grupoData, tabReports, reportes, imagenes = []) {
+        const reportesLista = Array.isArray(reportes) ? reportes : [];
+        const reportesIds = normalizarReportesIds(reportesLista.map(reporte => reporte.id));
+        const imagesByReport = agruparImagenesPorReporte(imagenes);
+        grupoData.reportes_mostrados_ids = reportesIds;
+        grupoData.reportes_ids = reportesIds;
+        grupoData.reportes = reportesIds.length;
+
+        if (reportesLista.length === 0) {
+            tabReports.innerHTML = `
+                <div class="empty-message">
+                    <p>Este grupo no tiene reportes registrados</p>
+                </div>
+            `;
+            return;
+        }
+
+        tabReports.innerHTML = reportesLista.map((reporte, index) => {
+            const reporteId = parseInt(reporte.id, 10);
+            const images = imagesByReport[reporteId] || [];
+            const imagesHTML = images.map((img, imgIndex) => {
+                const thumbnail = img.rutaThumbnail || img.ruta;
+                return `
+                    <div class="image-thumbnail" data-index="${imgIndex}" data-report="${reporteId}" style="position: relative; width: 100%; aspect-ratio: 1; border-radius: 4px; overflow: hidden; cursor: pointer; border: 1px solid #ddd; background: #f5f5f5;">
+                        <img src="${thumbnail}" alt="${img.nombre}"
+                             style="width: 100%; height: 100%; object-fit: cover;"
+                             title="${img.nombre}">
+                        <div style="position: absolute; inset: 0; background: rgba(0,0,0,0); transition: background 0.2s;"
+                             onmouseover="this.style.background='rgba(0,0,0,0.2)'"
+                             onmouseout="this.style.background='rgba(0,0,0,0)'"></div>
+                    </div>
+                `;
+            }).join('');
+            const idActividad = parseInt(reporte.id_actividad || 0, 10);
+            const mapeoData = JSON.stringify({
+                mapeo_oracion: parseInt(reporte.mapeo_oracion) || 0,
+                mapeo_companerismo: parseInt(reporte.mapeo_companerismo) || 0,
+                mapeo_adoracion: parseInt(reporte.mapeo_adoracion) || 0,
+                mapeo_biblia: parseInt(reporte.mapeo_biblia) || 0,
+                mapeo_evangelizar: parseInt(reporte.mapeo_evangelizar) || 0,
+                mapeo_cena: parseInt(reporte.mapeo_cena) || 0,
+                mapeo_dar: parseInt(reporte.mapeo_dar) || 0,
+                mapeo_bautizar: parseInt(reporte.mapeo_bautizar) || 0,
+                mapeo_trabajadores: parseInt(reporte.mapeo_trabajadores) || 0
+            }).replace(/"/g, '&quot;');
+
+            return `
+                <div class="report-item"
+                     data-href="index.php?doc=reportar&id=${reporteId}"
+                     style="display: flex; gap: 15px; padding: 12px; border: 1px solid #e0e0e0; border-radius: 6px; background: #fafafa; margin-bottom: 10px; cursor: pointer; transition: background-color 0.2s ease, border-color 0.2s ease;">
+                    <div style="flex-shrink: 0;">
+                        <div style="background: #2c3e50; color: white; width: 60px; height: 60px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px;">
+                            #${reporteId}
+                        </div>
+                    </div>
+                    <div style="flex-grow: 1;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <strong style="color: #333;">Reporte ${index + 1} de ${reportesIds.length}</strong>
+                            <span style="background: #e8e8e8; color: #2c3e50; padding: 4px 8px; border-radius: 4px; font-size: 12px;">ID: ${reporteId}</span>
+                        </div>
+                        <div id="report-info-${reporteId}" style="font-size: 12px; color: #666; margin-bottom: 8px;">
+                            ${renderReporteResumen(reporte)}
+                        </div>
+                        <div id="images-${reporteId}" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 6px; margin-top: 8px;">
+                            ${imagesHTML || '<span style="font-size: 12px; color: #999;">Sin imÃ¡genes</span>'}
+                        </div>
+                        <div id="mapeo-btn-${reporteId}" data-mapeo="${mapeoData}">
+                            ${idActividad === 1 ? `<button onclick="toggleMapeoChart(${reporteId})" class="btn btn-sm btn-info" style="margin-top: 8px; font-size: 11px; padding: 4px 10px; border-radius: 4px;">ðŸ“Š Ver Mapeo</button>` : ''}
+                        </div>
+                        <div id="mapeo-chart-${reporteId}" style="display: none; text-align: center; margin-top: 10px;">
+                            <canvas id="mapeo-canvas-${reporteId}" width="400" height="400" style="max-width: 100%; border: 1px solid #ddd; border-radius: 8px; background: #fff;"></canvas>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        tabReports.querySelectorAll('.report-item').forEach(item => {
+            item.addEventListener('mouseenter', function() {
+                this.style.backgroundColor = '#f0f6ff';
+                this.style.borderColor = '#b9d4f5';
+            });
+            item.addEventListener('mouseleave', function() {
+                this.style.backgroundColor = '#fafafa';
+                this.style.borderColor = '#e0e0e0';
+            });
+            item.addEventListener('click', function(e) {
+                if (e.target.closest('.image-thumbnail, button, canvas, a')) {
+                    return;
+                }
+                const href = this.dataset.href;
+                if (href) {
+                    window.location.href = href;
+                }
+            });
+        });
+
+        tabReports.querySelectorAll('.image-thumbnail').forEach(thumb => {
+            thumb.addEventListener('click', function() {
+                const reporteId = parseInt(this.dataset.report, 10);
+                const images = (imagesByReport[reporteId] || []).map(i => i.ruta);
+                const index = parseInt(this.dataset.index, 10) || 0;
+                openImageModal(index, images);
+            });
+        });
+    }
+
     function updateReportsTab(grupoData, tabReports) {
         const idGrupo = obtenerIdGrupoSeleccionado(grupoData);
 
@@ -2317,16 +2512,28 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                renderReportsList(grupoData, tabReports, data.reportes_ids || []);
-                renderReporteInfoBasica(data.reportes || []);
+                const reportesIds = normalizarReportesIds(data.reportes_ids || []);
+                grupoData.reportes_ids = reportesIds;
+                grupoData.reportes_mostrados_ids = reportesIds;
+                grupoData.reportes = reportesIds.length;
+                updateInfoTab(grupoData, document.getElementById('tab-info'), data.imagenes || [], false);
+                renderReportsListFast(grupoData, tabReports, data.reportes || [], data.imagenes || []);
             } else {
                 console.error('Error al cargar reportes del grupo:', data.message);
-                renderReportsList(grupoData, tabReports, []);
+                grupoData.reportes_ids = [];
+                grupoData.reportes_mostrados_ids = [];
+                grupoData.reportes = 0;
+                updateInfoTab(grupoData, document.getElementById('tab-info'), [], false);
+                renderReportsListFast(grupoData, tabReports, [], []);
             }
         })
         .catch(error => {
             console.error('Error al cargar reportes del grupo:', error);
-            renderReportsList(grupoData, tabReports, []);
+            grupoData.reportes_ids = [];
+            grupoData.reportes_mostrados_ids = [];
+            grupoData.reportes = 0;
+            updateInfoTab(grupoData, document.getElementById('tab-info'), [], false);
+            renderReportsListFast(grupoData, tabReports, [], []);
         });
     }
 
@@ -2420,6 +2627,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         const decisionesSection = document.getElementById('decisionesSection');
         const comentariosSection = document.getElementById('comentariosSection');
         const mapeosSection = document.getElementById('mapeosSection');
+        const metricasEvangelismoSection = document.getElementById('metricasEvangelismoSection');
         const asistenciaLabel = document.getElementById('asistenciaLabel');
 
         // Ocultar todos por defecto
@@ -2427,6 +2635,10 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         decisionesSection.style.display = 'none';
         comentariosSection.style.display = 'none';
         mapeosSection.style.display = 'none';
+        metricasEvangelismoSection.style.display = 'none';
+        document.getElementById('discipulado').value = 0;
+        document.getElementById('desiciones_extra').value = 0;
+        document.getElementById('preparandose').value = 0;
 
         // Mostrar según tipo
         if (tipoActividad === 'bautizo') {
@@ -2434,14 +2646,17 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             asistenciaLabel.textContent = 'Asistencia (opcional)';
         } else if (tipoActividad === 'gran_celebracion') {
             comentariosSection.style.display = 'block';
+            metricasEvangelismoSection.style.display = 'block';
             asistenciaLabel.textContent = 'Asistencia';
         } else if (tipoActividad === 'evangelismo') {
+            metricasEvangelismoSection.style.display = 'block';
             asistenciaLabel.textContent = 'Alcanzados';
         } else if (tipoActividad === 'reunion_cotidiana') {
             decisionesSection.style.display = 'block';
             mapeosSection.style.display = 'block';
             asistenciaLabel.textContent = 'Asistencia';
         }
+        actualizarAsistenciaReporte();
 
         // Cambiar título del formulario
         const titles = {
@@ -2463,9 +2678,57 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
     }
 
     // Manejar vista previa de imágenes y validación
+    function obtenerAsistenciaTotalReporte() {
+        return (parseInt(document.getElementById('asistencia_hom').value) || 0)
+            + (parseInt(document.getElementById('asistencia_muj').value) || 0)
+            + (parseInt(document.getElementById('asistencia_jov').value) || 0)
+            + (parseInt(document.getElementById('asistencia_nin').value) || 0);
+    }
+
+    function actualizarAsistenciaReporte() {
+        const total = obtenerAsistenciaTotalReporte();
+        const totalElement = document.getElementById('asistenciaTotalReporte');
+        if (totalElement) {
+            totalElement.textContent = total;
+        }
+    }
+
+    function validarMetricasContraAsistencia() {
+        const total = obtenerAsistenciaTotalReporte();
+        const metricasSection = document.getElementById('metricasEvangelismoSection');
+        if (!metricasSection || metricasSection.style.display === 'none') {
+            return true;
+        }
+
+        const campos = [
+            { id: 'discipulado', label: 'Discipulado' },
+            { id: 'desiciones_extra', label: 'Decisiones' },
+            { id: 'preparandose', label: 'Preparandose' }
+        ];
+
+        for (const campo of campos) {
+            const valor = parseInt(document.getElementById(campo.id).value) || 0;
+            if (valor > total) {
+                showStatusMessage(`${campo.label} no puede ser mayor a la asistencia total`, 'error');
+                document.getElementById(campo.id).focus();
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         const fotosInput = document.getElementById('fotosEvidencia');
         const fotosPreview = document.getElementById('fotosPreview');
+
+        ['asistencia_hom', 'asistencia_muj', 'asistencia_jov', 'asistencia_nin'].forEach(function(id) {
+            const input = document.getElementById(id);
+            if (input) {
+                input.addEventListener('input', actualizarAsistenciaReporte);
+                input.addEventListener('change', actualizarAsistenciaReporte);
+            }
+        });
 
         if (fotosInput) {
             const fotosLabel = fotosInput.closest('.form-group')?.querySelector('label');
@@ -2484,6 +2747,12 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                 const files = Array.from(this.files);
                 const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
                 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+
+                if (files.length > MAX_REPORT_IMAGES) {
+                    showStatusMessage(`Solo puedes cargar maximo ${MAX_REPORT_IMAGES} imagenes por reporte`, 'error');
+                    this.value = '';
+                    return;
+                }
 
                 files.forEach((file, index) => {
                     // Validar tipo
@@ -2550,6 +2819,13 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             showStatusMessage('Debe cargar al menos una evidencia fotográfica válida para guardar el reporte', 'error');
             return;
         }
+        if (fotosValidas.length > MAX_REPORT_IMAGES) {
+            showStatusMessage(`Solo puedes cargar maximo ${MAX_REPORT_IMAGES} imagenes por reporte`, 'error');
+            return;
+        }
+        if (!validarMetricasContraAsistencia()) {
+            return;
+        }
 
         const tipoActividad = document.getElementById('tipoActividad').value;
         const reporteIds = JSON.parse(document.getElementById('reporteIds').value || '[]');
@@ -2577,6 +2853,11 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         }
         if (document.getElementById('decisionesSection').style.display !== 'none') {
             datosReporte.desiciones = parseInt(document.getElementById('desiciones').value) || 0;
+        }
+        if (document.getElementById('metricasEvangelismoSection').style.display !== 'none') {
+            datosReporte.discipulado = parseInt(document.getElementById('discipulado').value) || 0;
+            datosReporte.desiciones = parseInt(document.getElementById('desiciones_extra').value) || 0;
+            datosReporte.preparandose = parseInt(document.getElementById('preparandose').value) || 0;
         }
         if (document.getElementById('comentariosSection').style.display !== 'none') {
             datosReporte.comentario = document.getElementById('comentario').value;
@@ -2677,6 +2958,12 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
 
         if (validFiles === 0) {
             showStatusMessage('No hay imágenes válidas para guardar', 'error');
+            btnSubmit.textContent = textOriginal;
+            btnSubmit.disabled = false;
+            return;
+        }
+        if (validFiles > MAX_REPORT_IMAGES) {
+            showStatusMessage(`Solo puedes cargar maximo ${MAX_REPORT_IMAGES} imagenes por reporte`, 'error');
             btnSubmit.textContent = textOriginal;
             btnSubmit.disabled = false;
             return;

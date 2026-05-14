@@ -45,7 +45,19 @@ try {
             idGrupoMadre,
             generacionNumero,
             fechaInicio,
-            asistencia_total
+            asistencia_total,
+            discipulado,
+            desiciones,
+            preparandose,
+            mapeo_oracion,
+            mapeo_companerismo,
+            mapeo_adoracion,
+            mapeo_biblia,
+            mapeo_evangelizar,
+            mapeo_cena,
+            mapeo_dar,
+            mapeo_bautizar,
+            mapeo_trabajadores
         FROM sat_reportes
         WHERE idUsuario = " . (int)$idFacilitador . "
           AND id_grupo = " . (int)$idGrupo . "
@@ -68,15 +80,51 @@ try {
             'idGrupoMadre' => (int)$PSN1->f('idGrupoMadre'),
             'generacionNumero' => (int)$PSN1->f('generacionNumero'),
             'fechaInicio' => $PSN1->f('fechaInicio'),
-            'asistencia_total' => (int)$PSN1->f('asistencia_total')
+            'asistencia_total' => (int)$PSN1->f('asistencia_total'),
+            'discipulado' => (int)$PSN1->f('discipulado'),
+            'desiciones' => (int)$PSN1->f('desiciones'),
+            'preparandose' => (int)$PSN1->f('preparandose'),
+            'mapeo_oracion' => (int)$PSN1->f('mapeo_oracion'),
+            'mapeo_companerismo' => (int)$PSN1->f('mapeo_companerismo'),
+            'mapeo_adoracion' => (int)$PSN1->f('mapeo_adoracion'),
+            'mapeo_biblia' => (int)$PSN1->f('mapeo_biblia'),
+            'mapeo_evangelizar' => (int)$PSN1->f('mapeo_evangelizar'),
+            'mapeo_cena' => (int)$PSN1->f('mapeo_cena'),
+            'mapeo_dar' => (int)$PSN1->f('mapeo_dar'),
+            'mapeo_bautizar' => (int)$PSN1->f('mapeo_bautizar'),
+            'mapeo_trabajadores' => (int)$PSN1->f('mapeo_trabajadores')
         );
+    }
+
+    $imagenes = array();
+    if (count($reportesIds) > 0) {
+        $idsSql = implode(',', array_map('intval', $reportesIds));
+        $sqlImagenes = "
+            SELECT adj_id, adj_nom, adj_url, adj_rep_fk
+            FROM tbl_adjuntos
+            WHERE adj_rep_fk IN (" . $idsSql . ")
+            ORDER BY adj_id ASC
+        ";
+        $PSN1->query($sqlImagenes);
+
+        while ($PSN1->next_record()) {
+            $ruta = $PSN1->f('adj_url');
+            $imagenes[] = array(
+                'id' => (int)$PSN1->f('adj_id'),
+                'nombre' => $PSN1->f('adj_nom'),
+                'ruta' => $ruta,
+                'rutaThumbnail' => $ruta,
+                'reporte_id' => (int)$PSN1->f('adj_rep_fk')
+            );
+        }
     }
 
     echo json_encode(array(
         'success' => true,
         'idGrupo' => $idGrupo,
         'reportes_ids' => $reportesIds,
-        'reportes' => $reportes
+        'reportes' => $reportes,
+        'imagenes' => $imagenes
     ));
 } catch (Exception $e) {
     error_log('ERROR en obtener_reportes_grupo.php: ' . $e->getMessage());

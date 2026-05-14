@@ -65,6 +65,10 @@ try {
     $imagenes = $_FILES['imagenes'];
     $total = is_array($imagenes['name']) ? count($imagenes['name']) : 0;
 
+    if ($total > 3) {
+        throw new Exception('Solo se permiten maximo 3 imagenes por reporte');
+    }
+
     for ($i = 0; $i < $total; $i++) {
         if ($imagenes['error'][$i] !== UPLOAD_ERR_OK) {
             continue;

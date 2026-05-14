@@ -62,9 +62,23 @@ try {
     $asistencia_nin = intval($data['asistencia_nin'] ?? 0);
     $asistencia_total = $asistencia_hom + $asistencia_muj + $asistencia_jov + $asistencia_nin;
 
-    $bautizados = intval($data['bautizados'] ?? 0);
-    $desiciones = intval($data['desiciones'] ?? 0);
+    $bautizados = max(0, intval($data['bautizados'] ?? 0));
+    $discipulado = max(0, intval($data['discipulado'] ?? 0));
+    $desiciones = max(0, intval($data['desiciones'] ?? 0));
+    $preparandose = max(0, intval($data['preparandose'] ?? 0));
     $comentario = addslashes((string)($data['comentario'] ?? ''));
+
+    if ($discipulado > $asistencia_total) {
+        throw new Exception('Discipulado no puede ser mayor a la asistencia total');
+    }
+
+    if ($desiciones > $asistencia_total) {
+        throw new Exception('Decisiones no puede ser mayor a la asistencia total');
+    }
+
+    if ($preparandose > $asistencia_total) {
+        throw new Exception('Preparandose no puede ser mayor a la asistencia total');
+    }
 
     $mapeo_oracion = intval($data['mapeo_oracion'] ?? 0);
     $mapeo_companerismo = intval($data['mapeo_companerismo'] ?? 0);
@@ -205,9 +219,9 @@ try {
         " . (int)$asistencia_jov . ",
         " . (int)$asistencia_nin . ",
         " . (int)$bautizados . ",
-        0,
+        " . (int)$discipulado . ",
         " . (int)$desiciones . ",
-        0,
+        " . (int)$preparandose . ",
         " . (int)$bautizadosPeriodo . ",
         0,
         '$ahora',
