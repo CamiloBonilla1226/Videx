@@ -1701,6 +1701,71 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         return Math.min(...ids);
     }
 
+    function obtenerIdGrupoSeleccionado(grupo) {
+        if (!grupo) {
+            return 0;
+        }
+
+        const idGuardado = parseInt(grupo.idGrupoSeleccionado || grupo.id_grupo_base || grupo.idGrupoBase, 10);
+        if (idGuardado > 0) {
+            return idGuardado;
+        }
+
+        return parseInt(obtenerIdReporteGrupo(grupo), 10) || 0;
+    }
+
+    function normalizarReportesIds(ids) {
+        if (!Array.isArray(ids)) {
+            return [];
+        }
+
+        const normalizados = ids
+            .map(id => parseInt(id, 10))
+            .filter(id => id > 0);
+
+        return [...new Set(normalizados)];
+    }
+
+    function obtenerEtiquetaActividad(reporte) {
+        const idActividad = parseInt(reporte.id_actividad || 0, 10);
+        const etiquetasActividad = {
+            77: 'Evangelismo',
+            99: 'Bautizo',
+            8: 'Gran Celebracion',
+            1: 'Coach'
+        };
+
+        if (etiquetasActividad[idActividad]) {
+            return etiquetasActividad[idActividad];
+        }
+
+        const generacion = parseInt(reporte.generacionNumero || 0, 10);
+        return generacion > 0 ? `Generacion ${generacion}` : 'Desconocido';
+    }
+
+    function renderReporteInfoBasica(reportes) {
+        if (!Array.isArray(reportes)) {
+            return;
+        }
+
+        reportes.forEach(reporte => {
+            const infoContainer = document.getElementById(`report-info-${reporte.id}`);
+            if (!infoContainer) {
+                return;
+            }
+
+            const fecha = reporte.fechaInicio
+                ? new Date(reporte.fechaInicio).toLocaleDateString('es-CO', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                })
+                : 'Sin fecha';
+
+            infoContainer.innerHTML = `<strong>${obtenerEtiquetaActividad(reporte)}</strong> • ${fecha} • Asistencia: ${parseInt(reporte.asistencia_total || 0, 10)}`;
+        });
+    }
+
     function normalizarNombreLider(nombre) {
         return (nombre || '').trim().replace(/\s+/g, ' ');
     }
@@ -1744,6 +1809,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
     }
 
     function selectGrupo(grupoData, element) {
+        grupoData.idGrupoSeleccionado = obtenerIdGrupoSeleccionado(grupoData);
         selectedGrupo = grupoData;
 
         // Actualizar estilos
@@ -2004,7 +2070,14 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                                 '4': '🤝 Coach (4)',
                                 '5': '🤝 Coach (5)'
                             };
-                            const tipo = tiposActividad[reporte.generacionNumero] || 'Desconocido';
+                            const tiposIdActividad = {
+                                '77': 'Evangelismo',
+                                '8': 'Gran Celebracion',
+                                '99': 'Bautizo',
+                                '1': 'Coach'
+                            };
+                            const idActividad = parseInt(reporte.id_actividad || 0, 10);
+                            const tipo = tiposIdActividad[idActividad] || tiposActividad[reporte.generacionNumero] || 'Desconocido';
                             const fecha = new Date(reporte.fechaInicio).toLocaleDateString('es-CO', {
                                 year: 'numeric',
                                 month: 'short',
@@ -2013,8 +2086,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                             infoContainer.innerHTML = `<strong>${tipo}</strong> • ${fecha} • Asistencia: ${reporte.asistencia_total}`;
 
                             // Agregar botón "Ver Mapeo" para reportes de Coach (generación 1-5)
-                            const gen = parseInt(reporte.generacionNumero);
-                            if (gen >= 1 && gen <= 5) {
+                            if (idActividad === 1) {
                                 const btnContainer = document.getElementById(`mapeo-btn-${reporte.id}`);
                                 if (btnContainer) {
                                     btnContainer.innerHTML = `<button onclick="toggleMapeoChart(${reporte.id})" class="btn btn-sm btn-info" style="margin-top: 8px; font-size: 11px; padding: 4px 10px; border-radius: 4px;">📊 Ver Mapeo</button>`;
@@ -2146,9 +2218,13 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         updateImage();
     }
 
-    function updateReportsTab(grupoData, tabReports) {
-        if (grupoData.reportes_ids && grupoData.reportes_ids.length > 0) {
-            const reportsHTML = grupoData.reportes_ids.map((reporteId, index) => `
+    function renderReportsList(grupoData, tabReports, reporteIds) {
+        const reportesIds = normalizarReportesIds(reporteIds);
+        grupoData.reportes_mostrados_ids = reportesIds;
+        grupoData.reportes = reportesIds.length;
+
+        if (reportesIds.length > 0) {
+            const reportsHTML = reportesIds.map((reporteId, index) => `
                 <div class="report-item"
                      data-href="index.php?doc=reportar&id=${reporteId}"
                      style="display: flex; gap: 15px; padding: 12px; border: 1px solid #e0e0e0; border-radius: 6px; background: #fafafa; margin-bottom: 10px; cursor: pointer; transition: background-color 0.2s ease, border-color 0.2s ease;">
@@ -2159,7 +2235,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                     </div>
                     <div style="flex-grow: 1;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <strong style="color: #333;">Reporte ${index + 1} de ${grupoData.reportes_ids.length}</strong>
+                            <strong style="color: #333;">Reporte ${index + 1} de ${reportesIds.length}</strong>
                             <span style="background: #e8e8e8; color: #2c3e50; padding: 4px 8px; border-radius: 4px; font-size: 12px;">ID: ${reporteId}</span>
                         </div>
                         <div id="report-info-${reporteId}" style="font-size: 12px; color: #666; margin-bottom: 8px;">
@@ -2199,8 +2275,8 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             });
 
             // Cargar información e imágenes de los reportes
-            if (grupoData.reportes_ids && grupoData.reportes_ids.length > 0) {
-                loadReportImagesAndInfo(grupoData.reportes_ids);
+            if (reportesIds.length > 0) {
+                loadReportImagesAndInfo(reportesIds);
             }
         } else {
             tabReports.innerHTML = `
@@ -2209,6 +2285,49 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                 </div>
             `;
         }
+    }
+
+    function updateReportsTab(grupoData, tabReports) {
+        const idGrupo = obtenerIdGrupoSeleccionado(grupoData);
+
+        if (!idGrupo) {
+            tabReports.innerHTML = `
+                <div class="empty-message">
+                    <p>No se pudo identificar el grupo seleccionado</p>
+                </div>
+            `;
+            return;
+        }
+
+        tabReports.innerHTML = `
+            <div class="empty-message">
+                <p>Cargando reportes...</p>
+            </div>
+        `;
+
+        fetch('obtener_reportes_grupo.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                idGrupo: idGrupo
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                renderReportsList(grupoData, tabReports, data.reportes_ids || []);
+                renderReporteInfoBasica(data.reportes || []);
+            } else {
+                console.error('Error al cargar reportes del grupo:', data.message);
+                renderReportsList(grupoData, tabReports, []);
+            }
+        })
+        .catch(error => {
+            console.error('Error al cargar reportes del grupo:', error);
+            renderReportsList(grupoData, tabReports, []);
+        });
     }
 
     function renderGroups() {
@@ -2279,7 +2398,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
 
         // Guardar IDs de reportes del grupo seleccionado
         if (selectedGrupo) {
-            document.getElementById('reporteIds').value = JSON.stringify(selectedGrupo.reportes_ids);
+            document.getElementById('reporteIds').value = JSON.stringify(selectedGrupo.reportes_mostrados_ids || []);
         }
     }
 
@@ -2434,9 +2553,16 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
 
         const tipoActividad = document.getElementById('tipoActividad').value;
         const reporteIds = JSON.parse(document.getElementById('reporteIds').value || '[]');
+        const idGrupo = obtenerIdGrupoSeleccionado(selectedGrupo);
+
+        if (!idGrupo) {
+            showStatusMessage('No se pudo identificar el grupo seleccionado', 'error');
+            return;
+        }
 
         const datosReporte = {
             tipoActividad: tipoActividad,
+            idGrupo: idGrupo,
             reporteIds: reporteIds,
             fechaActividad: document.getElementById('fechaActividad').value,
             asistencia_hom: parseInt(document.getElementById('asistencia_hom').value) || 0,
@@ -2499,6 +2625,12 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             if (data.success) {
                 // Reporte creado exitosamente
                 const nuevoReporteId = data.nuevoReporteId;
+                if (selectedGrupo && nuevoReporteId) {
+                    const reportesActuales = normalizarReportesIds(selectedGrupo.reportes_mostrados_ids || []);
+                    reportesActuales.push(parseInt(nuevoReporteId, 10));
+                    selectedGrupo.reportes_mostrados_ids = normalizarReportesIds(reportesActuales);
+                    selectedGrupo.reportes = selectedGrupo.reportes_mostrados_ids.length;
+                }
 
                 // Procesar imágenes si existen
                 const fotosValidas = obtenerFotosEvidenciaValidas();

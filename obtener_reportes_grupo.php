@@ -1,0 +1,89 @@
+<?php
+/**
+ * obtener_reportes_grupo.php
+ * Lista solo los reportes ligados a un grupo por sat_reportes.id_grupo.
+ */
+
+header('Content-Type: application/json; charset=utf-8');
+ini_set('display_errors', 1);
+ini_set('log_errors', 1);
+error_reporting(E_ALL);
+
+try {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    include_once('funciones.php');
+    include_once('config.php');
+
+    if (!isset($_SESSION['id'])) {
+        http_response_code(401);
+        echo json_encode(array('success' => false, 'message' => 'No autorizado'));
+        exit();
+    }
+
+    $data = json_decode(file_get_contents('php://input'), true);
+
+    if (!is_array($data)) {
+        throw new Exception('Datos invalidos para consultar reportes');
+    }
+
+    $idFacilitador = (int)$_SESSION['id'];
+    $idGrupo = (int)($data['idGrupo'] ?? 0);
+
+    if ($idGrupo <= 0) {
+        throw new Exception('Debe seleccionar un grupo valido');
+    }
+
+    $PSN1 = new DBbase_Sql;
+    $sql = "
+        SELECT
+            id,
+            id_grupo,
+            id_actividad,
+            idGrupoMadre,
+            generacionNumero,
+            fechaInicio,
+            asistencia_total
+        FROM sat_reportes
+        WHERE idUsuario = " . (int)$idFacilitador . "
+          AND id_grupo = " . (int)$idGrupo . "
+          AND id_grupo <> 0
+        ORDER BY fechaInicio DESC, id DESC
+    ";
+
+    $PSN1->query($sql);
+
+    $reportesIds = array();
+    $reportes = array();
+
+    while ($PSN1->next_record()) {
+        $idReporte = (int)$PSN1->f('id');
+        $reportesIds[] = $idReporte;
+        $reportes[] = array(
+            'id' => $idReporte,
+            'id_grupo' => (int)$PSN1->f('id_grupo'),
+            'id_actividad' => (int)$PSN1->f('id_actividad'),
+            'idGrupoMadre' => (int)$PSN1->f('idGrupoMadre'),
+            'generacionNumero' => (int)$PSN1->f('generacionNumero'),
+            'fechaInicio' => $PSN1->f('fechaInicio'),
+            'asistencia_total' => (int)$PSN1->f('asistencia_total')
+        );
+    }
+
+    echo json_encode(array(
+        'success' => true,
+        'idGrupo' => $idGrupo,
+        'reportes_ids' => $reportesIds,
+        'reportes' => $reportes
+    ));
+} catch (Exception $e) {
+    error_log('ERROR en obtener_reportes_grupo.php: ' . $e->getMessage());
+    http_response_code(500);
+    echo json_encode(array(
+        'success' => false,
+        'message' => 'Error: ' . $e->getMessage()
+    ));
+}
+?>
