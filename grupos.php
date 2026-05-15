@@ -1310,6 +1310,13 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                 <label>Líder del Grupo</label>
                 <input type="text" id="newGroupLider" name="lider" placeholder="Nombre del líder" oninput="clearFormError('newGroupLider', 'newGroupLiderError')">
                 <div class="form-field-error" id="newGroupLiderError"></div>
+                <div id="newGroupLideresUi" style="margin-top: 10px;">
+                    <div class="edit-lideres-container" id="newGroupLideresContainer"></div>
+                    <div class="edit-lider-input-group">
+                        <input type="text" id="newGroupLiderInput" class="edit-form-input edit-lider-input" placeholder="Agregar nuevo lÃ­der" oninput="clearFormError('newGroupLiderInput', 'newGroupLiderError')">
+                        <button type="button" class="edit-lider-add-btn" onclick="addNewGroupLider()">Agregar</button>
+                    </div>
+                </div>
             </div>
 
             <!-- DATOS DEL PRIMER REPORTE -->
@@ -1737,8 +1744,54 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
     function clearCreateGroupFormErrors() {
         clearFormError('newGroupName', 'newGroupNameError');
         clearFormError('newGroupLider', 'newGroupLiderError');
+        clearFormError('newGroupLiderInput', 'newGroupLiderError');
         clearFormError('newGroupFecha', 'newGroupFechaError');
         clearAsistenciaError();
+    }
+
+    function renderNewGroupLideresUI() {
+        const container = document.getElementById('newGroupLideresContainer');
+        if (!container) {
+            return;
+        }
+
+        container.innerHTML = createGroupFormData.lideresArray.map((lider, index) => `
+            <div class="edit-lider-tag">
+                ${lider}
+                <button type="button" onclick="removeNewGroupLider(${index})">x</button>
+            </div>
+        `).join('');
+    }
+
+    function addNewGroupLider() {
+        const liderInput = document.getElementById('newGroupLiderInput');
+        if (!liderInput) {
+            return;
+        }
+
+        const nuevoLider = normalizarNombreLider(liderInput.value);
+        const errorLider = validarNombreLider(nuevoLider);
+
+        if (errorLider) {
+            showFormError('newGroupLiderInput', 'newGroupLiderError', errorLider);
+            liderInput.focus();
+            return;
+        }
+
+        clearFormError('newGroupLiderInput', 'newGroupLiderError');
+
+        if (nuevoLider && !createGroupFormData.lideresArray.includes(nuevoLider)) {
+            createGroupFormData.lideresArray.push(nuevoLider);
+            liderInput.value = '';
+            renderNewGroupLideresUI();
+        } else if (createGroupFormData.lideresArray.includes(nuevoLider)) {
+            showStatusMessage('Este lÃ­der ya existe', 'info');
+        }
+    }
+
+    function removeNewGroupLider(index) {
+        createGroupFormData.lideresArray.splice(index, 1);
+        renderNewGroupLideresUI();
     }
 
     function obtenerIdReporteGrupo(grupo) {
@@ -1855,6 +1908,30 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
 
         if (!esAlfabetico) {
             return 'El nombre del lider solo debe contener letras y espacios';
+        }
+
+        return '';
+    }
+
+    function validarNombreGrupo(nombre) {
+        const grupo = (nombre || '').trim().replace(/\s+/g, ' ');
+
+        if (!grupo) {
+            return 'El nombre del grupo es obligatorio';
+        }
+
+        if (Array.from(grupo).length < 7) {
+            return 'El nombre del grupo debe tener minimo 7 caracteres';
+        }
+
+        const tieneLetrasONumeros = /[A-Za-z0-9\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u024F]/.test(grupo);
+        if (!tieneLetrasONumeros) {
+            return 'El nombre del grupo debe ser alfabetico o alfanumerico';
+        }
+
+        const formatoValido = /^[A-Za-z0-9\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u024F ]+$/.test(grupo);
+        if (!formatoValido) {
+            return 'El nombre del grupo solo puede tener letras, numeros y espacios';
         }
 
         return '';
@@ -2496,7 +2573,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                             ${imagesHTML || '<span style="font-size: 12px; color: #999;">Sin imÃ¡genes</span>'}
                         </div>
                         <div id="mapeo-btn-${reporteId}" data-mapeo="${mapeoData}">
-                            ${idActividad === 1 ? `<button onclick="toggleMapeoChart(${reporteId})" class="btn btn-sm btn-info" style="margin-top: 8px; font-size: 11px; padding: 4px 10px; border-radius: 4px;">ðŸ“Š Ver Mapeo</button>` : ''}
+                            ${idActividad === 1 ? `<button onclick="toggleMapeoChart(${reporteId})" class="btn btn-sm btn-info" style="margin-top: 8px; font-size: 11px; padding: 4px 10px; border-radius: 4px;">Ver Mapeo</button>` : ''}
                         </div>
                         <div id="mapeo-chart-${reporteId}" style="display: none; text-align: center; margin-top: 10px;">
                             <canvas id="mapeo-canvas-${reporteId}" width="400" height="400" style="max-width: 100%; border: 1px solid #ddd; border-radius: 8px; background: #fff;"></canvas>
@@ -3234,6 +3311,9 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
     let editFormData = {
         lideresArray: []
     };
+    let createGroupFormData = {
+        lideresArray: []
+    };
 
     function openEditModal() {
         if (!selectedGrupo) {
@@ -3284,14 +3364,27 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                     editFormData.lideresArray = liderParsed.filter(l => l && typeof l === 'string');
                 }
             } catch (e) {
-                // Si no es JSON, tratarlo como string simple
-                editFormData.lideresArray = [selectedGrupo.lider];
+                editFormData.lideresArray = String(selectedGrupo.lider)
+                    .split(',')
+                    .map(l => normalizarNombreLider(l))
+                    .filter(Boolean);
             }
         }
 
         renderLideresUI();
         document.getElementById('liderInput').value = '';
         clearFormError('liderInput', 'liderInputError');
+        const grupoMadreRadio = document.querySelector('input[name="editTieneGrupoMadre"]');
+        if (grupoMadreRadio) {
+            const grupoMadreFormGroup = grupoMadreRadio.closest('.edit-form-group');
+            if (grupoMadreFormGroup) {
+                grupoMadreFormGroup.style.display = 'none';
+            }
+        }
+        const grupoMadreSelectOculto = document.getElementById('editGrupoMadreSelect');
+        if (grupoMadreSelectOculto) {
+            grupoMadreSelectOculto.style.display = 'none';
+        }
 
         // Mostrar modal
         document.getElementById('editModal').classList.add('active');
@@ -3351,6 +3444,21 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         // Limpiar formulario
         document.getElementById('createGroupForm').reset();
         document.getElementById('grupoMadreSelect').style.display = 'none';
+        createGroupFormData.lideresArray = [];
+        renderNewGroupLideresUI();
+        const liderAntiguo = document.getElementById('newGroupLider');
+        if (liderAntiguo) {
+            liderAntiguo.style.display = 'none';
+            liderAntiguo.value = '';
+            const liderLabel = liderAntiguo.closest('.edit-modal-section')?.querySelector('label');
+            if (liderLabel) {
+                liderLabel.textContent = 'Líderes del Grupo';
+            }
+        }
+        const liderNuevo = document.getElementById('newGroupLiderInput');
+        if (liderNuevo) {
+            liderNuevo.value = '';
+        }
         clearCreateGroupFormErrors();
         calculateTotalAsistencia();
     }
@@ -3359,6 +3467,16 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         document.getElementById('createGroupModal').classList.remove('active');
         document.getElementById('createGroupForm').reset();
         document.getElementById('grupoMadreSelect').style.display = 'none';
+        createGroupFormData.lideresArray = [];
+        renderNewGroupLideresUI();
+        const liderAntiguo = document.getElementById('newGroupLider');
+        if (liderAntiguo) {
+            liderAntiguo.value = '';
+        }
+        const liderNuevo = document.getElementById('newGroupLiderInput');
+        if (liderNuevo) {
+            liderNuevo.value = '';
+        }
         clearCreateGroupFormErrors();
         calculateTotalAsistencia();
     }
@@ -3539,7 +3657,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         const total = getTotalAsistenciaNuevoGrupo();
         document.getElementById('totalAsistenciaDisplay').textContent = total;
 
-        if (total > 1) {
+        if (total > 0) {
             clearAsistenciaError();
         }
     }
@@ -3555,7 +3673,22 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         const ciudad = document.getElementById('newGroupCiudad').value.trim();
         const barrio = document.getElementById('newGroupBarrio').value.trim();
         const direccion = document.getElementById('newGroupDireccion').value.trim();
-        const lider = normalizarNombreLider(document.getElementById('newGroupLider').value);
+        const liderPendiente = normalizarNombreLider(document.getElementById('newGroupLiderInput')?.value || '');
+        if (liderPendiente) {
+            const errorLiderPendiente = validarNombreLider(liderPendiente);
+            if (errorLiderPendiente) {
+                showFormError('newGroupLiderInput', 'newGroupLiderError', errorLiderPendiente);
+                document.getElementById('newGroupLiderInput').focus();
+                return;
+            }
+
+            if (!createGroupFormData.lideresArray.includes(liderPendiente)) {
+                createGroupFormData.lideresArray.push(liderPendiente);
+            }
+            document.getElementById('newGroupLiderInput').value = '';
+            renderNewGroupLideresUI();
+        }
+        const lideres = createGroupFormData.lideresArray.slice();
         const tieneGrupoMadre = document.querySelector('input[name="tieneGrupoMadre"]:checked').value;
         const grupoMadreDropdown = document.getElementById('grupoMadreDropdown');
         const grupoMadreOption = grupoMadreDropdown.options[grupoMadreDropdown.selectedIndex];
@@ -3571,16 +3704,16 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         const asistencia_nin = parseInt(document.getElementById('newGroupAsisNin').value) || 0;
         const asistencia_total = asistencia_hom + asistencia_muj + asistencia_jov + asistencia_nin;
 
-        if (!nombre) {
-            showFormError('newGroupName', 'newGroupNameError', 'El nombre del grupo es obligatorio');
+        const errorNombreGrupo = validarNombreGrupo(nombre);
+        if (errorNombreGrupo) {
+            showFormError('newGroupName', 'newGroupNameError', errorNombreGrupo);
             document.getElementById('newGroupName').focus();
             return;
         }
 
-        const errorLider = validarNombreLider(lider);
-        if (errorLider) {
-            showFormError('newGroupLider', 'newGroupLiderError', errorLider);
-            document.getElementById('newGroupLider').focus();
+        if (lideres.length === 0) {
+            showFormError('newGroupLiderInput', 'newGroupLiderError', 'Debes agregar al menos un líder');
+            document.getElementById('newGroupLiderInput').focus();
             return;
         }
 
@@ -3608,7 +3741,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             ciudad: ciudad,
             barrio: barrio,
             direccion: direccion,
-            lider: lider,
+            lideres: lideres,
             tieneGrupoMadre: tieneGrupoMadre,
             grupoMadreId: grupoMadreId,
             grupoMadreHash: grupoMadreHash,
@@ -3655,8 +3788,11 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                     const mensajeNormalizado = mensajeError.toLowerCase();
 
                     if (mensajeNormalizado.includes('lider')) {
-                        showFormError('newGroupLider', 'newGroupLiderError', mensajeError.replace(/^Error:\s*/i, ''));
-                        document.getElementById('newGroupLider').focus();
+                        showFormError('newGroupLiderInput', 'newGroupLiderError', mensajeError.replace(/^Error:\s*/i, ''));
+                        document.getElementById('newGroupLiderInput').focus();
+                    } else if (mensajeNormalizado.includes('grupo') || mensajeNormalizado.includes('nombre')) {
+                        showFormError('newGroupName', 'newGroupNameError', mensajeError.replace(/^Error:\s*/i, ''));
+                        document.getElementById('newGroupName').focus();
                     } else if (mensajeNormalizado.includes('asistencia')) {
                         showAsistenciaError(mensajeError.replace(/^Error:\s*/i, ''));
                         document.getElementById('newGroupAsisHom').focus();
@@ -3685,34 +3821,32 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             return;
         }
 
-        // Obtener el valor de grupo madre del selector
-        const tieneGrupoMadre = document.querySelector('input[name="editTieneGrupoMadre"]:checked').value;
-        let grupoMadreValue = ''; // Inicializar como string vacío
-
-        if (tieneGrupoMadre === 'si') {
-            const dropdown = document.getElementById('editGrupoMadreDropdown');
-            if (dropdown.selectedIndex > 0) {
-                // Extraer el nombre del grupo madre del texto de la opción seleccionada
-                const selectedOption = dropdown.options[dropdown.selectedIndex];
-                const textContent = selectedOption.textContent;
-                // El formato es "Nombre (Gen X)(Padre) - Líder"
-                const parenthesisIndex = textContent.indexOf('(');
-                if (parenthesisIndex > 0) {
-                    grupoMadreValue = textContent.substring(0, parenthesisIndex).trim();
-                }
-            }
+        const errorNombreGrupo = validarNombreGrupo(document.getElementById('editNombre').value || '');
+        if (errorNombreGrupo) {
+            showStatusMessage(errorNombreGrupo, 'error');
+            document.getElementById('editNombre').focus();
+            return;
         }
-        // Si es 'no', grupoMadreValue permanece como string vacío
+
+        // Obtener el valor de grupo madre del selector
+        const grupoMadreValue = selectedGrupo.grupo_madre || '';
+        const idGrupo = obtenerIdGrupoSeleccionado(selectedGrupo);
+
+        if (!idGrupo) {
+            showStatusMessage('No se pudo identificar el grupo base', 'error');
+            return;
+        }
 
         const datosActualizacion = {
+            idGrupo: idGrupo,
             reporteIds: selectedGrupo.reportes_ids,
             nombre_exacto: document.getElementById('editNombre').value || null,
             ciudad: document.getElementById('editCiudad').value || null,
             barrio: document.getElementById('editBarrio').value || null,
             direccion: document.getElementById('editDireccion').value || null,
-            grupo_madre: grupoMadreValue, // Ahora siempre es un string (vacío o con nombre)
-            generacion: parseInt(document.getElementById('editGeneracion').value) || 0,
-            lider: editFormData.lideresArray.length > 0 ? editFormData.lideresArray : null
+            grupo_madre: grupoMadreValue,
+            generacion: parseInt(selectedGrupo.generacion, 10) || parseInt(document.getElementById('editGeneracion').value) || 0,
+            lider: editFormData.lideresArray.length > 0 ? editFormData.lideresArray : []
         };
 
         // Mostrar estado de carga
@@ -3755,9 +3889,9 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                 selectedGrupo.barrio = datosActualizacion.barrio || selectedGrupo.barrio;
                 selectedGrupo.direccion = datosActualizacion.direccion || selectedGrupo.direccion;
                 selectedGrupo.grupo_madre = datosActualizacion.grupo_madre || selectedGrupo.grupo_madre;
-                if (datosActualizacion.lider) {
-                    selectedGrupo.lider = datosActualizacion.lider;
-                }
+                selectedGrupo.lider = Array.isArray(datosActualizacion.lider) && datosActualizacion.lider.length > 0
+                    ? datosActualizacion.lider
+                    : '';
 
                 // Actualizar la vista
                 updateGroupPanel(selectedGrupo);

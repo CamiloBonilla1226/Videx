@@ -35,30 +35,61 @@ try {
     }
 
     // Validar datos obligatorios del grupo
-    if (!trim((string)($data['nombre'] ?? ''))) {
+    $nombreGrupoOriginal = preg_replace('/\s+/', ' ', trim((string)($data['nombre'] ?? '')));
+    if ($nombreGrupoOriginal === '') {
         throw new Exception('El nombre del grupo es obligatorio');
     }
 
+    $nombreGrupoLongitud = function_exists('mb_strlen') ? mb_strlen($nombreGrupoOriginal, 'UTF-8') : strlen($nombreGrupoOriginal);
+    if ($nombreGrupoLongitud < 7) {
+        throw new Exception('El nombre del grupo debe tener minimo 7 caracteres');
+    }
+
+    if (!preg_match('/[A-Za-z0-9\p{L}]/u', $nombreGrupoOriginal)) {
+        throw new Exception('El nombre del grupo debe ser alfabetico o alfanumerico');
+    }
+
+    if (!preg_match('/^[A-Za-z0-9\p{L} ]+$/u', $nombreGrupoOriginal)) {
+        throw new Exception('El nombre del grupo solo puede tener letras, numeros y espacios');
+    }
+
     $idFacilitador = $_SESSION['id'];
-    $nombre = $data['nombre'];
+    $nombre = $nombreGrupoOriginal;
     $descripcion = $data['descripcion'] ?? '';
     $ciudad = $data['ciudad'] ?? '';
     $barrio = $data['barrio'] ?? '';
     $direccion = $data['direccion'] ?? '';
-    $lider = preg_replace('/\s+/', ' ', trim((string)($data['lider'] ?? '')));
-    $liderLongitud = function_exists('mb_strlen') ? mb_strlen($lider, 'UTF-8') : strlen($lider);
-
-    if ($lider === '') {
-        throw new Exception('El nombre del lider es obligatorio');
+    $lideresEntrada = $data['lideres'] ?? array();
+    if (!is_array($lideresEntrada)) {
+        $lideresEntrada = array($data['lider'] ?? '');
     }
 
-    if ($liderLongitud < 10) {
-        throw new Exception('El nombre del lider debe tener minimo 10 caracteres');
+    $lideresNormalizados = array();
+    foreach ($lideresEntrada as $liderItem) {
+        $lider = preg_replace('/\s+/', ' ', trim((string)$liderItem));
+        if ($lider === '') {
+            continue;
+        }
+
+        $liderLongitud = function_exists('mb_strlen') ? mb_strlen($lider, 'UTF-8') : strlen($lider);
+        if ($liderLongitud < 10) {
+            throw new Exception('El nombre del lider debe tener minimo 10 caracteres');
+        }
+
+        if (!preg_match('/^[\p{L} ]+$/u', $lider)) {
+            throw new Exception('El nombre del lider solo debe contener letras y espacios');
+        }
+
+        if (!in_array($lider, $lideresNormalizados, true)) {
+            $lideresNormalizados[] = $lider;
+        }
     }
 
-    if (!preg_match('/^[\p{L} ]+$/u', $lider)) {
-        throw new Exception('El nombre del lider solo debe contener letras y espacios');
+    if (count($lideresNormalizados) === 0) {
+        throw new Exception('Debe agregar al menos un lider');
     }
+
+    $lider = implode(', ', $lideresNormalizados);
 
     $tieneGrupoMadre = ($data['tieneGrupoMadre'] ?? '') === 'si';
     $grupoMadreId = trim((string)($data['grupoMadreId'] ?? ''));
