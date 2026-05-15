@@ -62,6 +62,10 @@ try {
     $asistencia_nin = intval($data['asistencia_nin'] ?? 0);
     $asistencia_total = $asistencia_hom + $asistencia_muj + $asistencia_jov + $asistencia_nin;
 
+    if ($asistencia_total < 1) {
+        throw new Exception('La asistencia total debe ser minimo 1');
+    }
+
     $bautizados = max(0, intval($data['bautizados'] ?? 0));
     $discipulado = max(0, intval($data['discipulado'] ?? 0));
     $desiciones = max(0, intval($data['desiciones'] ?? 0));

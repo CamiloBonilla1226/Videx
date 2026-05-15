@@ -1433,6 +1433,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                             <input type="number" id="asistencia_nin" min="0" value="0">
                         </div>
                     </div>
+                    <div class="form-field-error" id="reportAsistenciaError"></div>
                 </div>
 
                 <div class="form-group" id="metricasEvangelismoSection" style="display: none;">
@@ -1476,9 +1477,14 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
 
                 <!-- Sección de Evidencia Fotográfica -->
                 <div class="form-group">
-                    <label>📸 Evidencia Fotográfica (Mínimo 1 - Máximo 3 imágenes)</label>
-                    <input type="file" id="fotosEvidencia" multiple accept="image/jpeg,image/png,image/jpg,image/webp" style="display: block; margin-top: 8px;">
-                    <small style="color: #666; display: block; margin-top: 8px;">📌 Mínimo 1 imagen requerida para guardar el reporte • Máximo 3 imágenes • 5 MB por imagen • Formatos: JPG, PNG, WebP</small>
+                    <label>Evidencia Fotográfica (Mínimo 1 - Máximo 3 imágenes)</label>
+                    <div id="fotosInputsContainer" style="display: flex; flex-direction: column; gap: 10px; margin-top: 8px;">
+                        <div class="foto-evidencia-item" data-slot="1">
+                            <label style="font-size: 12px;">Foto 1</label>
+                            <input type="file" class="fotos-evidencia-input" accept="image/jpeg,image/png,image/jpg,image/webp" style="display: block; margin-top: 6px;">
+                        </div>
+                    </div>
+                    <small style="color: #666; display: block; margin-top: 8px;">Debe cargar al menos una imagen. Máximo 3 imágenes, 5 MB por imagen. Formatos: JPG, PNG, WebP</small>
                     <div id="fotosPreview" style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px;"></div>
                     <div id="fotosCountMsg" style="margin-top: 8px; font-size: 12px; color: #666;"></div>
                 </div>
@@ -1596,6 +1602,10 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                 <input type="hidden" id="tipoActividad">
                 <input type="hidden" id="reporteIds">
 
+                <div class="form-group" style="margin-top: 10px;">
+                    <button type="button" id="addOtraFotoBtn" class="modal-button secondary" style="width: 100%;">Agregar otra foto</button>
+                </div>
+
                 <div class="modal-button-group">
                     <button type="button" class="modal-button secondary" onclick="backToActivitySelection()">Atrás</button>
                     <button type="submit" class="modal-button primary">Guardar Reporte</button>
@@ -1610,6 +1620,8 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
     let filteredGrupos = [];
     let selectedGrupo = null;
     const MAX_REPORT_IMAGES = 3;
+    const REPORT_MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+    const REPORT_ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
 
     function toggleMobileMenu() {
         const mobileSlider = document.getElementById('mobileSlider');
@@ -1686,6 +1698,36 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         });
 
         const error = document.getElementById('newGroupAsistenciaError');
+        if (error) {
+            error.textContent = '';
+            error.classList.remove('active');
+        }
+    }
+
+    function showReportAsistenciaError(message) {
+        ['asistencia_hom', 'asistencia_muj', 'asistencia_jov', 'asistencia_nin'].forEach(id => {
+            const field = document.getElementById(id);
+            if (field) {
+                field.classList.add('form-field-invalid');
+            }
+        });
+
+        const error = document.getElementById('reportAsistenciaError');
+        if (error) {
+            error.textContent = message;
+            error.classList.add('active');
+        }
+    }
+
+    function clearReportAsistenciaError() {
+        ['asistencia_hom', 'asistencia_muj', 'asistencia_jov', 'asistencia_nin'].forEach(id => {
+            const field = document.getElementById(id);
+            if (field) {
+                field.classList.remove('form-field-invalid');
+            }
+        });
+
+        const error = document.getElementById('reportAsistenciaError');
         if (error) {
             error.textContent = '';
             error.classList.remove('active');
@@ -2610,6 +2652,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
     function openActivityModal() {
         const modal = document.getElementById('activityModal');
         modal.classList.add('active');
+        resetNewReportForm();
 
         // Reset form
         document.getElementById('activitySelection').style.display = 'block';
@@ -2624,6 +2667,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
     function closeActivityModal() {
         const modal = document.getElementById('activityModal');
         modal.classList.remove('active');
+        resetNewReportForm();
     }
 
     function selectActivity(tipoActividad) {
@@ -2655,7 +2699,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         // Mostrar según tipo
         if (tipoActividad === 'bautizo') {
             bautizadosSection.style.display = 'block';
-            asistenciaLabel.textContent = 'Asistencia (opcional)';
+            asistenciaLabel.textContent = 'Asistencia';
         } else if (tipoActividad === 'gran_celebracion') {
             comentariosSection.style.display = 'block';
             metricasEvangelismoSection.style.display = 'block';
@@ -2685,6 +2729,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
     }
 
     function backToActivitySelection() {
+        clearReportAsistenciaError();
         document.getElementById('activitySelection').style.display = 'block';
         document.getElementById('reportForm').style.display = 'none';
     }
@@ -2703,6 +2748,21 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         if (totalElement) {
             totalElement.textContent = total;
         }
+        if (total > 0) {
+            clearReportAsistenciaError();
+        }
+    }
+
+    function validarAsistenciaMinimaReporte() {
+        const total = obtenerAsistenciaTotalReporte();
+        if (total < 1) {
+            showReportAsistenciaError('La asistencia total debe ser mínimo 1');
+            document.getElementById('asistencia_hom').focus();
+            return false;
+        }
+
+        clearReportAsistenciaError();
+        return true;
     }
 
     function validarMetricasContraAsistencia() {
@@ -2730,9 +2790,164 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         return true;
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
-        const fotosInput = document.getElementById('fotosEvidencia');
+    function obtenerCamposFotoReporte() {
+        return Array.from(document.querySelectorAll('.fotos-evidencia-input'));
+    }
+
+    function validarArchivoFotoReporte(file) {
+        if (!REPORT_ALLOWED_IMAGE_TYPES.includes(file.type)) {
+            return `Archivo ${file.name}: formato no permitido. Solo JPG, PNG, WebP`;
+        }
+
+        if (file.size > REPORT_MAX_IMAGE_SIZE) {
+            return `Archivo ${file.name}: excede 5 MB (${(file.size / 1024 / 1024).toFixed(1)} MB)`;
+        }
+
+        return '';
+    }
+
+    function actualizarEstadoBotonAgregarFoto() {
+        const addFotoBtn = document.getElementById('addOtraFotoBtn');
+        if (!addFotoBtn) {
+            return;
+        }
+
+        const totalCampos = obtenerCamposFotoReporte().length;
+        addFotoBtn.disabled = totalCampos >= MAX_REPORT_IMAGES;
+        addFotoBtn.style.display = totalCampos >= MAX_REPORT_IMAGES ? 'none' : 'block';
+    }
+
+    function renderFotosPreview() {
         const fotosPreview = document.getElementById('fotosPreview');
+        const fotosCountMsg = document.getElementById('fotosCountMsg');
+
+        if (!fotosPreview || !fotosCountMsg) {
+            return;
+        }
+
+        fotosPreview.innerHTML = '';
+        const fotosValidas = obtenerFotosEvidenciaValidas();
+
+        fotosValidas.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const preview = document.createElement('div');
+                preview.style.cssText = `
+                    position: relative;
+                    width: 100%;
+                    aspect-ratio: 1;
+                    border-radius: 6px;
+                    overflow: hidden;
+                    background: #f0f0f0;
+                    border: 2px solid #2c3e50;
+                `;
+                preview.innerHTML = `
+                    <img src="${event.target.result}" style="width: 100%; height: 100%; object-fit: cover;">
+                    <div style="position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.6); color: white; font-size: 11px; padding: 2px 6px; border-radius: 3px;">${index + 1}</div>
+                `;
+                fotosPreview.appendChild(preview);
+            };
+            reader.readAsDataURL(file);
+        });
+
+        if (fotosValidas.length === 0) {
+            fotosCountMsg.textContent = '';
+            fotosCountMsg.style.color = '#666';
+        } else if (fotosValidas.length === 1) {
+            fotosCountMsg.textContent = '1 imagen cargada (mínimo requerido)';
+            fotosCountMsg.style.color = '#27ae60';
+        } else {
+            fotosCountMsg.textContent = `${fotosValidas.length} imágenes cargadas (${MAX_REPORT_IMAGES - fotosValidas.length} espacios disponibles)`;
+            fotosCountMsg.style.color = '#27ae60';
+        }
+    }
+
+    function manejarCambioFotosReporte(event) {
+        const input = event.target;
+        const file = input.files && input.files[0] ? input.files[0] : null;
+
+        if (file) {
+            const errorArchivo = validarArchivoFotoReporte(file);
+            if (errorArchivo) {
+                showStatusMessage(errorArchivo, 'error');
+                input.value = '';
+            }
+        }
+
+        renderFotosPreview();
+    }
+
+    function agregarCampoFotoReporte() {
+        const container = document.getElementById('fotosInputsContainer');
+        if (!container) {
+            return;
+        }
+
+        const totalCampos = obtenerCamposFotoReporte().length;
+        if (totalCampos >= MAX_REPORT_IMAGES) {
+            showStatusMessage(`Solo puedes cargar máximo ${MAX_REPORT_IMAGES} imágenes por reporte.`, 'error');
+            return;
+        }
+
+        const nuevoIndice = totalCampos + 1;
+        const wrapper = document.createElement('div');
+        wrapper.className = 'foto-evidencia-item';
+        wrapper.dataset.slot = nuevoIndice;
+        wrapper.innerHTML = `
+            <label style="font-size: 12px;">Foto ${nuevoIndice}</label>
+            <input type="file" class="fotos-evidencia-input" accept="image/jpeg,image/png,image/jpg,image/webp" style="display: block; margin-top: 6px;">
+        `;
+
+        const input = wrapper.querySelector('.fotos-evidencia-input');
+        if (input) {
+            input.addEventListener('change', manejarCambioFotosReporte);
+        }
+
+        container.appendChild(wrapper);
+        actualizarEstadoBotonAgregarFoto();
+    }
+
+    function resetNewReportForm() {
+        const form = document.getElementById('newReportForm');
+        const fotosContainer = document.getElementById('fotosInputsContainer');
+        const fotosPreview = document.getElementById('fotosPreview');
+        const fotosCountMsg = document.getElementById('fotosCountMsg');
+
+        if (form) {
+            form.reset();
+        }
+
+        clearReportAsistenciaError();
+
+        if (fotosContainer) {
+            fotosContainer.innerHTML = `
+                <div class="foto-evidencia-item" data-slot="1">
+                    <label style="font-size: 12px;">Foto 1</label>
+                    <input type="file" class="fotos-evidencia-input" accept="image/jpeg,image/png,image/jpg,image/webp" style="display: block; margin-top: 6px;">
+                </div>
+            `;
+
+            const primerInput = fotosContainer.querySelector('.fotos-evidencia-input');
+            if (primerInput) {
+                primerInput.addEventListener('change', manejarCambioFotosReporte);
+            }
+        }
+
+        if (fotosPreview) {
+            fotosPreview.innerHTML = '';
+        }
+
+        if (fotosCountMsg) {
+            fotosCountMsg.textContent = '';
+            fotosCountMsg.style.color = '#666';
+        }
+
+        actualizarAsistenciaReporte();
+        actualizarEstadoBotonAgregarFoto();
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const addFotoBtn = document.getElementById('addOtraFotoBtn');
 
         ['asistencia_hom', 'asistencia_muj', 'asistencia_jov', 'asistencia_nin'].forEach(function(id) {
             const input = document.getElementById(id);
@@ -2742,98 +2957,17 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             }
         });
 
-        if (fotosInput) {
-            const fotosLabel = fotosInput.closest('.form-group')?.querySelector('label');
-            const fotosHelp = fotosInput.closest('.form-group')?.querySelector('small');
-            if (fotosLabel) {
-                fotosLabel.textContent = 'Evidencia Fotográfica (Obligatoria) Min 1 Max 3';
-            }
-            if (fotosHelp) {
-                fotosHelp.textContent = 'Debe cargar al menos una imagen. Máximo 5 MB por imagen. Formatos: JPG, PNG, WebP';
-            }
+        if (addFotoBtn) {
+            addFotoBtn.addEventListener('click', agregarCampoFotoReporte);
         }
 
-        if (fotosInput) {
-            fotosInput.addEventListener('change', function(e) {
-                fotosPreview.innerHTML = '';
-                const fotosCountMsg = document.getElementById('fotosCountMsg');
-                const files = Array.from(this.files);
-                const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
-                const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
-                let validCount = 0;
-
-                if (files.length > MAX_REPORT_IMAGES) {
-                    showStatusMessage(`❌ Solo puedes cargar máximo ${MAX_REPORT_IMAGES} imágenes por reporte. Seleccionaste ${files.length}.`, 'error');
-                    this.value = '';
-                    fotosCountMsg.textContent = '';
-                    return;
-                }
-
-                files.forEach((file, index) => {
-                    // Validar tipo
-                    if (!ALLOWED_TYPES.includes(file.type)) {
-                        showStatusMessage(`❌ Archivo ${file.name}: formato no permitido. Solo JPG, PNG, WebP`, 'error');
-                        return;
-                    }
-
-                    // Validar tamaño
-                    if (file.size > MAX_SIZE) {
-                        showStatusMessage(`❌ Archivo ${file.name}: excede 5 MB (${(file.size / 1024 / 1024).toFixed(1)} MB)`, 'error');
-                        return;
-                    }
-
-                    validCount++;
-
-                    // Crear vista previa
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        const preview = document.createElement('div');
-                        preview.style.cssText = `
-                            position: relative;
-                            width: 100%;
-                            aspect-ratio: 1;
-                            border-radius: 6px;
-                            overflow: hidden;
-                            background: #f0f0f0;
-                            border: 2px solid #2c3e50;
-                        `;
-                        preview.innerHTML = `
-                            <img src="${event.target.result}" style="width: 100%; height: 100%; object-fit: cover;">
-                            <div style="position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.6); color: white; font-size: 11px; padding: 2px 6px; border-radius: 3px;">${validCount}</div>
-                        `;
-                        fotosPreview.appendChild(preview);
-                    };
-                    reader.readAsDataURL(file);
-                });
-
-                // Mostrar contador
-                if (fotosCountMsg) {
-                    if (validCount === 0) {
-                        fotosCountMsg.textContent = '';
-                    } else if (validCount === 1) {
-                        fotosCountMsg.innerHTML = '✅ 1 imagen cargada (mínimo requerido)';
-                        fotosCountMsg.style.color = '#27ae60';
-                    } else {
-                        fotosCountMsg.innerHTML = `✅ ${validCount} imágenes cargadas (${MAX_REPORT_IMAGES - validCount} espacios disponibles)`;
-                        fotosCountMsg.style.color = '#27ae60';
-                    }
-                }
-            });
-        }
+        resetNewReportForm();
     });
 
     function obtenerFotosEvidenciaValidas() {
-        const fotosInput = document.getElementById('fotosEvidencia');
-        if (!fotosInput || !fotosInput.files || fotosInput.files.length === 0) {
-            return [];
-        }
-
-        const MAX_SIZE = 5 * 1024 * 1024;
-        const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
-
-        return Array.from(fotosInput.files).filter(file =>
-            ALLOWED_TYPES.includes(file.type) && file.size <= MAX_SIZE
-        );
+        return obtenerCamposFotoReporte()
+            .map(input => (input.files && input.files[0]) ? input.files[0] : null)
+            .filter(file => file && REPORT_ALLOWED_IMAGE_TYPES.includes(file.type) && file.size <= REPORT_MAX_IMAGE_SIZE);
     }
 
     function saveNewReport(event) {
@@ -2841,6 +2975,10 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
 
         if (!selectedGrupo) {
             showStatusMessage('No hay grupo seleccionado', 'error');
+            return;
+        }
+
+        if (!validarAsistenciaMinimaReporte()) {
             return;
         }
 
@@ -2959,7 +3097,13 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                     }
                 }
             } else {
-                showStatusMessage('Error: ' + (data.message || 'No se pudo crear el reporte'), 'error');
+                const mensajeError = data.message || 'No se pudo crear el reporte';
+                if (mensajeError.toLowerCase().includes('asistencia')) {
+                    showReportAsistenciaError(mensajeError.replace(/^Error:\s*/i, ''));
+                    document.getElementById('asistencia_hom').focus();
+                } else {
+                    showStatusMessage('Error: ' + mensajeError, 'error');
+                }
             }
         })
         .catch(error => {
@@ -2976,11 +3120,9 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
 
         // Validar y agregar imágenes
         let validFiles = 0;
-        const MAX_SIZE = 5 * 1024 * 1024;
-        const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
 
         for (let i = 0; i < files.length; i++) {
-            if (ALLOWED_TYPES.includes(files[i].type) && files[i].size <= MAX_SIZE) {
+            if (REPORT_ALLOWED_IMAGE_TYPES.includes(files[i].type) && files[i].size <= REPORT_MAX_IMAGE_SIZE) {
                 formData.append(`imagenes[]`, files[i]);
                 validFiles++;
             }
@@ -3453,8 +3595,8 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             return;
         }
 
-        if (asistencia_total <= 1) {
-            showAsistenciaError('La asistencia total debe ser mayor a 1');
+        if (asistencia_total < 1) {
+            showAsistenciaError('La asistencia total debe ser mínimo 1');
             document.getElementById('newGroupAsisHom').focus();
             return;
         }
