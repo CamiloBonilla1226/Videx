@@ -1181,7 +1181,8 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         <form id="editForm" onsubmit="saveGroupChanges(event)">
             <div class="edit-form-group">
                 <label class="edit-form-label">Nombre del Grupo</label>
-                <input type="text" id="editNombre" class="edit-form-input" placeholder="Nombre del grupo">
+                <input type="text" id="editNombre" class="edit-form-input" placeholder="Nombre del grupo" oninput="clearFormError('editNombre', 'editNombreError')">
+                <div class="form-field-error" id="editNombreError"></div>
             </div>
 
             <div class="edit-form-group">
@@ -1462,6 +1463,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                             <input type="number" id="preparandose" min="0" value="0">
                         </div>
                     </div>
+                    <div class="form-field-error" id="reportMetricasError"></div>
                 </div>
 
                 <!-- Campo opcional: Bautizados -->
@@ -1929,12 +1931,37 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             return 'El nombre del grupo debe ser alfabetico o alfanumerico';
         }
 
-        const formatoValido = /^[A-Za-z0-9\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u024F ]+$/.test(grupo);
-        if (!formatoValido) {
-            return 'El nombre del grupo solo puede tener letras, numeros y espacios';
-        }
-
         return '';
+    }
+
+    function showReportMetricasError(fieldId, message) {
+        ['discipulado', 'desiciones_extra', 'preparandose'].forEach(id => {
+            const field = document.getElementById(id);
+            if (field) {
+                field.classList.toggle('form-field-invalid', id === fieldId);
+            }
+        });
+
+        const error = document.getElementById('reportMetricasError');
+        if (error) {
+            error.textContent = message;
+            error.classList.add('active');
+        }
+    }
+
+    function clearReportMetricasError() {
+        ['discipulado', 'desiciones_extra', 'preparandose'].forEach(id => {
+            const field = document.getElementById(id);
+            if (field) {
+                field.classList.remove('form-field-invalid');
+            }
+        });
+
+        const error = document.getElementById('reportMetricasError');
+        if (error) {
+            error.textContent = '';
+            error.classList.remove('active');
+        }
     }
 
     function formatearLider(lider) {
@@ -2570,7 +2597,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                             ${renderReporteResumen(reporte)}
                         </div>
                         <div id="images-${reporteId}" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 6px; margin-top: 8px;">
-                            ${imagesHTML || '<span style="font-size: 12px; color: #999;">Sin imÃ¡genes</span>'}
+                            ${imagesHTML || '<span style="font-size: 12px; color: #999;">Sin imagenes</span>'}
                         </div>
                         <div id="mapeo-btn-${reporteId}" data-mapeo="${mapeoData}">
                             ${idActividad === 1 ? `<button onclick="toggleMapeoChart(${reporteId})" class="btn btn-sm btn-info" style="margin-top: 8px; font-size: 11px; padding: 4px 10px; border-radius: 4px;">Ver Mapeo</button>` : ''}
@@ -2846,6 +2873,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         const total = obtenerAsistenciaTotalReporte();
         const metricasSection = document.getElementById('metricasEvangelismoSection');
         if (!metricasSection || metricasSection.style.display === 'none') {
+            clearReportMetricasError();
             return true;
         }
 
@@ -2858,12 +2886,13 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         for (const campo of campos) {
             const valor = parseInt(document.getElementById(campo.id).value) || 0;
             if (valor > total) {
-                showStatusMessage(`${campo.label} no puede ser mayor a la asistencia total`, 'error');
+                showReportMetricasError(campo.id, `${campo.label} no puede ser mayor a la asistencia total`);
                 document.getElementById(campo.id).focus();
                 return false;
             }
         }
 
+        clearReportMetricasError();
         return true;
     }
 
@@ -2995,6 +3024,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         }
 
         clearReportAsistenciaError();
+        clearReportMetricasError();
 
         if (fotosContainer) {
             fotosContainer.innerHTML = `
@@ -3031,6 +3061,14 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             if (input) {
                 input.addEventListener('input', actualizarAsistenciaReporte);
                 input.addEventListener('change', actualizarAsistenciaReporte);
+            }
+        });
+
+        ['discipulado', 'desiciones_extra', 'preparandose'].forEach(function(id) {
+            const input = document.getElementById(id);
+            if (input) {
+                input.addEventListener('input', clearReportMetricasError);
+                input.addEventListener('change', clearReportMetricasError);
             }
         });
 
@@ -3823,10 +3861,11 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
 
         const errorNombreGrupo = validarNombreGrupo(document.getElementById('editNombre').value || '');
         if (errorNombreGrupo) {
-            showStatusMessage(errorNombreGrupo, 'error');
+            showFormError('editNombre', 'editNombreError', errorNombreGrupo);
             document.getElementById('editNombre').focus();
             return;
         }
+        clearFormError('editNombre', 'editNombreError');
 
         // Obtener el valor de grupo madre del selector
         const grupoMadreValue = selectedGrupo.grupo_madre || '';
@@ -3899,7 +3938,13 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                 // Cerrar modal
                 closeEditModal();
             } else {
-                showStatusMessage('Error: ' + (data.message || 'No se pudo actualizar el grupo'), 'error');
+                const mensajeError = data.message || 'No se pudo actualizar el grupo';
+                if (mensajeError.toLowerCase().includes('grupo') || mensajeError.toLowerCase().includes('nombre')) {
+                    showFormError('editNombre', 'editNombreError', mensajeError.replace(/^Error:\s*/i, ''));
+                    document.getElementById('editNombre').focus();
+                } else {
+                    showStatusMessage('Error: ' + mensajeError, 'error');
+                }
             }
         })
         .catch(error => {

@@ -49,10 +49,6 @@ try {
         throw new Exception('El nombre del grupo debe ser alfabetico o alfanumerico');
     }
 
-    if (!preg_match('/^[A-Za-z0-9\p{L} ]+$/u', $nombreGrupoOriginal)) {
-        throw new Exception('El nombre del grupo solo puede tener letras, numeros y espacios');
-    }
-
     $idFacilitador = $_SESSION['id'];
     $nombre = $nombreGrupoOriginal;
     $descripcion = $data['descripcion'] ?? '';
