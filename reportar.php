@@ -475,17 +475,54 @@ $temp_letrero = "REPORTE MENSUAL";
 
 // Compress image
 function compressImage($source, $destination, $quality) {
-  $info = getimagesize($source);
+  $info = @getimagesize($source);
+  if(!$info || empty($info['mime'])){
+        return false;
+  }
+
   if($info['mime'] == 'image/jpeg'){
         $image = imagecreatefromjpeg($source);
+        $resultado = imagejpeg($image, $destination, $quality);
   }
   elseif ($info['mime'] == 'image/gif'){
         $image = imagecreatefromgif($source);
+        $resultado = imagegif($image, $destination);
   }
   elseif ($info['mime'] == 'image/png') {
         $image = imagecreatefrompng($source);
+        imagesavealpha($image, true);
+        $pngQuality = (int) round((100 - max(0, min(100, $quality))) / 10);
+        $resultado = imagepng($image, $destination, max(0, min(9, $pngQuality)));
+  }else{
+        return move_uploaded_file($source, $destination);
   }
-  imagejpeg($image, $destination, $quality);
+
+  if(isset($image) && (is_resource($image) || is_object($image))){
+        imagedestroy($image);
+  }
+
+  return $resultado;
+}
+
+function obtenerRutaImagenReporte($idReporte, $numeroFoto, $extension = ""){
+    $baseRelativa = "archivos/evi_".$idReporte."_".$numeroFoto;
+    $baseAbsoluta = __DIR__.DIRECTORY_SEPARATOR.str_replace("/", DIRECTORY_SEPARATOR, $baseRelativa);
+
+    if($extension != ""){
+        $rutaRelativa = $baseRelativa.".".$extension;
+        $rutaAbsoluta = $baseAbsoluta.".".$extension;
+        if(file_exists($rutaAbsoluta)){
+            return $rutaRelativa;
+        }
+    }
+
+    $coincidencias = glob($baseAbsoluta.".*");
+    if($coincidencias && isset($coincidencias[0])){
+        $rutaRelativa = str_replace(__DIR__.DIRECTORY_SEPARATOR, "", $coincidencias[0]);
+        return str_replace("\\", "/", $rutaRelativa);
+    }
+
+    return "";
 }
 
 
@@ -644,6 +681,11 @@ else if(isset($_POST["funcion"])){
         if(empty($preparandose)) $preparandose = 0;
         if($generacionActual == "EVAN" || (int)$generacionNumero == 77){
             $discipulado = 0;
+            $preparandose = 0;
+        }
+        if($generacionActual == "BAUT"){
+            $discipulado = 0;
+            $desiciones = 0;
             $preparandose = 0;
         }
         if($generacionActual == "GCEL" || (int)$generacionNumero == 8){
@@ -928,6 +970,11 @@ else if(isset($_POST["funcion"])){
         $preparandose  = soloNumeros($_REQUEST["final_preparandose"]);
         if($generacionActual == "EVAN" || (int)$generacionNumero == 77){
             $discipulado = 0;
+            $preparandose = 0;
+        }
+        if($generacionActual == "BAUT"){
+            $discipulado = 0;
+            $desiciones = 0;
             $preparandose = 0;
         }
         if($generacionActual == "GCEL" || (int)$generacionNumero == 8){
@@ -1261,6 +1308,8 @@ if($idReporteActual > 0){
                 $generacionNumero = 77;
             }else if((int)$idActividad == 8){
                 $generacionNumero = 8;
+            }else if((int)$idActividad == 1){
+                $generacionNumero = 1;
             }
             if((int)$generacionNumero == 77){
                 $generacionActual = "EVAN";
@@ -1270,6 +1319,9 @@ if($idReporteActual > 0){
                 $generacionActual = "CERO";
             }else{
                 $generacionActual = "OTRA";
+            }
+            if((int)$idActividad == 99){
+                $generacionActual = "BAUT";
             }
 
             $asistencia_hom = $PSN1->f("asistencia_hom");
@@ -1301,6 +1353,16 @@ if($idReporteActual > 0){
             $mapeo_dar = $PSN1->f("mapeo_dar");  
             $mapeo_bautizar = $PSN1->f("mapeo_bautizar");  
             $mapeo_trabajadores = $PSN1->f("mapeo_trabajadores");  
+
+            $esActividadEvangelismo = ((int)$idActividad == 77);
+            $esActividadGranCelebracion = ((int)$idActividad == 8);
+            $esActividadCoach = ((int)$idActividad == 1);
+            $esActividadBautizo = ((int)$idActividad == 99);
+            $esActividadResumen = ($esActividadEvangelismo || $esActividadBautizo);
+            $usaFormatoSimple = ((int)$generacionNumero == 0 || (int)$generacionNumero == 77 || (int)$generacionNumero == 8 || $esActividadBautizo);
+            $rutaFoto1 = obtenerRutaImagenReporte($idReporteActual, 1, $ext1);
+            $rutaFoto2 = obtenerRutaImagenReporte($idReporteActual, 2, $ext2);
+            $rutaFoto3 = obtenerRutaImagenReporte($idReporteActual, 3, $ext3);
             
             
             //
@@ -1322,6 +1384,27 @@ if($idReporteActual > 0){
     if($PSN1->num_rows() > 0){
         if($PSN1->next_record()){
             $sum_baut = $PSN1->f("suma");
+        }
+    }
+    $adjuntosReporte = array();
+    $PSNAdj = new DBbase_Sql;
+    $sqlAdj = "SELECT adj_id, adj_nom, adj_url, adj_fec, adj_can ";
+    $sqlAdj.= "FROM tbl_adjuntos ";
+    $sqlAdj.= "WHERE adj_rep_fk = '".$idReporteActual."' ";
+    $sqlAdj.= "ORDER BY adj_id ASC";
+    $PSNAdj->query($sqlAdj);
+    if($PSNAdj->num_rows() > 0){
+        while($PSNAdj->next_record()){
+            $adjUrl = trim($PSNAdj->f("adj_url"));
+            if($adjUrl != ""){
+                $adjuntosReporte[] = array(
+                    "id" => $PSNAdj->f("adj_id"),
+                    "nombre" => $PSNAdj->f("adj_nom"),
+                    "url" => str_replace("\\", "/", $adjUrl),
+                    "fecha" => $PSNAdj->f("adj_fec"),
+                    "cantidad" => $PSNAdj->f("adj_can")
+                );
+            }
         }
     }
     ?><div class="container">
@@ -1379,7 +1462,7 @@ if($idReporteActual > 0){
         <?php if ($soloLecturaReporteFacilitador) { ?>
         <fieldset id="reporte_solo_lectura" disabled="disabled">
         <?php } ?>
-        <div class="cont-tit">
+        <div class="cont-tit" <?php if($esActividadEvangelismo){ ?>style="display:none;"<?php } ?>>
             <div class="hr"><hr></div>
             <div class="tit-cen">
                 <h3 class="text-center">INFORMACIÓN GENERAL</h3>
@@ -1388,15 +1471,17 @@ if($idReporteActual > 0){
             <div class="hr"><hr></div>
         </div> 
         
-        <?php if((int)$idActividad == 77){ ?>
+        <?php if($esActividadResumen){ ?>
+        <?php if(!$esActividadEvangelismo){ ?>
         <div class="cont-tit">
             <div class="hr"><hr></div>
             <div class="tit-cen">
                 <h3 class="text-center">DETALLE DEL REPORTE</h3>
-                <h5>ACTIVIDAD DE EVANGELISMO</h5>
+                <h5><?php echo $esActividadEvangelismo ? "ACTIVIDAD DE EVANGELISMO" : "ACTIVIDAD DE BAUTIZO"; ?></h5>
             </div>
             <div class="hr"><hr></div>
         </div>
+        <?php } ?>
         <div class="detalle-actividad-77">
         <?php } ?>
         <?php if(false && (int)$idActividad == 77){ ?>
@@ -1473,7 +1558,7 @@ if($idReporteActual > 0){
                 <textarea class="form-control" rows="3" readonly><?php echo $comentario; ?></textarea>
             </div>
         </div>
-        <div class="cont-tit">
+        <div class="cont-tit" <?php if($esActividadEvangelismo){ ?>style="display:none;"<?php } ?>>
             <div class="hr"><hr></div>
             <div class="tit-cen">
                 <h3 class="text-center">FOTOGRAFIAS DEL REPORTE</h3>
@@ -1534,21 +1619,24 @@ if($idReporteActual > 0){
             </div><?*/
         }
         ?>        
-        <?php if((int)$idActividad == 77){ ?>
+        <?php if($esActividadResumen){ ?>
         <div class="detalle-card">
             <div class="cont-tit">
                 <div class="hr"><hr></div>
                 <div class="tit-cen">
                     <h3 class="text-center">INFORMACION GENERAL</h3>
-                    <h5>RESUMEN DEL REPORTE DE EVANGELISMO</h5>
+                    <h5><?php echo $esActividadEvangelismo ? "RESUMEN DEL REPORTE DE EVANGELISMO" : "RESUMEN DEL REPORTE DE BAUTIZO"; ?></h5>
+                    <p><strong>ID del registro:</strong> <?=str_pad($idReporteActual, 6, "0", STR_PAD_LEFT); ?></p>
                 </div>
                 <div class="hr"><hr></div>
             </div>
             <div class="form-group">
+                <?php if($esActividadEvangelismo){ ?>
                 <div class="col-sm-3">
                     <strong>Plantador:</strong>
                     <input name="plantador" type="text" id="plantador" maxlength="250" value="<?=$plantador; ?>" class="form-control" required />
                 </div>
+                <?php } ?>
                 <div class="col-sm-2">
                     <strong>Fecha del reporte:</strong>
                     <input name="fechaReporte" type="date" id="fechaReporte" maxlength="250" value="<?=$fechaReporte; ?>" class="form-control" required readonly />
@@ -1557,7 +1645,7 @@ if($idReporteActual > 0){
                     <strong>Fecha de inicio:</strong>
                     <input name="fechaInicio" type="date" id="fechaInicio" maxlength="250" value="<?=$fechaInicio; ?>" max='<?=date("Y-m-d"); ?>' class="form-control" required />
                 </div>
-                <div class="col-sm-5">
+                <div class="col-sm-<?php echo $esActividadEvangelismo ? "5" : "8"; ?>">
                     <strong>Nombre del grupo al que pertenece:</strong>
                     <input type="text" value="<?=$nombreGrupoPertenece; ?>" class="form-control" readonly />
                     <input name="nombreGrupo_txt" type="hidden" id="nombreGrupo_txt" value="<?=$nombreGrupo_txt; ?>" />
@@ -1569,7 +1657,7 @@ if($idReporteActual > 0){
                     <input name="barrio" type="text" id="barrio" maxlength="250" value="<?=$barrio; ?>" class="form-control" required placeholder="Barrio" />
                 </div>
                 <div class="col-sm-3">
-                    <strong>Metodo de evangelismo:</strong>
+                    <strong><?php echo $esActividadEvangelismo ? "Metodo de evangelismo" : "Direccion"; ?>:</strong>
                     <input name="direccion" type="text" id="direccion" maxlength="250" value="<?=$direccion; ?>" class="form-control" required />
                 </div>
                 <div class="col-sm-2">
@@ -1585,7 +1673,7 @@ if($idReporteActual > 0){
                 <div class="col-sm-3">
                     <strong>Generacion:</strong>
                     <input name="temporal_solotxt" type="text" id="temporal_solotxt" value="<?=$generacionPertenece; ?>" readonly class="form-control" />
-                    <input name="generacionNumero" type="hidden" id="generacionNumero" value="<?=$generacionNumero; ?>" readonly class="form-control" required />
+                    <input name="generacionNumero" type="hidden" id="generacionNumero" value="<?=$generacionNumeroOriginal; ?>" readonly class="form-control" required />
                 </div>
             </div>
         </div>
@@ -1643,10 +1731,16 @@ if($idReporteActual > 0){
                     <input name="temporal_solotxt" type="text" id="temporal_solotxt" value="GRAN CELEBRACIÓN" readonly class="form-control"  />
                     <input name="generacionNumero" type="hidden" id="generacionNumero" value="<?=$generacionNumero; ?>" readonly class="form-control" required />
                 </div>
+            <?php  }else if ($esActividadCoach){?>
+                <div class="col-sm-4">
+                    <strong>GeneraciÃ³n:</strong>
+                    <input name="temporal_solotxt" type="text" id="temporal_solotxt" value="1" readonly class="form-control"  />
+                    <input name="generacionNumero" type="hidden" id="generacionNumero" value="1" readonly class="form-control" required />
+                </div>
             <?php  } ?>            
         </div>
         <?php } ?>
-        <?php  if($generacionNumero != 0 && $generacionNumero != 77 && $generacionNumero != 8){?>            
+        <?php  if($generacionNumero != 0 && $generacionNumero != 77 && $generacionNumero != 8 && !$esActividadCoach && !$esActividadBautizo){?>            
             <div class="cont-tit">
                 <div class="hr"><hr></div>
                 <div class="tit-cen">
@@ -1682,14 +1776,14 @@ if($idReporteActual > 0){
         <div class="cont-tit">
             <div class="hr"><hr></div>
             <div class="tit-cen">
-                <h3><?php if($generacionNumero == 77){ echo "ALCANZADOS"; }else{ echo "ASISTENCIA"; } ?></h3>
-                <?php if($generacionNumero == 77){ ?><h5>DISTRIBUCION DE LA ASISTENCIA REPORTADA</h5><?php } ?>
+                <h3><?php if($esActividadEvangelismo){ echo "ALCANZADOS"; }else{ echo "ASISTENCIA"; } ?></h3>
+                <?php if($esActividadEvangelismo){ ?><h5>DISTRIBUCION DE LA ASISTENCIA REPORTADA</h5><?php } ?>
             </div>
             <div class="hr"><hr></div>
         </div>
         <div class="form-group">
             <div class="col-sm-3"></div>
-            <?php if($generacionNumero == 0 || $generacionNumero == 77){?>
+            <?php if($generacionNumero == 0 || $esActividadEvangelismo || $esActividadBautizo){?>
                 <div class="col-sm-1">
                     <strong>Hombres:</strong>
                     <input name="final_asistencia_hom" type="number" id="final_asistencia_hom" value="<?=$asistencia_hom; ?>" class="form-control" onChange="sumar()"  />
@@ -1726,16 +1820,16 @@ if($idReporteActual > 0){
             
             <?php } ?>
             <div class="col-sm-2">
-                <strong><?php if($generacionNumero == 77){ echo "Alcanzados"; }else{ echo "Asistencia"; } ?> total:</strong>
+                <strong><?php if($esActividadEvangelismo){ echo "Alcanzados"; }else{ echo "Asistencia"; } ?> total:</strong>
                 <input name="final_asistencia_total" type="number" id="final_asistencia_total" value="<?=$asistencia_total; ?>" readonly class="form-control"  />
             </div>
             <div class="col-sm-3"></div>
         </div>
             
-        <?php if($generacionNumero == 0 || $generacionNumero == 77 || $generacionNumero == 8){?>
+        <?php if($usaFormatoSimple){?>
             <input name="final_bautizados" type="hidden" id="final_bautizados"  value="0" class="form-control" readonly />
             <input name="final_discipulado" type="hidden" id="final_discipulado" value="0" class="form-control" readonly />
-            <?php if($generacionNumero == 77){ ?>
+            <?php if($esActividadEvangelismo){ ?>
                 <div class="form-group">
                     <div class="col-sm-5"></div>
                     <div class="col-sm-2">
@@ -1749,25 +1843,59 @@ if($idReporteActual > 0){
             <?php } ?>
             <input name="final_preparandose" type="hidden" id="final_preparandose" value="0" class="form-control" readonly />
             <input name="final_bautizadosPeriodo" type="hidden" id="final_bautizadosPeriodo" value="0" class="form-control" readonly />
+            <?php if($esActividadEvangelismo || $esActividadBautizo || $esActividadGranCelebracion){ ?>
+            <div class="col-sm-12">
+                <div class="cont-tit">
+                    <div class="hr"><hr></div>
+                    <div class="tit-cen">
+                        <h3 class="text-center"><?php if($esActividadEvangelismo || $esActividadBautizo){ echo "COMENTARIOS DEL REPORTE"; }else{ echo "OTROS DATOS DEL PROCESO"; } ?></h3>
+                        <h5><?php if($esActividadEvangelismo || $esActividadBautizo){ echo "OBSERVACIONES GENERALES"; }else{ echo "COMENTARIOS"; } ?></h5>
+                    </div>
+                    <div class="hr"><hr></div>
+                </div>
+                <div class="form-group">
+                    <div class="col-sm-3"></div>
+                    <div class="col-sm-6">
+                        <textarea name="final_comentarios" id="final_comentarios" style="width: 100%;"><?php echo $comentario; ?></textarea>
+                    </div>
+                    <div class="col-sm-3"></div>
+                </div>
+            </div>
+            <?php } ?>
 
             <div class="cont-tit">
                 <div class="hr"><hr></div>
                 <div class="tit-cen">
-                    <h3 class="text-center"><?php if($generacionNumero == 77){ echo "EVIDENCIA FOTOGRAFICA"; }else{ echo "Método DE VERIFICACIÓN"; } ?></h3>
-                    <h5><?php if($generacionNumero == 77){ echo "FOTOS CARGADAS EN EL FORMULARIO"; }else{ echo "Fotografias"; } ?></h5>
+                    <h3 class="text-center"><?php if($esActividadEvangelismo || $esActividadBautizo){ echo "EVIDENCIA FOTOGRAFICA"; }else{ echo "Método DE VERIFICACIÓN"; } ?></h3>
+                    <h5><?php if($esActividadEvangelismo || $esActividadBautizo){ echo "FOTOS CARGADAS EN EL FORMULARIO"; }else{ echo "Fotografias"; } ?></h5>
                 </div>
                 <div class="hr"><hr></div>
             </div> 
             <div class="cont-flex fl-sard">
+                <?php if($esActividadEvangelismo && count($adjuntosReporte) > 0){ ?>
+                    <?php foreach($adjuntosReporte as $indiceAdj => $adjuntoActual){ ?>
+                    <div class="cont-item col-sm-4">
+                        <div class="form-group">
+                            <div class="col-sm-12">
+                                <strong style="font-size: 18px;display: block;margin-top: 10px;">Foto <?=($indiceAdj + 1); ?>:</strong>
+                                <a href="<?=$adjuntoActual["url"]; ?>" target="_blank"><img src="<?=$adjuntoActual["url"]; ?>" width="100%" /></a>
+                                <?php if(trim($adjuntoActual["nombre"]) != ""){ ?>
+                                    <small style="display:block; margin-top:8px; color:#666;"><?=$adjuntoActual["nombre"]; ?></small>
+                                <?php } ?>
+                            </div>
+                        </div>
+                    </div>
+                    <?php } ?>
+                <?php }else{ ?>
                 <div class="cont-item col-sm-3">
                     <div class="form-group">
                         <div class="col-sm-12">
                             <strong style="font-size: 18px;display: block;margin-top: 10px;">Foto 1:</strong>
                             <?php
-                            if($ext1 == "" || !file_exists("archivos/evi_".$idReporteActual."_1.".$ext1)){
+                            if($rutaFoto1 == ""){
                                 echo "<div class='alert alert-danger' >Sin foto cargada</div>";
                             }else{?>
-                                <a href="archivos/evi_<?=$idReporteActual; ?>_1.<?=$ext1; ?>" target="_blank"><img src="archivos/evi_<?=$idReporteActual; ?>_1.<?=$ext1; ?>" width="100%" /></a>
+                                <a href="<?=$rutaFoto1; ?>" target="_blank"><img src="<?=$rutaFoto1; ?>" width="100%" /></a>
                             <?php } ?>
                         </div>
                     </div>
@@ -1783,10 +1911,10 @@ if($idReporteActual > 0){
                         <div class="col-sm-12">
                             <strong style="font-size: 18px;display: block;margin-top: 10px;">Foto 2:</strong>
                             <?php
-                            if($ext2 == "" || !file_exists("archivos/evi_".$idReporteActual."_2.".$ext2)){
+                            if($rutaFoto2 == ""){
                                 echo "<div class='alert alert-danger' >Sin foto cargada</div>";
                             }else{?>
-                                <a href="archivos/evi_<?=$idReporteActual; ?>_2.<?=$ext2; ?>" target="_blank"><img src="archivos/evi_<?=$idReporteActual; ?>_2.<?=$ext2; ?>" width="100%" /></a>
+                                <a href="<?=$rutaFoto2; ?>" target="_blank"><img src="<?=$rutaFoto2; ?>" width="100%" /></a>
                             <?php } ?>
                         </div>
                     </div>
@@ -1802,10 +1930,10 @@ if($idReporteActual > 0){
                         <div class="col-sm-12">
                             <strong style="font-size: 18px;display: block;margin-top: 10px;">Foto 3:</strong>
                             <?php
-                            if($ext3 == "" || !file_exists("archivos/evi_".$idReporteActual."_3.".$ext3)){
+                            if($rutaFoto3 == ""){
                                 echo "<div class='alert alert-danger' >Sin foto cargada</div>";
                             }else{?>
-                                <a href="archivos/evi_<?=$idReporteActual; ?>_3.<?=$ext3; ?>" target="_blank"><img src="archivos/evi_<?=$idReporteActual; ?>_3.<?=$ext3; ?>" width="100%" /></a>
+                                <a href="<?=$rutaFoto3; ?>" target="_blank"><img src="<?=$rutaFoto3; ?>" width="100%" /></a>
                             <?php } ?>
                         </div>
                     </div>
@@ -1816,6 +1944,7 @@ if($idReporteActual > 0){
                         </div>
                     </div>
                 </div>
+                <?php } ?>
             </div>
                 
         <?php }else{ ?>
@@ -2103,10 +2232,10 @@ if($idReporteActual > 0){
                 <div class="col-sm-4">
                     <strong>Foto:</strong>
                     <?php
-                    if($ext1 == "" || !file_exists("archivos/evi_".$idReporteActual."_1.".$ext1)){
+                    if($rutaFoto1 == ""){
                         ?><div class='alert alert-danger' style="margin-bottom: 0px !important;">Sin foto cargada</div><?php
                     }else{?>
-                        <a href="archivos/evi_<?=$idReporteActual; ?>_1.<?=$ext1; ?>" target="_blank"><img src="archivos/evi_<?=$idReporteActual; ?>_1.<?=$ext1; ?>" width="100%" /></a>
+                        <a href="<?=$rutaFoto1; ?>" target="_blank"><img src="<?=$rutaFoto1; ?>" width="100%" /></a>
                     <?php }?><br>
                     <strong>Cargar foto:</strong>
                     <input name="archivo1" type="file" id="archivo1" class="form-control" />
@@ -2131,7 +2260,7 @@ if($idReporteActual > 0){
                 <div class="col-sm-4"></div>
             </div>
         <?php } ?>
-        <?php if ($generacionNumero == 8 || $generacionNumero == 77) {?>
+        <?php if (($generacionNumero == 8 || $generacionNumero == 77) && !$esActividadEvangelismo && !$esActividadGranCelebracion && !$esActividadBautizo) {?>
             <div class="col-sm-12">
                 <div class="cont-tit">
                     <div class="hr"><hr></div>
@@ -2150,7 +2279,7 @@ if($idReporteActual > 0){
                 </div>
             </div>
         <?php } ?>
-        <?php if((int)$idActividad == 77){ ?>
+        <?php if($esActividadResumen){ ?>
         </div>
         <?php } ?>
         <?php if ($soloLecturaReporteFacilitador) { ?>
@@ -2193,12 +2322,12 @@ if($idReporteActual > 0){
                 }
                 
                 <?php
-                if($generacionNumero == 0 || $generacionNumero == 77 || $generacionNumero == 8){
+                if($generacionNumero == 0 || $generacionNumero == 77 || $generacionNumero == 8 || $esActividadBautizo){
                     ?>               
                     var bautizados = 0;
                     var bautizadosPeriodo = 0;
                     var desiciones = 0;
-                    <?php if($generacionNumero == 77){ ?>
+                    <?php if($esActividadEvangelismo){ ?>
                         if(document.getElementById("final_desiciones").value != ""){
                             var desiciones = document.getElementById("final_desiciones").value;
                         }
@@ -2233,13 +2362,13 @@ if($idReporteActual > 0){
                 
                 
                 
-                <?php if($generacionNumero == 77){ ?>
+                <?php if($esActividadEvangelismo){ ?>
                     document.getElementById("final_bautizados").value = 0;
                     document.getElementById("final_discipulado").value = 0;
                     document.getElementById("final_bautizadosPeriodo").value = 0;
                     document.getElementById("final_desiciones").value = parseInt(desiciones);
                     document.getElementById("final_preparandose").value = 0;
-                <?php }else if($generacionNumero == 0 || $generacionNumero == 8){ ?>
+                <?php }else if($generacionNumero == 0 || $generacionNumero == 8 || $esActividadBautizo){ ?>
                     document.getElementById("final_bautizados").value = 0;
                     document.getElementById("final_discipulado").value = 0;
                     document.getElementById("final_bautizadosPeriodo").value = 0;
