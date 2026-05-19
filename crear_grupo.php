@@ -102,9 +102,9 @@ try {
     $asistencia_muj = intval($data['asistencia_muj'] ?? 0);
     $asistencia_jov = intval($data['asistencia_jov'] ?? 0);
     $asistencia_nin = intval($data['asistencia_nin'] ?? 0);
-    $discipulado = max(0, intval($data['discipulado'] ?? 0));
-    $desiciones = max(0, intval($data['desiciones'] ?? 0));
-    $preparandose = max(0, intval($data['preparandose'] ?? 0));
+    $discipulado = 0;
+    $desiciones = 0;
+    $preparandose = 0;
     
     // El primer reporte de un nuevo IPG debe iniciar el mapeo en nivel 2.
     $mapeo_oracion = 2;
@@ -228,18 +228,6 @@ try {
 
     if ($asistencia_total < 1) {
         throw new Exception('La asistencia total debe ser mínimo 1');
-    }
-
-    if ($discipulado > $asistencia_total) {
-        throw new Exception('Discipulado no puede ser mayor a la asistencia total');
-    }
-
-    if ($desiciones > $asistencia_total) {
-        throw new Exception('Decisiones de Fé no puede ser mayor a la asistencia total');
-    }
-
-    if ($preparandose > $asistencia_total) {
-        throw new Exception('Preparandose no puede ser mayor a la asistencia total');
     }
 
     // Crear reporte de generación 0 (creación del grupo)

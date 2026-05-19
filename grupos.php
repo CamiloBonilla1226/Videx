@@ -830,6 +830,15 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         display: block;
     }
 
+    .form-general-error.active {
+        background: #fdecea;
+        border: 1px solid #f5b7b1;
+        border-radius: 4px;
+        padding: 10px 12px;
+        margin: 10px 0 14px 0;
+        line-height: 1.4;
+    }
+
     .form-field-invalid {
         border-color: #c0392b !important;
         box-shadow: 0 0 0 2px rgba(192, 57, 43, 0.12) !important;
@@ -1179,6 +1188,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         </div>
 
         <form id="editForm" onsubmit="saveGroupChanges(event)">
+            <div class="form-field-error form-general-error" id="editFormError"></div>
             <div class="edit-form-group">
                 <label class="edit-form-label">Nombre del Grupo</label>
                 <input type="text" id="editNombre" class="edit-form-input" placeholder="Nombre del grupo" oninput="clearFormError('editNombre', 'editNombreError')">
@@ -1256,6 +1266,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         </div>
 
         <form id="createGroupForm" onsubmit="saveNewGroup(event)" novalidate>
+            <div class="form-field-error form-general-error" id="createGroupFormError"></div>
             <!-- INFORMACIÓN DEL GRUPO -->
             <h4 style="margin-top: 15px; margin-bottom: 10px; color: #333;">📋 Información del IPG</h4>
 
@@ -1286,12 +1297,13 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
 
             <div class="edit-modal-section" id="grupoMadreSelect" style="display: none;">
                 <label>Seleccionar Grupo Madre *</label>
-                <select id="grupoMadreDropdown" name="grupoMadre">
+                <select id="grupoMadreDropdown" name="grupoMadre" onchange="clearFormError('grupoMadreDropdown', 'grupoMadreError')">
                     <option value="">-- Cargando grupos --</option>
                 </select>
                 <div id="generacionInfo" style="margin-top: 10px; padding: 10px; background: #e8f4f8; border-radius: 4px; display: none;">
                     <small>La nueva generación será: <strong id="generacionDisplay">-</strong></small>
                 </div>
+                <div class="form-field-error" id="grupoMadreError"></div>
             </div>
 
             <div class="edit-modal-section">
@@ -1323,13 +1335,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             <!-- DATOS DEL PRIMER REPORTE -->
             <h4 style="margin-top: 20px; margin-bottom: 10px; color: #333;">📊 Primer Reporte (Datos Iniciales)</h4>
 
-            <div class="edit-modal-section">
-                <p style="font-size: 13px; color: #666; margin: 0 0 10px 0;">
-                    📌 Se creará como: <strong>Coach</strong> (Gen <span id="newGroupGenDefault">0</span>)
-                </p>
-                <!-- Campo oculto para pasar la actividad -->
-                <input type="hidden" name="actividad" value="reunion_cotidiana">
-            </div>
+            <input type="hidden" name="actividad" value="reunion_cotidiana">
 
             <div class="edit-modal-section">
                 <label>Fecha del Primer Encuentro *</label>
@@ -1361,25 +1367,6 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                     <small style="color: #666;">Total: <strong id="totalAsistenciaDisplay">0</strong></small>
                 </div>
                 <div class="form-field-error" id="newGroupAsistenciaError"></div>
-            </div>
-
-            <div class="edit-modal-section" id="newGroupCoachMetricasSection">
-                <label>Datos de Coach</label>
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
-                    <div>
-                        <label style="font-size: 13px;">Discipulado</label>
-                        <input type="number" id="newGroupDiscipulado" name="discipulado" min="0" value="0" oninput="clearFormError('newGroupDiscipulado', 'newGroupMetricasError')">
-                    </div>
-                    <div>
-                        <label style="font-size: 13px;">Decisiones de Fé</label>
-                        <input type="number" id="newGroupDesiciones" name="desiciones" min="0" value="0" oninput="clearFormError('newGroupDesiciones', 'newGroupMetricasError')">
-                    </div>
-                    <div>
-                        <label style="font-size: 13px;">Preparandose</label>
-                        <input type="number" id="newGroupPreparandose" name="preparandose" min="0" value="0" oninput="clearFormError('newGroupPreparandose', 'newGroupMetricasError')">
-                    </div>
-                </div>
-                <div class="form-field-error" id="newGroupMetricasError"></div>
             </div>
 
             <div class="edit-modal-buttons">
@@ -1433,6 +1420,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             </div>
 
             <form id="newReportForm" onsubmit="saveNewReport(event)" style="max-height: 500px; overflow-y: auto;">
+                <div class="form-field-error form-general-error" id="newReportFormError"></div>
                 <!-- Campo de Fecha de Actividad -->
                 <div class="form-group">
                     <label>Fecha de la Actividad</label>
@@ -1515,6 +1503,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                     <small style="color: #666; display: block; margin-top: 8px;">Debe cargar al menos una imagen. Máximo 3 imágenes, 5 MB por imagen. Formatos: JPG, PNG, WebP</small>
                     <div id="fotosPreview" style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px;"></div>
                     <div id="fotosCountMsg" style="margin-top: 8px; font-size: 12px; color: #666;"></div>
+                    <div class="form-field-error" id="reportFotosError"></div>
                 </div>
 
                 <!-- Sección de Mapeos (solo para Coach) -->
@@ -1685,6 +1674,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         if (error) {
             error.textContent = message;
             error.classList.add('active');
+            error.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     }
 
@@ -1714,6 +1704,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         if (error) {
             error.textContent = message;
             error.classList.add('active');
+            error.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     }
 
@@ -1744,6 +1735,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         if (error) {
             error.textContent = message;
             error.classList.add('active');
+            error.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     }
 
@@ -1763,13 +1755,12 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
     }
 
     function clearCreateGroupFormErrors() {
+        clearInlineFormError('createGroupFormError');
         clearFormError('newGroupName', 'newGroupNameError');
         clearFormError('newGroupLider', 'newGroupLiderError');
         clearFormError('newGroupLiderInput', 'newGroupLiderError');
         clearFormError('newGroupFecha', 'newGroupFechaError');
-        clearFormError('newGroupDiscipulado', 'newGroupMetricasError');
-        clearFormError('newGroupDesiciones', 'newGroupMetricasError');
-        clearFormError('newGroupPreparandose', 'newGroupMetricasError');
+        clearFormError('grupoMadreDropdown', 'grupoMadreError');
         clearAsistenciaError();
     }
 
@@ -1809,7 +1800,8 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             liderInput.value = '';
             renderNewGroupLideresUI();
         } else if (createGroupFormData.lideresArray.includes(nuevoLider)) {
-            showStatusMessage('Este líder ya existe', 'info');
+            showFormError('newGroupLiderInput', 'newGroupLiderError', 'Este líder ya existe');
+            liderInput.focus();
         }
     }
 
@@ -1974,6 +1966,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         if (error) {
             error.textContent = message;
             error.classList.add('active');
+            error.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     }
 
@@ -1990,6 +1983,49 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             error.textContent = '';
             error.classList.remove('active');
         }
+    }
+
+    function clearReportFormErrors() {
+        clearInlineFormError('newReportFormError');
+        clearInlineFormError('reportFotosError');
+        clearReportAsistenciaError();
+        clearReportMetricasError();
+    }
+
+    function showInlineFormError(errorId, message) {
+        const error = document.getElementById(errorId);
+        if (!error) {
+            showStatusMessage(message, 'error');
+            return;
+        }
+
+        error.textContent = message;
+        error.classList.add('active');
+        error.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function clearInlineFormError(errorId) {
+        const error = document.getElementById(errorId);
+        if (error) {
+            error.textContent = '';
+            error.classList.remove('active');
+        }
+    }
+
+    function showCreateGroupFormError(message) {
+        showInlineFormError('createGroupFormError', message);
+    }
+
+    function showReportFormError(message) {
+        showInlineFormError('newReportFormError', message);
+    }
+
+    function showReportFotosError(message) {
+        showInlineFormError('reportFotosError', message);
+    }
+
+    function showEditFormError(message) {
+        showInlineFormError('editFormError', message);
     }
 
     function formatearLider(lider) {
@@ -2913,7 +2949,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
     }
 
     function backToActivitySelection() {
-        clearReportAsistenciaError();
+        clearReportFormErrors();
         document.getElementById('activitySelection').style.display = 'block';
         document.getElementById('reportForm').style.display = 'none';
     }
@@ -3060,8 +3096,10 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         if (file) {
             const errorArchivo = validarArchivoFotoReporte(file);
             if (errorArchivo) {
-                showStatusMessage(errorArchivo, 'error');
+                showReportFotosError(errorArchivo);
                 input.value = '';
+            } else {
+                clearInlineFormError('reportFotosError');
             }
         }
 
@@ -3076,7 +3114,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
 
         const totalCampos = obtenerCamposFotoReporte().length;
         if (totalCampos >= MAX_REPORT_IMAGES) {
-            showStatusMessage(`Solo puedes cargar máximo ${MAX_REPORT_IMAGES} imágenes por reporte.`, 'error');
+            showReportFotosError(`Solo puedes cargar máximo ${MAX_REPORT_IMAGES} imágenes por reporte.`);
             return;
         }
 
@@ -3108,8 +3146,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             form.reset();
         }
 
-        clearReportAsistenciaError();
-        clearReportMetricasError();
+        clearReportFormErrors();
 
         if (fotosContainer) {
             fotosContainer.innerHTML = `
@@ -3174,7 +3211,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         event.preventDefault();
 
         if (!selectedGrupo) {
-            showStatusMessage('No hay grupo seleccionado', 'error');
+            showReportFormError('No hay grupo seleccionado');
             return;
         }
 
@@ -3184,11 +3221,11 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
 
         const fotosValidas = obtenerFotosEvidenciaValidas();
         if (fotosValidas.length === 0) {
-            showStatusMessage('❌ Debe cargar al menos 1 evidencia fotográfica para guardar el reporte (máximo 3)', 'error');
+            showReportFotosError('Debe cargar al menos 1 evidencia fotográfica para guardar el reporte (máximo 3)');
             return;
         }
         if (fotosValidas.length > MAX_REPORT_IMAGES) {
-            showStatusMessage(`❌ Solo puedes cargar máximo ${MAX_REPORT_IMAGES} imágenes por reporte (cargaste ${fotosValidas.length})`, 'error');
+            showReportFotosError(`Solo puedes cargar máximo ${MAX_REPORT_IMAGES} imágenes por reporte (cargaste ${fotosValidas.length})`);
             return;
         }
         if (!validarMetricasContraAsistencia()) {
@@ -3200,7 +3237,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         const idGrupo = obtenerIdGrupoSeleccionado(selectedGrupo);
 
         if (!idGrupo) {
-            showStatusMessage('No se pudo identificar el grupo seleccionado', 'error');
+            showReportFormError('No se pudo identificar el grupo seleccionado');
             return;
         }
 
@@ -3304,11 +3341,23 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                 }
             } else {
                 const mensajeError = data.message || 'No se pudo crear el reporte';
-                if (mensajeError.toLowerCase().includes('asistencia')) {
+                const mensajeNormalizado = mensajeError.toLowerCase();
+                if (mensajeNormalizado.includes('asistencia')) {
                     showReportAsistenciaError(mensajeError.replace(/^Error:\s*/i, ''));
                     document.getElementById('asistencia_hom').focus();
+                } else if (mensajeNormalizado.includes('discipulado')) {
+                    showReportMetricasError('discipulado', mensajeError.replace(/^Error:\s*/i, ''));
+                    document.getElementById('discipulado').focus();
+                } else if (mensajeNormalizado.includes('decisiones')) {
+                    showReportMetricasError('desiciones_extra', mensajeError.replace(/^Error:\s*/i, ''));
+                    document.getElementById('desiciones_extra').focus();
+                } else if (mensajeNormalizado.includes('preparandose')) {
+                    showReportMetricasError('preparandose', mensajeError.replace(/^Error:\s*/i, ''));
+                    document.getElementById('preparandose').focus();
+                } else if (mensajeNormalizado.includes('imagen') || mensajeNormalizado.includes('foto')) {
+                    showReportFotosError(mensajeError.replace(/^Error:\s*/i, ''));
                 } else {
-                    showStatusMessage('Error: ' + mensajeError, 'error');
+                    showReportFormError(mensajeError.replace(/^Error:\s*/i, ''));
                 }
             }
         })
@@ -3316,7 +3365,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             console.error('Error:', error);
             btnSubmit.textContent = textOriginal;
             btnSubmit.disabled = false;
-            showStatusMessage('Error de conexión al guardar el reporte: ' + error.message, 'error');
+            showReportFormError('Error de conexión al guardar el reporte: ' + error.message);
         });
     }
 
@@ -3335,13 +3384,13 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         }
 
         if (validFiles === 0) {
-            showStatusMessage('❌ No hay imágenes válidas. Debe cargar al menos 1 imagen (máximo 3)', 'error');
+            showReportFotosError('No hay imágenes válidas. Debe cargar al menos 1 imagen (máximo 3)');
             btnSubmit.textContent = textOriginal;
             btnSubmit.disabled = false;
             return;
         }
         if (validFiles > MAX_REPORT_IMAGES) {
-            showStatusMessage(`❌ Solo puedes cargar máximo ${MAX_REPORT_IMAGES} imágenes por reporte (intentaste cargar ${validFiles})`, 'error');
+            showReportFotosError(`Solo puedes cargar máximo ${MAX_REPORT_IMAGES} imágenes por reporte (intentaste cargar ${validFiles})`);
             btnSubmit.textContent = textOriginal;
             btnSubmit.disabled = false;
             return;
@@ -3378,7 +3427,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                     updateGroupPanel(selectedGrupo);
                 }
             } else {
-                showStatusMessage('Error al guardar imágenes: ' + (data.message || 'Error desconocido'), 'error');
+                showReportFotosError(data.message || 'Error al guardar imágenes');
             }
         })
         .catch(error => {
@@ -3386,7 +3435,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             console.error('Error details:', error.message);
             btnSubmit.textContent = textOriginal;
             btnSubmit.disabled = false;
-            showStatusMessage('Error al guardar imágenes: ' + error.message, 'error');
+            showReportFotosError('Error al guardar imágenes: ' + error.message);
         });
     }
 
@@ -3449,6 +3498,9 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             showStatusMessage('Por favor selecciona un grupo primero', 'info');
             return;
         }
+        clearInlineFormError('editFormError');
+        clearFormError('editNombre', 'editNombreError');
+        clearFormError('liderInput', 'liderInputError');
 
         // Llenar formulario con datos actuales del grupo
         document.getElementById('editNombre').value = selectedGrupo.nombre_exacto || '';
@@ -3522,6 +3574,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
     function closeEditModal() {
         document.getElementById('editModal').classList.remove('active');
         editFormData.lideresArray = [];
+        clearInlineFormError('editFormError');
         clearFormError('liderInput', 'liderInputError');
     }
 
@@ -3551,7 +3604,8 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             liderInput.value = '';
             renderLideresUI();
         } else if (editFormData.lideresArray.includes(nuevoLider)) {
-            showStatusMessage('Este líder ya existe', 'info');
+            showFormError('liderInput', 'liderInputError', 'Este líder ya existe');
+            liderInput.focus();
         }
     }
 
@@ -3623,7 +3677,10 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             grupoMadreDropdown.required = false;
             grupoMadreDropdown.value = '';
             // Establecer generación a 0 cuando no tiene grupo madre
-            document.getElementById('newGroupGenDefault').textContent = '0';
+            const generacionDefault = document.getElementById('newGroupGenDefault');
+            if (generacionDefault) {
+                generacionDefault.textContent = '0';
+            }
             document.getElementById('generacionInfo').style.display = 'none';
         }
     }
@@ -3684,11 +3741,15 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             const generacionMadre = parseInt(selectedOption.dataset.generacion);
             const generacionNueva = generacionMadre + 1;
             generacionDisplay.textContent = generacionNueva;
-            generacionDefault.textContent = generacionNueva;
+            if (generacionDefault) {
+                generacionDefault.textContent = generacionNueva;
+            }
             generacionInfo.style.display = 'block';
         } else {
             generacionInfo.style.display = 'none';
-            generacionDefault.textContent = '0';
+            if (generacionDefault) {
+                generacionDefault.textContent = '0';
+            }
         }
     }
 
@@ -3832,9 +3893,6 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         const asistencia_jov = parseInt(document.getElementById('newGroupAsisJov').value) || 0;
         const asistencia_nin = parseInt(document.getElementById('newGroupAsisNin').value) || 0;
         const asistencia_total = asistencia_hom + asistencia_muj + asistencia_jov + asistencia_nin;
-        const discipulado = parseInt(document.getElementById('newGroupDiscipulado').value) || 0;
-        const desiciones = parseInt(document.getElementById('newGroupDesiciones').value) || 0;
-        const preparandose = parseInt(document.getElementById('newGroupPreparandose').value) || 0;
 
         const errorNombreGrupo = validarNombreGrupo(nombre);
         if (errorNombreGrupo) {
@@ -3850,7 +3908,8 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         }
 
         if (tieneGrupoMadre === 'si' && !grupoMadreId) {
-            showStatusMessage('Debes seleccionar un grupo madre', 'error');
+            showFormError('grupoMadreDropdown', 'grupoMadreError', 'Debes seleccionar un grupo madre');
+            document.getElementById('grupoMadreDropdown').focus();
             return;
         }
 
@@ -3864,19 +3923,6 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             showAsistenciaError('La asistencia total debe ser mínimo 1');
             document.getElementById('newGroupAsisHom').focus();
             return;
-        }
-
-        const metricasCoach = [
-            { id: 'newGroupDiscipulado', valor: discipulado, label: 'Discipulado' },
-            { id: 'newGroupDesiciones', valor: desiciones, label: 'Decisiones de Fé' },
-            { id: 'newGroupPreparandose', valor: preparandose, label: 'Preparandose' }
-        ];
-        for (const metrica of metricasCoach) {
-            if (metrica.valor > asistencia_total) {
-                showFormError(metrica.id, 'newGroupMetricasError', `${metrica.label} no puede ser mayor a la asistencia total`);
-                document.getElementById(metrica.id).focus();
-                return;
-            }
         }
 
         const datosNuevoGrupo = {
@@ -3896,10 +3942,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             asistencia_hom: asistencia_hom,
             asistencia_muj: asistencia_muj,
             asistencia_jov: asistencia_jov,
-            asistencia_nin: asistencia_nin,
-            discipulado: discipulado,
-            desiciones: desiciones,
-            preparandose: preparandose
+            asistencia_nin: asistencia_nin
         };
 
         console.log('Datos del nuevo grupo:', datosNuevoGrupo);
@@ -3938,43 +3981,38 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                     if (mensajeNormalizado.includes('lider')) {
                         showFormError('newGroupLiderInput', 'newGroupLiderError', mensajeError.replace(/^Error:\s*/i, ''));
                         document.getElementById('newGroupLiderInput').focus();
+                    } else if (mensajeNormalizado.includes('madre')) {
+                        showFormError('grupoMadreDropdown', 'grupoMadreError', mensajeError.replace(/^Error:\s*/i, ''));
+                        document.getElementById('grupoMadreDropdown').focus();
                     } else if (mensajeNormalizado.includes('grupo') || mensajeNormalizado.includes('nombre')) {
                         showFormError('newGroupName', 'newGroupNameError', mensajeError.replace(/^Error:\s*/i, ''));
                         document.getElementById('newGroupName').focus();
-                    } else if (mensajeNormalizado.includes('discipulado')) {
-                        showFormError('newGroupDiscipulado', 'newGroupMetricasError', mensajeError.replace(/^Error:\s*/i, ''));
-                        document.getElementById('newGroupDiscipulado').focus();
-                    } else if (mensajeNormalizado.includes('decisiones')) {
-                        showFormError('newGroupDesiciones', 'newGroupMetricasError', mensajeError.replace(/^Error:\s*/i, ''));
-                        document.getElementById('newGroupDesiciones').focus();
-                    } else if (mensajeNormalizado.includes('preparandose')) {
-                        showFormError('newGroupPreparandose', 'newGroupMetricasError', mensajeError.replace(/^Error:\s*/i, ''));
-                        document.getElementById('newGroupPreparandose').focus();
                     } else if (mensajeNormalizado.includes('asistencia')) {
                         showAsistenciaError(mensajeError.replace(/^Error:\s*/i, ''));
                         document.getElementById('newGroupAsisHom').focus();
                     } else {
-                        showStatusMessage('Error: ' + mensajeError, 'error');
+                        showCreateGroupFormError(mensajeError.replace(/^Error:\s*/i, ''));
                     }
                 }
             } catch (parseError) {
                 console.error('Error al parsear JSON:', parseError);
                 console.error('Respuesta cruda completa:', text);
                 console.error('Empieza con:', text.charAt(0));
-                showStatusMessage('Error del servidor', 'error');
+                showCreateGroupFormError('Error del servidor. Intenta guardar nuevamente.');
             }
         })
         .catch(error => {
             console.error('Error al crear grupo:', error);
-            showStatusMessage('Error al crear el grupo', 'error');
+            showCreateGroupFormError('Error al crear el grupo: ' + error.message);
         });
     }
 
     function saveGroupChanges(event) {
         event.preventDefault();
+        clearInlineFormError('editFormError');
 
         if (!selectedGrupo) {
-            showStatusMessage('Error: No hay grupo seleccionado', 'error');
+            showEditFormError('No hay grupo seleccionado');
             return;
         }
 
@@ -3991,7 +4029,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         const idGrupo = obtenerIdGrupoSeleccionado(selectedGrupo);
 
         if (!idGrupo) {
-            showStatusMessage('No se pudo identificar el grupo base', 'error');
+            showEditFormError('No se pudo identificar el grupo base');
             return;
         }
 
@@ -4062,7 +4100,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                     showFormError('editNombre', 'editNombreError', mensajeError.replace(/^Error:\s*/i, ''));
                     document.getElementById('editNombre').focus();
                 } else {
-                    showStatusMessage('Error: ' + mensajeError, 'error');
+                    showEditFormError(mensajeError.replace(/^Error:\s*/i, ''));
                 }
             }
         })
@@ -4070,7 +4108,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             console.error('Error:', error);
             btnSave.textContent = textOriginal;
             btnSave.disabled = false;
-            showStatusMessage('Error de conexión al guardar cambios', 'error');
+            showEditFormError('Error de conexión al guardar cambios: ' + error.message);
         });
     }
 
