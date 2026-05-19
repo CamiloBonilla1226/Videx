@@ -1314,7 +1314,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                 <div id="newGroupLideresUi" style="margin-top: 10px;">
                     <div class="edit-lideres-container" id="newGroupLideresContainer"></div>
                     <div class="edit-lider-input-group">
-                        <input type="text" id="newGroupLiderInput" class="edit-form-input edit-lider-input" placeholder="Agregar nuevo lÃ­der" oninput="clearFormError('newGroupLiderInput', 'newGroupLiderError')">
+                        <input type="text" id="newGroupLiderInput" class="edit-form-input edit-lider-input" placeholder="Agregar nuevo líder" oninput="clearFormError('newGroupLiderInput', 'newGroupLiderError')">
                         <button type="button" class="edit-lider-add-btn" onclick="addNewGroupLider()">Agregar</button>
                     </div>
                 </div>
@@ -1361,6 +1361,25 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                     <small style="color: #666;">Total: <strong id="totalAsistenciaDisplay">0</strong></small>
                 </div>
                 <div class="form-field-error" id="newGroupAsistenciaError"></div>
+            </div>
+
+            <div class="edit-modal-section" id="newGroupCoachMetricasSection">
+                <label>Datos de Coach</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                    <div>
+                        <label style="font-size: 13px;">Discipulado</label>
+                        <input type="number" id="newGroupDiscipulado" name="discipulado" min="0" value="0" oninput="clearFormError('newGroupDiscipulado', 'newGroupMetricasError')">
+                    </div>
+                    <div>
+                        <label style="font-size: 13px;">Decisiones de Fé</label>
+                        <input type="number" id="newGroupDesiciones" name="desiciones" min="0" value="0" oninput="clearFormError('newGroupDesiciones', 'newGroupMetricasError')">
+                    </div>
+                    <div>
+                        <label style="font-size: 13px;">Preparandose</label>
+                        <input type="number" id="newGroupPreparandose" name="preparandose" min="0" value="0" oninput="clearFormError('newGroupPreparandose', 'newGroupMetricasError')">
+                    </div>
+                </div>
+                <div class="form-field-error" id="newGroupMetricasError"></div>
             </div>
 
             <div class="edit-modal-buttons">
@@ -1445,20 +1464,20 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                 </div>
 
                 <div class="form-group" id="metricasEvangelismoSection" style="display: none;">
-                    <label>Asistencia Total</label>
+                    <label id="metricasReporteTitulo">Asistencia Total</label>
                     <div style="padding: 10px; background: #f0f0f0; border-radius: 4px; margin-bottom: 12px;">
                         <strong id="asistenciaTotalReporte">0</strong>
                     </div>
                     <div class="attendance-grid">
-                        <div class="attendance-input">
+                        <div class="attendance-input" id="metricFieldDiscipulado">
                             <label>Discipulado</label>
                             <input type="number" id="discipulado" min="0" value="0">
                         </div>
-                        <div class="attendance-input">
-                            <label>Decisiones</label>
+                        <div class="attendance-input" id="metricFieldDecisiones">
+                            <label id="desicionesExtraLabel">Decisiones de Fé</label>
                             <input type="number" id="desiciones_extra" min="0" value="0">
                         </div>
-                        <div class="attendance-input">
+                        <div class="attendance-input" id="metricFieldPreparandose">
                             <label>Preparandose</label>
                             <input type="number" id="preparandose" min="0" value="0">
                         </div>
@@ -1474,7 +1493,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
 
                 <!-- Campo opcional: Decisiones -->
                 <div class="form-group" id="decisionesSection" style="display: none;">
-                    <label>Decisiones para Cristo</label>
+                    <label>Decisiones de Fé</label>
                     <input type="number" id="desiciones" min="0" value="0">
                 </div>
 
@@ -1748,6 +1767,9 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         clearFormError('newGroupLider', 'newGroupLiderError');
         clearFormError('newGroupLiderInput', 'newGroupLiderError');
         clearFormError('newGroupFecha', 'newGroupFechaError');
+        clearFormError('newGroupDiscipulado', 'newGroupMetricasError');
+        clearFormError('newGroupDesiciones', 'newGroupMetricasError');
+        clearFormError('newGroupPreparandose', 'newGroupMetricasError');
         clearAsistenciaError();
     }
 
@@ -1787,7 +1809,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             liderInput.value = '';
             renderNewGroupLideresUI();
         } else if (createGroupFormData.lideresArray.includes(nuevoLider)) {
-            showStatusMessage('Este lÃ­der ya existe', 'info');
+            showStatusMessage('Este líder ya existe', 'info');
         }
     }
 
@@ -1860,6 +1882,12 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         }
 
         const generacion = parseInt(reporte.generacionNumero || 0, 10);
+        if (generacion === 77) {
+            return 'Evangelismo';
+        }
+        if (generacion === 8) {
+            return 'Gran Celebracion';
+        }
         return generacion > 0 ? `Generacion ${generacion}` : 'Desconocido';
     }
 
@@ -2518,16 +2546,24 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         const discipulado = parseInt(reporte.discipulado || 0, 10);
         const desiciones = parseInt(reporte.desiciones || 0, 10);
         const preparandose = parseInt(reporte.preparandose || 0, 10);
+        const idActividad = parseInt(reporte.id_actividad || 0, 10);
+        const generacion = parseInt(reporte.generacionNumero || 0, 10);
+        let metricasHTML = `<span>👥 Asistencia: <strong style="color: #2c3e50;">${asistencia}</strong></span>`;
+
+        if (idActividad === 77 || (idActividad === 0 && generacion === 77)) {
+            metricasHTML += `<br><span>✝️ Decisiones de Fé: <strong style="color: #2c3e50;">${desiciones}</strong></span>`;
+        } else if (idActividad === 1 || (idActividad === 0 && generacion >= 1 && generacion <= 5)) {
+            metricasHTML += ` | <span>📖 Discipulado: <strong style="color: #2c3e50;">${discipulado}</strong></span><br>
+                    <span>✝️ Decisiones de Fé: <strong style="color: #2c3e50;">${desiciones}</strong></span> | 
+                    <span>🎯 Preparándose: <strong style="color: #2c3e50;">${preparandose}</strong></span>`;
+        }
 
         return `
             <div style="line-height: 1.6;">
                 <div style="font-weight: 600; color: #2c3e50; margin-bottom: 6px;">${obtenerEtiquetaActividad(reporte)}</div>
                 <div style="color: #555; font-size: 11px;">
                     <span style="font-weight: 500;">📅 ${fecha}</span><br>
-                    <span>👥 Asistencia: <strong style="color: #2c3e50;">${asistencia}</strong></span> | 
-                    <span>📖 Discipulado: <strong style="color: #2c3e50;">${discipulado}</strong></span><br>
-                    <span>✝️ Decisiones: <strong style="color: #2c3e50;">${desiciones}</strong></span> | 
-                    <span>🎯 Preparándose: <strong style="color: #2c3e50;">${preparandose}</strong></span>
+                    ${metricasHTML}
                 </div>
             </div>
         `;
@@ -2788,14 +2824,48 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         const comentariosSection = document.getElementById('comentariosSection');
         const mapeosSection = document.getElementById('mapeosSection');
         const metricasEvangelismoSection = document.getElementById('metricasEvangelismoSection');
+        const metricasReporteTitulo = document.getElementById('metricasReporteTitulo');
         const asistenciaLabel = document.getElementById('asistenciaLabel');
+        const camposMetricas = {
+            discipulado: {
+                wrapper: document.getElementById('metricFieldDiscipulado'),
+                input: document.getElementById('discipulado')
+            },
+            decisiones: {
+                wrapper: document.getElementById('metricFieldDecisiones'),
+                input: document.getElementById('desiciones_extra')
+            },
+            preparandose: {
+                wrapper: document.getElementById('metricFieldPreparandose'),
+                input: document.getElementById('preparandose')
+            }
+        };
+
+        function configurarCampoMetrica(campo, visible) {
+            if (!campo || !campo.wrapper || !campo.input) {
+                return;
+            }
+
+            campo.wrapper.style.display = visible ? '' : 'none';
+            if (!visible) {
+                campo.input.value = 0;
+            }
+        }
+
+        function configurarMetricas(opciones = {}) {
+            metricasEvangelismoSection.style.display = opciones.mostrar ? 'block' : 'none';
+            metricasReporteTitulo.textContent = opciones.titulo || 'Asistencia Total';
+            configurarCampoMetrica(camposMetricas.discipulado, !!opciones.discipulado);
+            configurarCampoMetrica(camposMetricas.decisiones, !!opciones.decisiones);
+            configurarCampoMetrica(camposMetricas.preparandose, !!opciones.preparandose);
+        }
 
         // Ocultar todos por defecto
         bautizadosSection.style.display = 'none';
         decisionesSection.style.display = 'none';
         comentariosSection.style.display = 'none';
         mapeosSection.style.display = 'none';
-        metricasEvangelismoSection.style.display = 'none';
+        configurarMetricas({ mostrar: false });
         document.getElementById('discipulado').value = 0;
         document.getElementById('desiciones_extra').value = 0;
         document.getElementById('preparandose').value = 0;
@@ -2806,13 +2876,23 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             asistenciaLabel.textContent = 'Asistencia';
         } else if (tipoActividad === 'gran_celebracion') {
             comentariosSection.style.display = 'block';
-            metricasEvangelismoSection.style.display = 'block';
             asistenciaLabel.textContent = 'Asistencia';
         } else if (tipoActividad === 'evangelismo') {
-            metricasEvangelismoSection.style.display = 'block';
+            comentariosSection.style.display = 'block';
+            configurarMetricas({
+                mostrar: true,
+                titulo: 'Alcanzados Total',
+                decisiones: true
+            });
             asistenciaLabel.textContent = 'Alcanzados';
         } else if (tipoActividad === 'reunion_cotidiana') {
-            decisionesSection.style.display = 'block';
+            configurarMetricas({
+                mostrar: true,
+                titulo: 'Asistencia Total',
+                discipulado: true,
+                decisiones: true,
+                preparandose: true
+            });
             mapeosSection.style.display = 'block';
             asistenciaLabel.textContent = 'Asistencia';
         }
@@ -2878,12 +2958,17 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         }
 
         const campos = [
-            { id: 'discipulado', label: 'Discipulado' },
-            { id: 'desiciones_extra', label: 'Decisiones' },
-            { id: 'preparandose', label: 'Preparandose' }
+            { id: 'discipulado', wrapperId: 'metricFieldDiscipulado', label: 'Discipulado' },
+            { id: 'desiciones_extra', wrapperId: 'metricFieldDecisiones', label: 'Decisiones de Fé' },
+            { id: 'preparandose', wrapperId: 'metricFieldPreparandose', label: 'Preparandose' }
         ];
 
         for (const campo of campos) {
+            const wrapper = document.getElementById(campo.wrapperId);
+            if (wrapper && wrapper.style.display === 'none') {
+                continue;
+            }
+
             const valor = parseInt(document.getElementById(campo.id).value) || 0;
             if (valor > total) {
                 showReportMetricasError(campo.id, `${campo.label} no puede ser mayor a la asistencia total`);
@@ -3138,9 +3223,15 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             datosReporte.desiciones = parseInt(document.getElementById('desiciones').value) || 0;
         }
         if (document.getElementById('metricasEvangelismoSection').style.display !== 'none') {
-            datosReporte.discipulado = parseInt(document.getElementById('discipulado').value) || 0;
-            datosReporte.desiciones = parseInt(document.getElementById('desiciones_extra').value) || 0;
-            datosReporte.preparandose = parseInt(document.getElementById('preparandose').value) || 0;
+            if (document.getElementById('metricFieldDiscipulado').style.display !== 'none') {
+                datosReporte.discipulado = parseInt(document.getElementById('discipulado').value) || 0;
+            }
+            if (document.getElementById('metricFieldDecisiones').style.display !== 'none') {
+                datosReporte.desiciones = parseInt(document.getElementById('desiciones_extra').value) || 0;
+            }
+            if (document.getElementById('metricFieldPreparandose').style.display !== 'none') {
+                datosReporte.preparandose = parseInt(document.getElementById('preparandose').value) || 0;
+            }
         }
         if (document.getElementById('comentariosSection').style.display !== 'none') {
             datosReporte.comentario = document.getElementById('comentario').value;
@@ -3741,6 +3832,9 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         const asistencia_jov = parseInt(document.getElementById('newGroupAsisJov').value) || 0;
         const asistencia_nin = parseInt(document.getElementById('newGroupAsisNin').value) || 0;
         const asistencia_total = asistencia_hom + asistencia_muj + asistencia_jov + asistencia_nin;
+        const discipulado = parseInt(document.getElementById('newGroupDiscipulado').value) || 0;
+        const desiciones = parseInt(document.getElementById('newGroupDesiciones').value) || 0;
+        const preparandose = parseInt(document.getElementById('newGroupPreparandose').value) || 0;
 
         const errorNombreGrupo = validarNombreGrupo(nombre);
         if (errorNombreGrupo) {
@@ -3772,6 +3866,19 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             return;
         }
 
+        const metricasCoach = [
+            { id: 'newGroupDiscipulado', valor: discipulado, label: 'Discipulado' },
+            { id: 'newGroupDesiciones', valor: desiciones, label: 'Decisiones de Fé' },
+            { id: 'newGroupPreparandose', valor: preparandose, label: 'Preparandose' }
+        ];
+        for (const metrica of metricasCoach) {
+            if (metrica.valor > asistencia_total) {
+                showFormError(metrica.id, 'newGroupMetricasError', `${metrica.label} no puede ser mayor a la asistencia total`);
+                document.getElementById(metrica.id).focus();
+                return;
+            }
+        }
+
         const datosNuevoGrupo = {
             // Datos del grupo
             nombre: nombre,
@@ -3789,7 +3896,10 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             asistencia_hom: asistencia_hom,
             asistencia_muj: asistencia_muj,
             asistencia_jov: asistencia_jov,
-            asistencia_nin: asistencia_nin
+            asistencia_nin: asistencia_nin,
+            discipulado: discipulado,
+            desiciones: desiciones,
+            preparandose: preparandose
         };
 
         console.log('Datos del nuevo grupo:', datosNuevoGrupo);
@@ -3831,6 +3941,15 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                     } else if (mensajeNormalizado.includes('grupo') || mensajeNormalizado.includes('nombre')) {
                         showFormError('newGroupName', 'newGroupNameError', mensajeError.replace(/^Error:\s*/i, ''));
                         document.getElementById('newGroupName').focus();
+                    } else if (mensajeNormalizado.includes('discipulado')) {
+                        showFormError('newGroupDiscipulado', 'newGroupMetricasError', mensajeError.replace(/^Error:\s*/i, ''));
+                        document.getElementById('newGroupDiscipulado').focus();
+                    } else if (mensajeNormalizado.includes('decisiones')) {
+                        showFormError('newGroupDesiciones', 'newGroupMetricasError', mensajeError.replace(/^Error:\s*/i, ''));
+                        document.getElementById('newGroupDesiciones').focus();
+                    } else if (mensajeNormalizado.includes('preparandose')) {
+                        showFormError('newGroupPreparandose', 'newGroupMetricasError', mensajeError.replace(/^Error:\s*/i, ''));
+                        document.getElementById('newGroupPreparandose').focus();
                     } else if (mensajeNormalizado.includes('asistencia')) {
                         showAsistenciaError(mensajeError.replace(/^Error:\s*/i, ''));
                         document.getElementById('newGroupAsisHom').focus();

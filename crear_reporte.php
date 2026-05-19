@@ -72,12 +72,21 @@ try {
     $preparandose = max(0, intval($data['preparandose'] ?? 0));
     $comentario = addslashes((string)($data['comentario'] ?? ''));
 
+    if ($tipoActividad === 'evangelismo') {
+        $discipulado = 0;
+        $preparandose = 0;
+    } elseif ($tipoActividad === 'gran_celebracion' || $tipoActividad === 'bautizo') {
+        $discipulado = 0;
+        $desiciones = 0;
+        $preparandose = 0;
+    }
+
     if ($discipulado > $asistencia_total) {
         throw new Exception('Discipulado no puede ser mayor a la asistencia total');
     }
 
     if ($desiciones > $asistencia_total) {
-        throw new Exception('Decisiones no puede ser mayor a la asistencia total');
+        throw new Exception('Decisiones de Fé no puede ser mayor a la asistencia total');
     }
 
     if ($preparandose > $asistencia_total) {
@@ -137,6 +146,11 @@ try {
 
     $idGrupoMadre = (int)$PSN1->f('idGrupoMadre');
     $generacionNumero = (int)$PSN1->f('generacionNumero');
+    if ($tipoActividad === 'evangelismo') {
+        $generacionNumero = 77;
+    } elseif ($tipoActividad === 'gran_celebracion') {
+        $generacionNumero = 8;
+    }
     $plantador = addslashes((string)$PSN1->f('plantador'));
     $sitioReunion = addslashes((string)$PSN1->f('sitioReunion'));
     $grupoMadre_txt = addslashes((string)$PSN1->f('grupoMadre_txt'));

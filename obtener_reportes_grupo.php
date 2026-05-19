@@ -57,7 +57,8 @@ try {
             mapeo_cena,
             mapeo_dar,
             mapeo_bautizar,
-            mapeo_trabajadores
+            mapeo_trabajadores,
+            comentario
         FROM sat_reportes
         WHERE idUsuario = " . (int)$idFacilitador . "
           AND id_grupo = " . (int)$idGrupo . "
@@ -92,7 +93,8 @@ try {
             'mapeo_cena' => (int)$PSN1->f('mapeo_cena'),
             'mapeo_dar' => (int)$PSN1->f('mapeo_dar'),
             'mapeo_bautizar' => (int)$PSN1->f('mapeo_bautizar'),
-            'mapeo_trabajadores' => (int)$PSN1->f('mapeo_trabajadores')
+            'mapeo_trabajadores' => (int)$PSN1->f('mapeo_trabajadores'),
+            'comentario' => $PSN1->f('comentario')
         );
     }
 

@@ -617,6 +617,15 @@ else if(isset($_POST["funcion"])){
         if(empty($desiciones)) $desiciones = 0;
         $preparandose  = soloNumeros($_REQUEST["final_preparandose"]);
         if(empty($preparandose)) $preparandose = 0;
+        if($generacionActual == "EVAN" || (int)$generacionNumero == 77){
+            $discipulado = 0;
+            $preparandose = 0;
+        }
+        if($generacionActual == "GCEL" || (int)$generacionNumero == 8){
+            $discipulado = 0;
+            $desiciones = 0;
+            $preparandose = 0;
+        }
         $iglesias_reconocidas = 0;
         //        
 
@@ -892,6 +901,15 @@ else if(isset($_POST["funcion"])){
         $discipulado  = soloNumeros($_REQUEST["final_discipulado"]);
         $desiciones  = soloNumeros($_REQUEST["final_desiciones"]);
         $preparandose  = soloNumeros($_REQUEST["final_preparandose"]);
+        if($generacionActual == "EVAN" || (int)$generacionNumero == 77){
+            $discipulado = 0;
+            $preparandose = 0;
+        }
+        if($generacionActual == "GCEL" || (int)$generacionNumero == 8){
+            $discipulado = 0;
+            $desiciones = 0;
+            $preparandose = 0;
+        }
         $iglesias_reconocidas = 0;
         
         
@@ -1198,6 +1216,21 @@ if($idReporteActual > 0){
             
             $idGrupoMadre = $PSN1->f("idGrupoMadre");
             $generacionNumero = $PSN1->f("generacionNumero");
+            $idActividad = $PSN1->f("id_actividad");
+            if((int)$idActividad == 77){
+                $generacionNumero = 77;
+            }else if((int)$idActividad == 8){
+                $generacionNumero = 8;
+            }
+            if((int)$generacionNumero == 77){
+                $generacionActual = "EVAN";
+            }else if((int)$generacionNumero == 8){
+                $generacionActual = "GCEL";
+            }else if((int)$generacionNumero == 0){
+                $generacionActual = "CERO";
+            }else{
+                $generacionActual = "OTRA";
+            }
 
             $asistencia_hom = $PSN1->f("asistencia_hom");
             $asistencia_muj = $PSN1->f("asistencia_muj");
@@ -1458,18 +1491,29 @@ if($idReporteActual > 0){
             
             <?php } ?>
             <div class="col-sm-2">
-                <strong><?php if($generacionNumero == 77 && $generacionNumero == 8){ echo "Alcanzados"; }else{ echo "Asistencia"; } ?> total:</strong>
+                <strong><?php if($generacionNumero == 77){ echo "Alcanzados"; }else{ echo "Asistencia"; } ?> total:</strong>
                 <input name="final_asistencia_total" type="number" id="final_asistencia_total" value="<?=$asistencia_total; ?>" readonly class="form-control"  />
             </div>
             <div class="col-sm-3"></div>
         </div>
             
         <?php if($generacionNumero == 0 || $generacionNumero == 77 || $generacionNumero == 8){?>
-            <input name="final_bautizados" type="hidden" id="final_bautizados"  value="<?=$bautizados; ?>" class="form-control" readonly />
-            <input name="final_discipulado" type="hidden" id="final_discipulado" value="<?=$discipulado; ?>" class="form-control" readonly />
-            <input name="final_desiciones" type="hidden" id="final_desiciones" value="<?=$desiciones; ?>" class="form-control" readonly />
-            <input name="final_preparandose" type="hidden" id="final_preparandose" value="<?=$preparandose; ?>" class="form-control" readonly />
-            <input name="final_bautizadosPeriodo" type="hidden" id="final_bautizadosPeriodo" value="<?=$bautizadosPeriodo; ?>" class="form-control" readonly />
+            <input name="final_bautizados" type="hidden" id="final_bautizados"  value="0" class="form-control" readonly />
+            <input name="final_discipulado" type="hidden" id="final_discipulado" value="0" class="form-control" readonly />
+            <?php if($generacionNumero == 77){ ?>
+                <div class="form-group">
+                    <div class="col-sm-5"></div>
+                    <div class="col-sm-2">
+                        <strong>Decisiones de Fé:</strong>
+                        <input name="final_desiciones" type="number" id="final_desiciones" value="<?=$desiciones; ?>" class="form-control" onChange="sumar()" />
+                    </div>
+                    <div class="col-sm-5"></div>
+                </div>
+            <?php }else{ ?>
+                <input name="final_desiciones" type="hidden" id="final_desiciones" value="0" class="form-control" readonly />
+            <?php } ?>
+            <input name="final_preparandose" type="hidden" id="final_preparandose" value="0" class="form-control" readonly />
+            <input name="final_bautizadosPeriodo" type="hidden" id="final_bautizadosPeriodo" value="0" class="form-control" readonly />
 
             <div class="cont-tit">
                 <div class="hr"><hr></div>
@@ -1559,7 +1603,7 @@ if($idReporteActual > 0){
                     <input name="final_discipulado" type="number" id="final_discipulado" readonly value="<?=$discipulado; ?>" class="form-control"  />
                 </div>
                 <div class="col-sm-2">
-                    <strong>Decisiones para Cristo:</strong>
+                    <strong>Decisiones de Fé:</strong>
                     <input name="final_desiciones" type="number" id="final_desiciones" value="<?=$desiciones; ?>" class="form-control"  />
                 </div>
                 <div class="col-sm-2">
@@ -1852,7 +1896,7 @@ if($idReporteActual > 0){
                 <div class="col-sm-4"></div>
             </div>
         <?php } ?>
-        <?php if ($generacionNumero == 8) {?>
+        <?php if ($generacionNumero == 8 || $generacionNumero == 77) {?>
             <div class="col-sm-12">
                 <div class="cont-tit">
                     <div class="hr"><hr></div>
@@ -1915,19 +1959,28 @@ if($idReporteActual > 0){
                     ?>               
                     var bautizados = 0;
                     var bautizadosPeriodo = 0;
-                    var bautizados = parseInt(asistencia_hom) + parseInt(asistencia_muj) + parseInt(asistencia_jov) + parseInt(asistencia_nin);
+                    var desiciones = 0;
+                    <?php if($generacionNumero == 77){ ?>
+                        if(document.getElementById("final_desiciones").value != ""){
+                            var desiciones = document.getElementById("final_desiciones").value;
+                        }
+                    <?php } ?>
                     <?php
                 }
                 else{
                     ?>
                     var bautizados = 0;
                     var bautizadosPeriodo = 0;
+                    var desiciones = 0;
                     //
                     if(document.getElementById("final_bautizadosPeriodo").value != ""){
                         var bautizados = document.getElementById("final_bautizadosPeriodo").value;
                     }
                     if(document.getElementById("final_bautizadosPeriodo").value != ""){
                         var bautizadosPeriodo = document.getElementById("final_bautizadosPeriodo").value;
+                    }
+                    if(document.getElementById("final_desiciones").value != ""){
+                        var desiciones = document.getElementById("final_desiciones").value;
                     }
                     <?php
                 }
@@ -1942,13 +1995,25 @@ if($idReporteActual > 0){
                 
                 
                 
-                document.getElementById("final_bautizados").value = parseInt(bautizados);
-                document.getElementById("final_discipulado").value = parseInt(var_suma);
-                //
-                document.getElementById("final_bautizadosPeriodo").value = parseInt(bautizadosPeriodo);
-                
-                //document.getElementById("final_desiciones").value = parseInt(var_suma) - 1;
-                document.getElementById("final_preparandose").value = parseInt(var_suma) - parseInt(bautizadosPeriodo);                
+                <?php if($generacionNumero == 77){ ?>
+                    document.getElementById("final_bautizados").value = 0;
+                    document.getElementById("final_discipulado").value = 0;
+                    document.getElementById("final_bautizadosPeriodo").value = 0;
+                    document.getElementById("final_desiciones").value = parseInt(desiciones);
+                    document.getElementById("final_preparandose").value = 0;
+                <?php }else if($generacionNumero == 0 || $generacionNumero == 8){ ?>
+                    document.getElementById("final_bautizados").value = 0;
+                    document.getElementById("final_discipulado").value = 0;
+                    document.getElementById("final_bautizadosPeriodo").value = 0;
+                    document.getElementById("final_desiciones").value = 0;
+                    document.getElementById("final_preparandose").value = 0;
+                <?php }else{ ?>
+                    document.getElementById("final_bautizados").value = parseInt(bautizados);
+                    document.getElementById("final_discipulado").value = parseInt(var_suma);
+                    document.getElementById("final_bautizadosPeriodo").value = parseInt(bautizadosPeriodo);
+                    document.getElementById("final_desiciones").value = parseInt(desiciones);
+                    document.getElementById("final_preparandose").value = parseInt(var_suma) - parseInt(bautizadosPeriodo);
+                <?php } ?>
             }            
             
             function eliminarRegistro(){
@@ -4806,6 +4871,7 @@ if($generacionActual == "CERO"){
     $campos[] = array("ALCANZADOS: MUJERES", "asistencia_muj");
     $campos[] = array("ALCANZADOS: JÓVENES", "asistencia_jov");
     $campos[] = array("ALCANZADOS: NIÑOS", "asistencia_nin");
+    $campos[] = array("DECISIONES DE FÉ", "desiciones");
 }else if($generacionActual == "GCEL"){
     $campos[] = array("ASISTENCIA: HOMBRES", "asistencia_hom");
     $campos[] = array("ASISTENCIA: MUJERES", "asistencia_muj");
@@ -4817,7 +4883,7 @@ if($generacionActual == "CERO"){
     $campos[] = array("ASISTENCIA: JÓVENES", "asistencia_jov");
     $campos[] = array("ASISTENCIA: NIÑOS", "asistencia_nin");
     
-    $campos[] = array("DECISIONES PARA CRISTO", "desiciones");
+    $campos[] = array("DECISIONES DE FÉ", "desiciones");
     //$campos[] = array("BAUTIZADOS ESTE PERIODO", "bautizadosPeriodo");   
 }
 
@@ -4850,7 +4916,7 @@ foreach($campos as $campo_actual){?>
         </div>
     </fieldset>
 <?php } 
-if ($generacionActual == "GCEL") {?>
+if ($generacionActual == "GCEL" || $generacionActual == "EVAN") {?>
     <fieldset>
         <div class="cont-tit">
             <div class="hr"><hr></div>
@@ -4936,7 +5002,7 @@ if ($generacionActual == "GCEL") {?>
             <div class="col-sm-5"></div>
         </div>
         <?php
-        if($generacionActual == "CERO" || $generacionActual == "EVAN"){
+        if($generacionActual == "CERO" || $generacionActual == "EVAN" || $generacionActual == "GCEL"){
             ?>
                 <input name="final_bautizados" type="hidden" id="final_bautizados" value="0" class="form-control" readonly />
                 <input name="final_discipulado" type="hidden" id="final_discipulado" value="0" class="form-control" readonly />
@@ -4945,7 +5011,7 @@ if ($generacionActual == "GCEL") {?>
                 <input name="final_bautizadosPeriodo" type="hidden" id="final_bautizadosPeriodo" value="0" class="form-control" readonly />
             <?php
         }
-        else{
+        if($generacionActual == "EVAN" || $generacionActual == "GCEL"){
             ?>
             <div class="cont-tit">
                 <div class="hr"><hr></div>
@@ -4956,16 +5022,25 @@ if ($generacionActual == "GCEL") {?>
                 </div>
                 <div class="hr"><hr></div>
             </div>  
-            <?php if ($generacionActual == "GCEL") { ?>
-                <div class="form-group">
-                    <div class="col-sm-3"></div>
-                        <div class="col-sm-6">
-                            <textarea style="width: 100%;" name="final_comentarios" id="final_comentarios" readonly></textarea>
-                        </div>
-                    <div class="col-sm-3"></div>
+            <div class="form-group">
+                <div class="col-sm-3"></div>
+                    <div class="col-sm-6">
+                        <textarea style="width: 100%;" name="final_comentarios" id="final_comentarios" readonly></textarea>
+                    </div>
+                <div class="col-sm-3"></div>
+            </div>
+            <?php
+        }else if($generacionActual != "CERO"){
+            ?>
+            <div class="cont-tit">
+                <div class="hr"><hr></div>
+                <div class="tit-cen">
+                    <h3 class="text-center">OTROS DATOS DEL PROCESO</h3>
+                    <h5>COMENTARIOS</h5>
+                    <p>A continuación se muestra otros datos</p>
                 </div>
-            <?php 
-            }else{ ?>
+                <div class="hr"><hr></div>
+            </div>  
                 <div class="form-group">
                     <div class="col-sm-2">
                         <strong>Miembros Bautizados:</strong>
@@ -4976,7 +5051,7 @@ if ($generacionActual == "GCEL") {?>
                         <input name="final_discipulado" type="number" id="final_discipulado" value="0" class="form-control" readonly />
                     </div>
                     <div class="col-sm-3">
-                        <strong>Decisiones para Cristo:</strong>
+                        <strong>Decisiones de Fé:</strong>
                         <input name="final_desiciones" type="number" id="final_desiciones" value="0" class="form-control" readonly />
                     </div>
                     <div class="col-sm-3">
@@ -4989,7 +5064,6 @@ if ($generacionActual == "GCEL") {?>
                     </div>
                 </div>
                 <?php
-            }
         }
         ?>
         <div class="cont-btn cont-flex fl-sbet">
@@ -5354,8 +5428,8 @@ alert(Mensaje);
                         return false;
                     }
                     
-                    if(parseInt(document.getElementById("final_asistencia_total").value) < 3){
-                        alert("La asistencia total no puede ser menor a 3 personas");
+                    if(parseInt(document.getElementById("final_asistencia_total").value) < 1){
+                        alert("La asistencia total no puede ser menor a 1 persona");
                         return false;
                     }
                     
@@ -5551,31 +5625,35 @@ alert(Mensaje);
                     var bautizados = 0;
                     var bautizadosPeriodo = 0;
                     var desiciones = 0;
-                    var bautizados = parseInt(asistencia_hom) + parseInt(asistencia_muj) + parseInt(asistencia_jov) + parseInt(asistencia_nin);
                     <?php
                     if ($generacionActual == "GCEL") {?>
                         document.getElementById("final_comentarios").value = document.getElementById("comentario").value;
                     <?php
                     }
-                }else{
-                    if($generacionActual != "EVAN"){
-                        ?>
-                        if(document.getElementById("desiciones").value != ""){
-                            var desiciones = document.getElementById("desiciones").value;
-                        }
-
-
-                        var bautizados = 0;
-                        var bautizadosPeriodo = 0;
-                        if(document.getElementById("total").value != ""){
-                            var bautizados = document.getElementById("total").value;
-                        }
-                        if(document.getElementById("total").value != ""){
-                            var bautizadosPeriodo = document.getElementById("total").value;
-                        }
-                        <?php
+                }else if($generacionActual == "EVAN"){
+                    ?>
+                    var bautizados = 0;
+                    var bautizadosPeriodo = 0;
+                    if(document.getElementById("desiciones").value != ""){
+                        var desiciones = document.getElementById("desiciones").value;
                     }
-                    
+                    document.getElementById("final_comentarios").value = document.getElementById("comentario").value;
+                    <?php
+                }else{
+                    ?>
+                    if(document.getElementById("desiciones").value != ""){
+                        var desiciones = document.getElementById("desiciones").value;
+                    }
+
+                    var bautizados = 0;
+                    var bautizadosPeriodo = 0;
+                    if(document.getElementById("total").value != ""){
+                        var bautizados = document.getElementById("total").value;
+                    }
+                    if(document.getElementById("total").value != ""){
+                        var bautizadosPeriodo = document.getElementById("total").value;
+                    }
+                    <?php
                 }
                 ?>
                 var var_suma = parseInt(asistencia_hom) + parseInt(asistencia_muj) + parseInt(asistencia_jov) + parseInt(asistencia_nin);
@@ -5590,14 +5668,25 @@ alert(Mensaje);
                 
                 
                 
-                document.getElementById("final_bautizados").value = parseInt(bautizados);
-                document.getElementById("final_discipulado").value = parseInt(var_suma);
-                //
-                document.getElementById("final_bautizadosPeriodo").value = parseInt(bautizadosPeriodo);
-                
-                //document.getElementById("final_desiciones").value = parseInt(var_suma) - 1; //Antigua logica
-                document.getElementById("final_desiciones").value = parseInt(desiciones);
-                document.getElementById("final_preparandose").value = parseInt(var_suma) - parseInt(bautizadosPeriodo);                
+                <?php if($generacionActual == "EVAN"){ ?>
+                    document.getElementById("final_bautizados").value = 0;
+                    document.getElementById("final_discipulado").value = 0;
+                    document.getElementById("final_bautizadosPeriodo").value = 0;
+                    document.getElementById("final_desiciones").value = parseInt(desiciones);
+                    document.getElementById("final_preparandose").value = 0;
+                <?php }else if($generacionActual == "GCEL" || $generacionActual == "CERO"){ ?>
+                    document.getElementById("final_bautizados").value = 0;
+                    document.getElementById("final_discipulado").value = 0;
+                    document.getElementById("final_bautizadosPeriodo").value = 0;
+                    document.getElementById("final_desiciones").value = 0;
+                    document.getElementById("final_preparandose").value = 0;
+                <?php }else{ ?>
+                    document.getElementById("final_bautizados").value = parseInt(bautizados);
+                    document.getElementById("final_discipulado").value = parseInt(var_suma);
+                    document.getElementById("final_bautizadosPeriodo").value = parseInt(bautizadosPeriodo);
+                    document.getElementById("final_desiciones").value = parseInt(desiciones);
+                    document.getElementById("final_preparandose").value = parseInt(var_suma) - parseInt(bautizadosPeriodo);
+                <?php } ?>
             }
             
             <?php

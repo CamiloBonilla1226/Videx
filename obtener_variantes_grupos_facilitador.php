@@ -43,7 +43,8 @@ try {
             base.direccion,
             base.grupoMadre_txt AS grupo_madre,
             base.generacionNumero AS generacion,
-            COUNT(hijo.id) AS reportes
+            COUNT(DISTINCT hijo.id) AS reportes,
+            GROUP_CONCAT(DISTINCT hijo.id ORDER BY hijo.fechaInicio DESC, hijo.id DESC SEPARATOR ',') AS reportes_ids_csv
         FROM sat_reportes base
         LEFT JOIN sat_reportes hijo
             ON hijo.id_grupo = base.id
@@ -73,6 +74,16 @@ try {
         if ($barrio !== '') {
             $ubicacion = $ubicacion !== '' ? ($ciudad . ', ' . $barrio) : $barrio;
         }
+        $reportesIdsCsv = trim((string)$PSN1->f('reportes_ids_csv'));
+        $reportesIds = array();
+        if ($reportesIdsCsv !== '') {
+            foreach (explode(',', $reportesIdsCsv) as $reporteId) {
+                $reporteId = (int)$reporteId;
+                if ($reporteId > 0) {
+                    $reportesIds[] = $reporteId;
+                }
+            }
+        }
 
         $grupos[] = array(
             'id_unico' => (int)$PSN1->f('id_unico'),
@@ -87,7 +98,8 @@ try {
             'grupo_madre' => $PSN1->f('grupo_madre'),
             'generacion' => (int)$PSN1->f('generacion'),
             'ubicacion' => $ubicacion,
-            'reportes' => (int)$PSN1->f('reportes')
+            'reportes' => (int)$PSN1->f('reportes'),
+            'reportes_ids' => $reportesIds
         );
     }
 
