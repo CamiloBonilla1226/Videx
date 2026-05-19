@@ -36,45 +36,37 @@ function cargarDatosGrafica($anio = null){
     $GRF_DATOS = new DBbase_Sql;
     $GRF_DATOS2 = new DBbase_Sql;
 
+    // Evangelismo: ahora se toma por actividad, no por generacion.
+    // Se suma la asistencia total de los reportes con id_actividad = 77.
+    $sum_evangelismos = 0;
     $sql = "SELECT 
-        SUM(asistencia_total) as evangelismo,
-        COUNT(id) as iglesias";
+        SUM(asistencia_total) as evangelismo";
     $sql .=" FROM sat_reportes ";
     $sql .= " LEFT JOIN usuario_empresa ON usuario_empresa.idUsuario = sat_reportes.idUsuario";
-    $sql.=" WHERE ".$sqlUser." (sat_reportes.generacionNumero = 77 ".$sqlFiltro_limpio." )";
+    $sql.=" WHERE ".$sqlUser." sat_reportes.id_actividad = 77 ".$sqlFiltro_limpio;
     //echo $sql;
     $GRF_DATOS->query($sql);
-    $num=$GRF_DATOS->num_rows();
-    if($num > 0){
-        while($GRF_DATOS->next_record()) {
-            //
-            $sum_evangelismos = $GRF_DATOS->f('evangelismo');
-            //
-        }
-    } else {
-        $varError = 1;
-    }
-
-    $sql = "SELECT 
-        SUM(asistencia_total) as gran_celebracion,
-        COUNT(id) as iglesias";
-    $sql .=" FROM sat_reportes ";
-    $sql .= " LEFT JOIN usuario_empresa ON usuario_empresa.idUsuario = sat_reportes.idUsuario";
-    $sql.=" WHERE ".$sqlUser." (sat_reportes.generacionNumero = 8 ".$sqlFiltro_limpio.") ";
-    //echo $sql;
-    $GRF_DATOS2->query($sql);
-    $num=$GRF_DATOS2->num_rows();
-    if($num > 0){
-        while($GRF_DATOS2->next_record()){
-            //
-            $sum_gran_celebracion = $GRF_DATOS2->f('gran_celebracion');
-            //
-        }
-    } else {
-        $varError = 1;
+    if($GRF_DATOS->next_record() > 0){
+        $sum_evangelismos = intval($GRF_DATOS->f('evangelismo'));
     }
     
-    $datosView['evangelismo'] = $sum_evangelismos + $sum_gran_celebracion;
+    $datosView['evangelismo'] = $sum_evangelismos;
+
+    // Discipulado: se suma sin importar la generacion del reporte.
+    // Solo conserva los filtros de usuario y fecha.
+    $sum_discipulado = 0;
+    $sql = "SELECT 
+        SUM(discipulado) as discipulado";
+    $sql .=" FROM sat_reportes ";
+    $sql .= " LEFT JOIN usuario_empresa ON usuario_empresa.idUsuario = sat_reportes.idUsuario";
+    $sql.=" WHERE ".$sqlUser." 1 ".$sqlFiltro_limpio;
+    //echo $sql;
+    $GRF_DATOS2->query($sql);
+    if($GRF_DATOS2->next_record() > 0){
+        $sum_discipulado = intval($GRF_DATOS2->f('discipulado'));
+    }
+    
+    $datosView['discipulado'] = $sum_discipulado;
     
     $sql = "SELECT 
         SUM(asistencia_total) as evangelismo,
@@ -94,7 +86,7 @@ function cargarDatosGrafica($anio = null){
     // falloso desde
     /*    if($num > 0){
             while($GRF_DATOS->next_record()){
-                $datosView['discipulado'] = $GRF_DATOS->f('discipulado');
+                // Discipulado se calcula aparte sin filtro de generacion.
                 $datosView['bautizos'] = $GRF_DATOS->f('bautizos');
                 $datosView['desiciones'] = $GRF_DATOS->f('desiciones');
                 $datosView['asistencia'] = $GRF_DATOS->f('evangelismo');
@@ -108,7 +100,7 @@ function cargarDatosGrafica($anio = null){
     // falloso hasta
     // nueva versión desde
     if($GRF_DATOS->next_record() > 0){
-        $datosView['discipulado'] = $GRF_DATOS->f('discipulado');
+        // Discipulado se calcula aparte sin filtro de generacion.
         $datosView['bautizos'] = $GRF_DATOS->f('bautizos');
         $datosView['desiciones'] = $GRF_DATOS->f('desiciones');
         $datosView['asistencia'] = $GRF_DATOS->f('evangelismo');
