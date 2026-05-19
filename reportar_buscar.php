@@ -100,6 +100,38 @@ $fechaFinal = eliminarInvalidos($_REQUEST["fechaFinal"]);
 $generacionNumero = "";
 $inactivo = "";
 $sinmapeo = "";
+$esFacilitador = (isset($_SESSION["perfil"]) && $_SESSION["perfil"] == 163);
+$sqlJoinGrupoBase = " LEFT JOIN sat_reportes AS grupo_base ON grupo_base.id = sat_reportes.id_grupo ";
+$sqlFiltro .= " AND COALESCE(sat_reportes.id_grupo, 0) <> 0";
+
+if (!function_exists('reportar_buscar_actividad_label')) {
+    function reportar_buscar_actividad_label($idActividad, $generacionNumero)
+    {
+        $idActividad = (int)$idActividad;
+        $generacionNumero = (int)$generacionNumero;
+
+        if ($idActividad == 77) {
+            return "Evangelismo";
+        }
+        if ($idActividad == 99) {
+            return "Bautizo";
+        }
+        if ($idActividad == 8) {
+            return "Gran celebracion";
+        }
+        if ($idActividad == 1) {
+            return "Coach";
+        }
+        if ($generacionNumero == 77) {
+            return "Evangelismo";
+        }
+        if ($generacionNumero == 8) {
+            return "Gran celebracion";
+        }
+
+        return "Coach";
+    }
+}
 
 
 
@@ -693,6 +725,7 @@ else{
     $sql = "SELECT count(DISTINCT sat_reportes.id) as conteo ";
     $sql .= " FROM sat_reportes ";
     $sql .= " LEFT JOIN usuario ON usuario.id = sat_reportes.idUsuario ";
+    $sql .= $sqlJoinGrupoBase;
     $sql .= " WHERE 1 ";
     //
 
@@ -719,14 +752,14 @@ else{
         $sinmapeo = soloNumeros($_REQUEST["sinmapeo"]);
         $sqlFiltro .= " AND sat_reportes.generacionNumero NOT IN (0, 77) AND sat_reportes.generacionNumero NOT IN (0, 8)";
         $sqlFiltro .= " AND (sat_reportes.mapeo_oracion = 0
-                            OR mapeo_companerismo = 0
-                            OR mapeo_adoracion = 0
-                            OR mapeo_biblia = 0
-                            OR mapeo_evangelizar = 0
-                            OR mapeo_cena = 0
-                            OR mapeo_dar = 0
-                            OR mapeo_bautizar = 0
-                            OR mapeo_trabajadores = 0
+                            OR sat_reportes.mapeo_companerismo = 0
+                            OR sat_reportes.mapeo_adoracion = 0
+                            OR sat_reportes.mapeo_biblia = 0
+                            OR sat_reportes.mapeo_evangelizar = 0
+                            OR sat_reportes.mapeo_cena = 0
+                            OR sat_reportes.mapeo_dar = 0
+                            OR sat_reportes.mapeo_bautizar = 0
+                            OR sat_reportes.mapeo_trabajadores = 0
                             OR sat_reportes.mapeo_comprometido = 0
                             OR sat_reportes.mapeo_comprometido = ''
                             OR sat_reportes.nombreGrupo_txt = ''
@@ -777,7 +810,12 @@ else{
         else{
             $generacionNumero_buscar = $generacionNumero;            
         }
-        $sqlFiltro .= " AND sat_reportes.generacionNumero = '".$generacionNumero_buscar."'";
+        if($generacionNumero_buscar == 77 || $generacionNumero_buscar == 8){
+            $sqlFiltro .= " AND (sat_reportes.id_actividad = '".$generacionNumero_buscar."' OR sat_reportes.generacionNumero = '".$generacionNumero_buscar."')";
+        }
+        else{
+            $sqlFiltro .= " AND COALESCE(grupo_base.generacionNumero, sat_reportes.generacionNumero) = '".$generacionNumero_buscar."'";
+        }
     } 
 
 
@@ -804,23 +842,12 @@ else{
 
     $sqlTotalesProceso = "SELECT
             SUM(COALESCE(sat_reportes.asistencia_total, 0)) as asistencia_total,
-            SUM(CASE
-                    WHEN COALESCE(NULLIF(sat_reportes.generacionNumero, ''), 0) IN (0, 77, 8) THEN 0
-                    ELSE COALESCE(sat_reportes.desiciones, 0)
-                END) as desiciones,
-            SUM(CASE
-                    WHEN COALESCE(NULLIF(sat_reportes.generacionNumero, ''), 0) IN (0, 77, 8) THEN 0
-                    ELSE COALESCE(sat_reportes.preparandose, 0)
-                END) as preparandose,
-            SUM(CASE
-                    WHEN COALESCE(NULLIF(sat_reportes.generacionNumero, ''), 0) IN (0, 77, 8) THEN 0
-                    ELSE COALESCE(sat_reportes.discipulado, 0)
-                END) as discipulado,
-            SUM(CASE
-                    WHEN COALESCE(NULLIF(sat_reportes.generacionNumero, ''), 0) IN (0, 77, 8) THEN 0
-                    ELSE COALESCE(sat_reportes.bautizados, 0)
-                END) as bautizados
+            SUM(COALESCE(sat_reportes.desiciones, 0)) as desiciones,
+            SUM(COALESCE(sat_reportes.preparandose, 0)) as preparandose,
+            SUM(COALESCE(sat_reportes.discipulado, 0)) as discipulado,
+            SUM(COALESCE(sat_reportes.bautizados, 0)) as bautizados
         FROM sat_reportes
+        ".$sqlJoinGrupoBase."
         WHERE 1 ".$sqlFiltro;
 
     $PSN_totales = new DBbase_Sql;
@@ -834,7 +861,7 @@ else{
     }
 
     $total_paginas = ceil($total_registros / $registros); 
-    $sql_ids = "SELECT sat_reportes.id FROM sat_reportes WHERE 1 ".$sqlFiltro." ORDER BY sat_reportes.id DESC LIMIT ".$inicio.", ".$registros;
+    $sql_ids = "SELECT sat_reportes.id FROM sat_reportes ".$sqlJoinGrupoBase." WHERE 1 ".$sqlFiltro." ORDER BY sat_reportes.id DESC LIMIT ".$inicio.", ".$registros;
     $PSN_ids = new DBbase_Sql;
     $PSN_ids->query($sql_ids);
     $report_ids = [];
@@ -843,12 +870,14 @@ else{
     }
 
     if (count($report_ids) > 0) {
-        $sql = "SELECT sat_reportes.*, usuario.nombre as nombreUsuario, sat_grupos.nombre as nombreGrupo, adjuntos.adj_url ";
+        $sql = "SELECT sat_reportes.*, usuario.nombre as nombreUsuario, sat_grupos.nombre as nombreGrupo, grupo_base.generacionNumero as generacionGrupo, actividad.nombre_actividad, adjuntos.adj_url, adjuntos.total_adjuntos ";
         $sql.=" FROM sat_reportes ";
         $sql .= " LEFT JOIN usuario ON usuario.id = sat_reportes.idUsuario";
         $sql .= " LEFT JOIN sat_grupos ON sat_grupos.id = sat_reportes.idGrupoMadre";
+        $sql .= $sqlJoinGrupoBase;
+        $sql .= " LEFT JOIN actividad ON actividad.id_actividad = sat_reportes.id_actividad";
         $sql .= " LEFT JOIN (
-                    SELECT adj_rep_fk, MAX(NULLIF(adj_url, '')) as adj_url
+                    SELECT adj_rep_fk, MAX(NULLIF(adj_url, '')) as adj_url, COUNT(NULLIF(adj_url, '')) as total_adjuntos
                     FROM tbl_adjuntos
                     GROUP BY adj_rep_fk
                   ) as adjuntos ON sat_reportes.id = adjuntos.adj_rep_fk";
@@ -880,6 +909,19 @@ else{
                     }
                     .table thead th{
                         vertical-align: middle;text-align: center;
+                    }
+                    .tabla-reportes-grupos th,
+                    .tabla-reportes-grupos td{
+                        vertical-align: middle !important;
+                        white-space: nowrap;
+                    }
+                    .tabla-reportes-grupos th.col-text,
+                    .tabla-reportes-grupos td.col-text{
+                        text-align: left;
+                    }
+                    .tabla-reportes-grupos th.col-center,
+                    .tabla-reportes-grupos td.col-center{
+                        text-align: center;
                     }
                     .table a{
                         color:#000;
@@ -1000,7 +1042,6 @@ else{
                             <h5><?php echo $total_registros; ?> Registros encontrados</h5>
                             <h5>
                                 Totales del filtro actual:
-                                Ast. Total <?=$totalesFiltroProceso["asistencia_total"]; ?> |
                                 Deci. <?=$totalesFiltroProceso["desiciones"]; ?> |
                                 Prep. <?=$totalesFiltroProceso["preparandose"]; ?> |
                                 Disc. <?=$totalesFiltroProceso["discipulado"]; ?> |
@@ -1010,42 +1051,32 @@ else{
                         <div class="hr"><hr></div>
                     </div>
                     <div style="overflow-x: auto;">
-                        <table border="0" cellspacing="0" cellpadding="2"  align="center" class="table table-striped" style="font-size:12px">
+                        <?php $columnasAntesTotales = $esFacilitador ? 4 : 5; ?>
+                        <table border="0" cellspacing="0" cellpadding="2"  align="center" class="table table-striped tabla-reportes-grupos" style="font-size:12px">
                             <thead>
                                 <tr> 
-                                    <!--<th>Id</th>//-->
-                                    <th>Facilitador</th>
-                                    <th>Plantador/Pastor/Lider</th>
-                                    <th title="Fecha de reporte" width="80">Fec. Reporte</th>
-                                        <!-- <th>Sitio Reunión</th> //-->
-                                        <th>Grupo Madre</th>
-                                        <th width="80">Fec. Inicio</th>
-                                    <th>Generación</th>
-                                    <th title="Asistencia total">Ast. Total</th>
-                                        <!--<th>Hombres</th>
-                                        <th>Mujeres</th>
-                                    <th>Jóvenes</th>
-                                        <th>Niños</th>//-->
-                                    <th title="Decisiones">Deci.</th>
-                                    <th title="Preparándose">Prep.</th>
-                                    <th title="En Discipulado">Disc.</th>
-                                    <th title="Bautizados">Baut.</th>
-                                    <th title="Fecha del Mapeo" width="80">Fec. Mapeo</th>
-                                    <!--<th>Iglesias Reconocidas</th>//-->
-                                    <th>Foto/Bautizo</th>
-                                    <th>Foto/Grupo</th>
-                                <!--<th>Testimonio/Foto</th>-->
+                                    <th class="col-center">Id</th>
+                                    <?php if(!$esFacilitador){ ?>
+                                    <th class="col-text">Facilitador</th>
+                                    <?php } ?>
+                                    <th class="col-center" title="Fecha de reporte" width="80">Fec. Reporte</th>
+                                    <th class="col-text">Actividad</th>
+                                    <th class="col-center">Generacion</th>
+                                    <th class="col-center" title="Decisiones">Deci.</th>
+                                    <th class="col-center" title="Preparándose">Prep.</th>
+                                    <th class="col-center" title="En Discipulado">Disc.</th>
+                                    <th class="col-center" title="Bautizados">Baut.</th>
+                                    <th class="col-center">Foto</th>
                                 </tr>
                             </thead>
                             <tfoot>
                                 <tr style="background-color:#E8F4EA; font-weight:bold;">
-                                    <th colspan="7" style="text-align:right;">Totales del filtro</th>
-                                    <th><?=$totalesFiltroProceso["asistencia_total"]; ?></th>
-                                    <th><?=$totalesFiltroProceso["desiciones"]; ?></th>
-                                    <th><?=$totalesFiltroProceso["preparandose"]; ?></th>
-                                    <th><?=$totalesFiltroProceso["discipulado"]; ?></th>
-                                    <th><?=$totalesFiltroProceso["bautizados"]; ?></th>
-                                    <th colspan="3"></th>
+                                    <th colspan="<?=$columnasAntesTotales; ?>" class="col-center" style="text-align:right;">Totales del filtro</th>
+                                    <th class="col-center"><?=$totalesFiltroProceso["desiciones"]; ?></th>
+                                    <th class="col-center"><?=$totalesFiltroProceso["preparandose"]; ?></th>
+                                    <th class="col-center"><?=$totalesFiltroProceso["discipulado"]; ?></th>
+                                    <th class="col-center"><?=$totalesFiltroProceso["bautizados"]; ?></th>
+                                    <th class="col-center"></th>
                                 </tr>
                             </tfoot>
                             <tbody>
@@ -1093,97 +1124,34 @@ else{
                                         $preparandose  = $PSN1->f("preparandose");
                                         $url_baut  = $PSN1->f("adj_url");
                                         $iglesias_reconocidas = $PSN1->f("iglesias_reconocidas");  
+                                        $idActividad = $PSN1->f("id_actividad");
+                                        $generacionGrupo = $PSN1->f("generacionGrupo");
+                                        if($generacionGrupo === "" || $generacionGrupo === null){
+                                            $generacionGrupo = $generacionNumero;
+                                        }
+                                        $actividadReporte = trim($PSN1->f("nombre_actividad"));
+                                        if($actividadReporte == ""){
+                                            $actividadReporte = reportar_buscar_actividad_label($idActividad, $generacionNumero);
+                                        }
+                                        $totalAdjuntos = (int)$PSN1->f("total_adjuntos");
+                                        $tieneFoto = ($totalAdjuntos > 0 || trim($url_baut) != "" || trim($ext1) != "" || trim($ext2) != "" || trim($ext3) != "");
                                         ?><tr class='clickable-row' data-href='index.php?doc=reportar&id=<?=$id; ?>' >
-                                            <!--<td><a href="index.php?doc=reportar&id=<?=$id; ?>"><?=str_pad($id, 6, "0", STR_PAD_LEFT); ?></a></td>//-->
-                                            <td><a href="index.php?doc=reportar&id=<?=$id; ?>"><?=$nombreUsuario; ?></a></td>
-                                            <td><?=$plantador; ?></td>
-                                            <td><?=$fechaReporte; ?></td>
-                                            <!--<td><?=$sitioReunion; ?></td>//-->
-                                                <td><?=$grupoMadre_txt; ?></td>
-                                                <td><?=$fechaInicio; ?></td>
-                                                <td><?php
-                                                if($generacionNumero == 0){
-                                                    //echo "CAPACITACIÓN";
-                                                    echo "0";
-                                                    $bautizados = 0;
-                                                    $desiciones = 0;
-                                                    $preparandose = 0;
-                                                    $discipulado = 0;
-                                                }else if($generacionNumero == 77){
-                                                    echo "Evangelismo";
-                                                    $bautizados = 0;
-                                                    $desiciones = 0;
-                                                    $preparandose = 0;
-                                                    $discipulado = 0;
-                                                }else if($generacionNumero == 8){
-                                                    echo "Gran celebr.";
-                                                    $bautizados = 0;
-                                                    $desiciones = 0;
-                                                $preparandose = 0;
-                                                    $discipulado = 0;
-                                                }
-                                                else{
-                                                echo $generacionNumero;
-                                                }
-                                                ?></td>
-                                            <td><?=$asistencia_total; ?></td>
-                                                <!--<td><?=$asistencia_hom; ?></td>
-                                                <td><?=$asistencia_muj; ?></td>
-                                                <td><?=$asistencia_jov; ?></td>
-                                                <td><?=$asistencia_nin; ?></td>//-->
-                                            <td><?=$desiciones; ?></td>
-                                            <td><?=$preparandose; ?></td>
-                                            <td><?=$discipulado; ?></td>
-                                            <td><?=$bautizados; ?></td>
-                                            <td><?=$mapeo_fecha; ?></td>
-                                            <!--<td><?=$iglesias_reconocidas; ?></td>//--->
-                                            <!--<td align="center"><?php
-                                            if($ext2 != ""){
-                                                ?><img src="images/png/thumb-up.png" width="20px" />
-                                                <i class="fas fa-thumbs-up ico-lik"></i><?php
+                                            <td class="col-center"><a href="index.php?doc=reportar&id=<?=$id; ?>"><?=str_pad($id, 6, "0", STR_PAD_LEFT); ?></a></td>
+                                            <?php if(!$esFacilitador){ ?>
+                                            <td class="col-text"><a href="index.php?doc=reportar&id=<?=$id; ?>"><?=$nombreUsuario; ?></a></td>
+                                            <?php } ?>
+                                            <td class="col-center"><?=$fechaReporte; ?></td>
+                                            <td class="col-text"><?=$actividadReporte; ?></td>
+                                            <td class="col-center"><?=$generacionGrupo; ?></td>
+                                            <td class="col-center"><?=$desiciones; ?></td>
+                                            <td class="col-center"><?=$preparandose; ?></td>
+                                            <td class="col-center"><?=$discipulado; ?></td>
+                                            <td class="col-center"><?=$bautizados; ?></td>
+                                            <td class="col-center"><?php
+                                            if($tieneFoto){
+                                                ?><i class="fas fa-thumbs-up ico-lik"></i><?php
                                             }else{
-                                                ?><img src="images/png/thumb-down.png" width="20px" />
-                                                <i class="fas fa-thumbs-down ico-dli"></i><?php                            
-                                            }
-                                            ?></td>-->
-                                            <td align="center"><?php
-                                            if($url_baut != "" || $url_baut != null){
-                                                ?><i class="fas fa-thumbs-up ico-lik"></i>
-                                                <!--<img src="images/png/thumb-up.png" width="20px" />--><?php
-                                            }else{
-                                                ?>
-                                                <i class="fas fa-thumbs-down ico-dli"></i>
-                                                <!--<img src="images/png/thumb-down.png" width="20px" />--><?php                            
-                                            }
-                                            ?></td>
-                                            <td align="center"><?php
-                                            if($generacionNumero == 0 || $generacionNumero == 77 || $generacionNumero == 8){
-                                                if($ext3 != ""){
-                                                    ?><!--<img src="images/png/thumb-up.png" width="20px" />-->
-                                                    <i class="fas fa-thumbs-up ico-lik"></i><?php
-                                                }else{
-                                                    ?><!--<img src="images/png/thumb-down.png" width="20px" />-->
-                                                    <i class="fas fa-thumbs-down ico-dli"></i><?php                            
-                                                }
-                                            }
-                                            else{
-                                                /*$total = $mapeo_oracion
-                                                        + $mapeo_companerismo
-                                                        + $mapeo_adoracion
-                                                        + $mapeo_biblia
-                                                        + $mapeo_evangelizar
-                                                        + $mapeo_cena
-                                                        + $mapeo_dar
-                                                        + $mapeo_bautizar
-                                                        + $mapeo_trabajadores;*/
-                                                if($ext1 != "" || $ext2 != ""){
-                                                ?><!--<img src="images/png/thumb-up.png" width="20px" />-->
-                                                <i class="fas fa-thumbs-up ico-lik"></i><?php
-                                            }else{
-                                                ?><!--<img src="images/png/thumb-down.png" width="20px" />-->
-                                                    <i class="fas fa-thumbs-down ico-dli"></i>
-                                                <?php                       
-                                                }
+                                                ?><i class="fas fa-thumbs-down ico-dli"></i><?php
                                             }
                                             ?></td>
                                         </tr>

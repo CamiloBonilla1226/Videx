@@ -80,6 +80,31 @@ th {
     text-align: center;
 }
 
+.detalle-actividad-77 {
+    margin-top: 20px;
+}
+
+.detalle-actividad-77 .detalle-card {
+    background: #f8fbff;
+    border: 1px solid #d7e6f2;
+    border-radius: 12px;
+    padding: 18px 15px 8px;
+    margin-bottom: 22px;
+}
+
+.detalle-actividad-77 .detalle-card .form-group:last-child {
+    margin-bottom: 0;
+}
+
+.detalle-actividad-77 .form-control[readonly],
+.detalle-actividad-77 textarea.form-control[readonly] {
+    background-color: #ffffff;
+}
+
+.detalle-actividad-77 .cont-item {
+    margin-bottom: 20px;
+}
+
 </style>
 
 <?php
@@ -1186,8 +1211,9 @@ if($idReporteActual > 0){
     /*
     *   TRAEMOS LOS DATOS PRINCIPALES DEL USUARIO
     */
-    $sql = "SELECT sat_reportes.*, sat_grupos.nombre ";
+    $sql = "SELECT sat_reportes.*, sat_grupos.nombre, grupo_base.id AS idGrupoBaseReporte, grupo_base.nombreGrupo_txt AS nombreGrupoBaseReporte, grupo_base.grupoMadre_txt AS grupoMadreBaseReporte, grupo_base.generacionNumero AS generacionGrupoBaseReporte ";
     $sql.=" FROM sat_reportes LEFT JOIN sat_grupos ON sat_grupos.id = sat_reportes.idGrupoMadre ";
+    $sql.=" LEFT JOIN sat_reportes AS grupo_base ON grupo_base.id = sat_reportes.id_grupo ";
     $sql.=" WHERE sat_reportes.id = '".$idReporteActual."'";
     $sql.=" GROUP BY sat_reportes.id";
     $PSN1->query($sql);
@@ -1215,8 +1241,22 @@ if($idReporteActual > 0){
             $ext3 = $PSN1->f("ext3");
             
             $idGrupoMadre = $PSN1->f("idGrupoMadre");
-            $generacionNumero = $PSN1->f("generacionNumero");
+            $idGrupoReporte = $PSN1->f("id_grupo");
+            $generacionNumeroOriginal = $PSN1->f("generacionNumero");
+            $generacionNumero = $generacionNumeroOriginal;
             $idActividad = $PSN1->f("id_actividad");
+            $nombreGrupoPertenece = trim($PSN1->f("nombreGrupoBaseReporte"));
+            if($nombreGrupoPertenece == ""){
+                $nombreGrupoPertenece = trim($nombreGrupo_txt);
+            }
+            $nombreGrupoMadreDetalle = trim($PSN1->f("grupoMadreBaseReporte"));
+            if($nombreGrupoMadreDetalle == ""){
+                $nombreGrupoMadreDetalle = trim($grupoMadre_txt);
+            }
+            $generacionPertenece = trim($PSN1->f("generacionGrupoBaseReporte"));
+            if($generacionPertenece === ""){
+                $generacionPertenece = $generacionNumeroOriginal;
+            }
             if((int)$idActividad == 77){
                 $generacionNumero = 77;
             }else if((int)$idActividad == 8){
@@ -1348,6 +1388,143 @@ if($idReporteActual > 0){
             <div class="hr"><hr></div>
         </div> 
         
+        <?php if((int)$idActividad == 77){ ?>
+        <div class="cont-tit">
+            <div class="hr"><hr></div>
+            <div class="tit-cen">
+                <h3 class="text-center">DETALLE DEL REPORTE</h3>
+                <h5>ACTIVIDAD DE EVANGELISMO</h5>
+            </div>
+            <div class="hr"><hr></div>
+        </div>
+        <div class="detalle-actividad-77">
+        <?php } ?>
+        <?php if(false && (int)$idActividad == 77){ ?>
+        <div style="display:none;">
+        <div class="form-group">
+            <div class="col-sm-4">
+                <strong>Plantador:</strong>
+                <input type="text" value="<?=$plantador; ?>" class="form-control" readonly />
+            </div>
+            <div class="col-sm-2">
+                <strong>Fecha reporte:</strong>
+                <input type="text" value="<?=$fechaReporte; ?>" class="form-control" readonly />
+            </div>
+            <div class="col-sm-2">
+                <strong>Fecha inicio:</strong>
+                <input type="text" value="<?=$fechaInicio; ?>" class="form-control" readonly />
+            </div>
+            <div class="col-sm-4">
+                <strong>Nombre del grupo:</strong>
+                <input type="text" value="<?=$nombreGrupoPertenece; ?>" class="form-control" readonly />
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-sm-3">
+                <strong>Barrio:</strong>
+                <input type="text" value="<?=$barrio; ?>" class="form-control" readonly />
+            </div>
+            <div class="col-sm-4">
+                <strong>Direccion:</strong>
+                <input type="text" value="<?=$direccion; ?>" class="form-control" readonly />
+            </div>
+            <div class="col-sm-3">
+                <strong>Ciudad:</strong>
+                <input type="text" value="<?=$ciudad; ?>" class="form-control" readonly />
+            </div>
+            <div class="col-sm-2">
+                <strong>Generacion:</strong>
+                <input type="text" value="<?=$generacionPertenece; ?>" class="form-control" readonly />
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-sm-6">
+                <strong>Grupo madre:</strong>
+                <input type="text" value="<?php if(trim($nombreGrupoMadreDetalle) != ""){ echo $nombreGrupoMadreDetalle; }else{ echo "Sin grupo madre"; } ?>" class="form-control" readonly />
+            </div>
+            <div class="col-sm-1">
+                <strong>Hombres:</strong>
+                <input type="text" value="<?=$asistencia_hom; ?>" class="form-control" readonly />
+            </div>
+            <div class="col-sm-1">
+                <strong>Mujeres:</strong>
+                <input type="text" value="<?=$asistencia_muj; ?>" class="form-control" readonly />
+            </div>
+            <div class="col-sm-1">
+                <strong>Jovenes:</strong>
+                <input type="text" value="<?=$asistencia_jov; ?>" class="form-control" readonly />
+            </div>
+            <div class="col-sm-1">
+                <strong>Niños:</strong>
+                <input type="text" value="<?=$asistencia_nin; ?>" class="form-control" readonly />
+            </div>
+            <div class="col-sm-2">
+                <strong>Asistencia total:</strong>
+                <input type="text" value="<?=$asistencia_total; ?>" class="form-control" readonly />
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-sm-3">
+                <strong>Decisiones de fe:</strong>
+                <input type="text" value="<?=$desiciones; ?>" class="form-control" readonly />
+            </div>
+            <div class="col-sm-9">
+                <strong>Comentarios:</strong>
+                <textarea class="form-control" rows="3" readonly><?php echo $comentario; ?></textarea>
+            </div>
+        </div>
+        <div class="cont-tit">
+            <div class="hr"><hr></div>
+            <div class="tit-cen">
+                <h3 class="text-center">FOTOGRAFIAS DEL REPORTE</h3>
+                <h5>EVIDENCIA CARGADA EN EL FORMULARIO</h5>
+            </div>
+            <div class="hr"><hr></div>
+        </div>
+        <div class="cont-flex fl-sard">
+            <div class="cont-item col-sm-4">
+                <div class="form-group">
+                    <div class="col-sm-12">
+                        <strong style="font-size: 18px;display: block;margin-top: 10px;">Foto 1:</strong>
+                        <?php
+                        if($ext1 == "" || !file_exists("archivos/evi_".$idReporteActual."_1.".$ext1)){
+                            echo "<div class='alert alert-danger'>Sin foto cargada</div>";
+                        }else{?>
+                            <a href="archivos/evi_<?=$idReporteActual; ?>_1.<?=$ext1; ?>" target="_blank"><img src="archivos/evi_<?=$idReporteActual; ?>_1.<?=$ext1; ?>" width="100%" /></a>
+                        <?php } ?>
+                    </div>
+                </div>
+            </div>
+            <div class="cont-item col-sm-4">
+                <div class="form-group">
+                    <div class="col-sm-12">
+                        <strong style="font-size: 18px;display: block;margin-top: 10px;">Foto 2:</strong>
+                        <?php
+                        if($ext2 == "" || !file_exists("archivos/evi_".$idReporteActual."_2.".$ext2)){
+                            echo "<div class='alert alert-danger'>Sin foto cargada</div>";
+                        }else{?>
+                            <a href="archivos/evi_<?=$idReporteActual; ?>_2.<?=$ext2; ?>" target="_blank"><img src="archivos/evi_<?=$idReporteActual; ?>_2.<?=$ext2; ?>" width="100%" /></a>
+                        <?php } ?>
+                    </div>
+                </div>
+            </div>
+            <div class="cont-item col-sm-4">
+                <div class="form-group">
+                    <div class="col-sm-12">
+                        <strong style="font-size: 18px;display: block;margin-top: 10px;">Foto 3:</strong>
+                        <?php
+                        if($ext3 == "" || !file_exists("archivos/evi_".$idReporteActual."_3.".$ext3)){
+                            echo "<div class='alert alert-danger'>Sin foto cargada</div>";
+                        }else{?>
+                            <a href="archivos/evi_<?=$idReporteActual; ?>_3.<?=$ext3; ?>" target="_blank"><img src="archivos/evi_<?=$idReporteActual; ?>_3.<?=$ext3; ?>" width="100%" /></a>
+                        <?php } ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+        <?php } ?>
+
         <?php
         if($generacionNumero == 0){
             /*?><div class="form-group">
@@ -1357,6 +1534,62 @@ if($idReporteActual > 0){
             </div><?*/
         }
         ?>        
+        <?php if((int)$idActividad == 77){ ?>
+        <div class="detalle-card">
+            <div class="cont-tit">
+                <div class="hr"><hr></div>
+                <div class="tit-cen">
+                    <h3 class="text-center">INFORMACION GENERAL</h3>
+                    <h5>RESUMEN DEL REPORTE DE EVANGELISMO</h5>
+                </div>
+                <div class="hr"><hr></div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-3">
+                    <strong>Plantador:</strong>
+                    <input name="plantador" type="text" id="plantador" maxlength="250" value="<?=$plantador; ?>" class="form-control" required />
+                </div>
+                <div class="col-sm-2">
+                    <strong>Fecha del reporte:</strong>
+                    <input name="fechaReporte" type="date" id="fechaReporte" maxlength="250" value="<?=$fechaReporte; ?>" class="form-control" required readonly />
+                </div>
+                <div class="col-sm-2">
+                    <strong>Fecha de inicio:</strong>
+                    <input name="fechaInicio" type="date" id="fechaInicio" maxlength="250" value="<?=$fechaInicio; ?>" max='<?=date("Y-m-d"); ?>' class="form-control" required />
+                </div>
+                <div class="col-sm-5">
+                    <strong>Nombre del grupo al que pertenece:</strong>
+                    <input type="text" value="<?=$nombreGrupoPertenece; ?>" class="form-control" readonly />
+                    <input name="nombreGrupo_txt" type="hidden" id="nombreGrupo_txt" value="<?=$nombreGrupo_txt; ?>" />
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2">
+                    <strong>Barrio:</strong>
+                    <input name="barrio" type="text" id="barrio" maxlength="250" value="<?=$barrio; ?>" class="form-control" required placeholder="Barrio" />
+                </div>
+                <div class="col-sm-3">
+                    <strong>Metodo de evangelismo:</strong>
+                    <input name="direccion" type="text" id="direccion" maxlength="250" value="<?=$direccion; ?>" class="form-control" required />
+                </div>
+                <div class="col-sm-2">
+                    <strong>Ciudad:</strong>
+                    <input name="ciudad" type="text" id="ciudad" maxlength="250" value="<?=$ciudad; ?>" class="form-control" required />
+                </div>
+                <div class="col-sm-5">
+                    <strong>Grupo madre:</strong>
+                    <input name="grupoMadre_txt" type="text" id="grupoMadre_txt" value="<?=$grupoMadre_txt; ?>" class="form-control" placeholder="Sin grupo madre" />
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-3">
+                    <strong>Generacion:</strong>
+                    <input name="temporal_solotxt" type="text" id="temporal_solotxt" value="<?=$generacionPertenece; ?>" readonly class="form-control" />
+                    <input name="generacionNumero" type="hidden" id="generacionNumero" value="<?=$generacionNumero; ?>" readonly class="form-control" required />
+                </div>
+            </div>
+        </div>
+        <?php }else{ ?>
         <div class="form-group">
             <div class="col-sm-3">
                 <strong>Plantador/Pastor/Lider:</strong>
@@ -1401,7 +1634,7 @@ if($idReporteActual > 0){
             }else if ($generacionNumero == 77){?>
                 <div class="col-sm-4">
                     <strong>Generación:</strong>
-                    <input name="temporal_solotxt" type="text" id="temporal_solotxt" value="EVANGELISMO" readonly class="form-control"  />
+                    <input name="temporal_solotxt" type="text" id="temporal_solotxt" value="<?=$generacionPertenece; ?>" readonly class="form-control"  />
                     <input name="generacionNumero" type="hidden" id="generacionNumero" value="<?=$generacionNumero; ?>" readonly class="form-control" required />
                 </div>
             <?php  }else if ($generacionNumero == 8){?>
@@ -1412,6 +1645,7 @@ if($idReporteActual > 0){
                 </div>
             <?php  } ?>            
         </div>
+        <?php } ?>
         <?php  if($generacionNumero != 0 && $generacionNumero != 77 && $generacionNumero != 8){?>            
             <div class="cont-tit">
                 <div class="hr"><hr></div>
@@ -1449,6 +1683,7 @@ if($idReporteActual > 0){
             <div class="hr"><hr></div>
             <div class="tit-cen">
                 <h3><?php if($generacionNumero == 77){ echo "ALCANZADOS"; }else{ echo "ASISTENCIA"; } ?></h3>
+                <?php if($generacionNumero == 77){ ?><h5>DISTRIBUCION DE LA ASISTENCIA REPORTADA</h5><?php } ?>
             </div>
             <div class="hr"><hr></div>
         </div>
@@ -1518,8 +1753,8 @@ if($idReporteActual > 0){
             <div class="cont-tit">
                 <div class="hr"><hr></div>
                 <div class="tit-cen">
-                    <h3 class="text-center">Método DE VERIFICACIÓN</h3>
-                    <h5>Fotográfias</h5>
+                    <h3 class="text-center"><?php if($generacionNumero == 77){ echo "EVIDENCIA FOTOGRAFICA"; }else{ echo "Método DE VERIFICACIÓN"; } ?></h3>
+                    <h5><?php if($generacionNumero == 77){ echo "FOTOS CARGADAS EN EL FORMULARIO"; }else{ echo "Fotografias"; } ?></h5>
                 </div>
                 <div class="hr"><hr></div>
             </div> 
@@ -1901,8 +2136,8 @@ if($idReporteActual > 0){
                 <div class="cont-tit">
                     <div class="hr"><hr></div>
                     <div class="tit-cen">
-                        <h3 class="text-center">OTROS DATOS DEL PROCESO</h3>
-                        <h5>COMENTARIOS</h5>
+                        <h3 class="text-center"><?php if($generacionNumero == 77){ echo "COMENTARIOS DEL REPORTE"; }else{ echo "OTROS DATOS DEL PROCESO"; } ?></h3>
+                        <h5><?php if($generacionNumero == 77){ echo "OBSERVACIONES GENERALES"; }else{ echo "COMENTARIOS"; } ?></h5>
                     </div>
                     <div class="hr"><hr></div>
                 </div>
@@ -1914,6 +2149,9 @@ if($idReporteActual > 0){
                     <div class="col-sm-3"></div>
                 </div>
             </div>
+        <?php } ?>
+        <?php if((int)$idActividad == 77){ ?>
+        </div>
         <?php } ?>
         <?php if ($soloLecturaReporteFacilitador) { ?>
         </fieldset>
