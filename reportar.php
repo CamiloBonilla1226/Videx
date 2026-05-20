@@ -1741,6 +1741,7 @@ if($idReporteActual > 0){
         </div>
         <?php } ?>
         <?php  if($generacionNumero != 0 && $generacionNumero != 77 && $generacionNumero != 8 && !$esActividadCoach && !$esActividadBautizo){?>            
+            <div class="col-sm-12" style="clear: both; margin-top: 15px;">
             <div class="cont-tit">
                 <div class="hr"><hr></div>
                 <div class="tit-cen">
@@ -1863,6 +1864,7 @@ if($idReporteActual > 0){
             </div>
             <?php } ?>
 
+            <div class="col-sm-12" style="clear: both; margin-top: 15px;">
             <div class="cont-tit">
                 <div class="hr"><hr></div>
                 <div class="tit-cen">
@@ -1945,6 +1947,7 @@ if($idReporteActual > 0){
                     </div>
                 </div>
                 <?php } ?>
+            </div>
             </div>
                 
         <?php }else{ ?>
