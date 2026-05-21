@@ -914,6 +914,11 @@ else{
                     .tabla-reportes-grupos td{
                         vertical-align: middle !important;
                         white-space: nowrap;
+                        border-right: 1px solid #d8e0e8 !important;
+                    }
+                    .tabla-reportes-grupos th:first-child,
+                    .tabla-reportes-grupos td:first-child{
+                        border-left: 1px solid #d8e0e8 !important;
                     }
                     .tabla-reportes-grupos th.col-text,
                     .tabla-reportes-grupos td.col-text{

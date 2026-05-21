@@ -109,6 +109,75 @@ th {
 
 <?php
 
+if (!function_exists('reportar_escape_attr')) {
+    function reportar_escape_attr($valor)
+    {
+        return htmlspecialchars((string)$valor, ENT_QUOTES, 'UTF-8');
+    }
+}
+
+if (!function_exists('reportar_normalizar_plantador')) {
+    function reportar_normalizar_plantador($valor)
+    {
+        $valor = trim((string)$valor);
+        if ($valor === '') {
+            return '';
+        }
+
+        $plantadores = json_decode($valor, true);
+        if (json_last_error() === JSON_ERROR_NONE && is_array($plantadores)) {
+            $nombres = array();
+            foreach ($plantadores as $plantador) {
+                if (!is_scalar($plantador)) {
+                    continue;
+                }
+
+                $plantador = trim((string)$plantador);
+                if ($plantador !== '' && !in_array($plantador, $nombres, true)) {
+                    $nombres[] = $plantador;
+                }
+            }
+
+            if (count($nombres) > 0) {
+                return implode(', ', $nombres);
+            }
+        }
+
+        return $valor;
+    }
+}
+
+if (!function_exists('reportar_obtener_campos_mapeo')) {
+    function reportar_obtener_campos_mapeo()
+    {
+        return array(
+            "mapeo_oracion" => "Orar",
+            "mapeo_companerismo" => "Companerismo",
+            "mapeo_adoracion" => "Adorar",
+            "mapeo_biblia" => "Aplicar la biblia",
+            "mapeo_evangelizar" => "Evangelizar",
+            "mapeo_cena" => "Cena del Senor",
+            "mapeo_dar" => "Dar",
+            "mapeo_bautizar" => "Bautizar",
+            "mapeo_trabajadores" => "Entrenar nuevos lideres"
+        );
+    }
+}
+
+if (!function_exists('reportar_obtener_mapeos_faltantes')) {
+    function reportar_obtener_mapeos_faltantes($request)
+    {
+        $faltantes = array();
+        foreach (reportar_obtener_campos_mapeo() as $campo => $etiqueta) {
+            if (!isset($request[$campo]) || trim((string)$request[$campo]) === '') {
+                $faltantes[$campo] = $etiqueta;
+            }
+        }
+
+        return $faltantes;
+    }
+}
+
 // QUITAR
 //print_r( $_SESSION );
 ?> <br/>
@@ -556,6 +625,11 @@ if(isset($_REQUEST["id"]) && $_REQUEST["id"] != ""){
 
 $soloLecturaReporteFacilitador = (isset($_SESSION["perfil"]) && $_SESSION["perfil"] == 163 && $idReporteActual != 0);
 $bloqueoEdicionReporteFacilitador = 0;
+$error_datos = 0;
+$texto_error = "";
+$mensaje_error = "";
+$campos_mapeo_faltantes = array();
+$campos_mapeo_labels = reportar_obtener_campos_mapeo();
 
 
 // Array que nos servira para ir llevando cuenta de los requerimientos.
@@ -570,7 +644,6 @@ else if(isset($_POST["funcion"])){
         2   Password no coincide
         3   Identificacion YA existente
     */
-    $error_datos = 0;
     //
     if($_POST["funcion"] == "insertar"){
         //die("Insertar");
@@ -633,6 +706,11 @@ else if(isset($_POST["funcion"])){
         
         // Asignar valores de mapeo solo para reportes tipo OTRA (generaciones 1-5)
         if($generacionActual == "OTRA") {
+            $campos_mapeo_faltantes = reportar_obtener_mapeos_faltantes($_REQUEST);
+            if(count($campos_mapeo_faltantes) > 0){
+                $error_datos = 1;
+                $mensaje_error = "Debe completar todos los campos de mapeo del formulario de coach. Faltan: ".implode(", ", array_values($campos_mapeo_faltantes)).".";
+            }
             $mapeo_oracion = soloNumeros($_REQUEST["mapeo_oracion"]);
             if(empty($mapeo_oracion)) $mapeo_oracion = 0;
             $mapeo_companerismo = soloNumeros($_REQUEST["mapeo_companerismo"]);
@@ -1007,6 +1085,11 @@ else if(isset($_POST["funcion"])){
         
         // Asignar valores de mapeo solo para reportes tipo OTRA (generaciones 1-5)
         if($generacionActual == "OTRA") {
+            $campos_mapeo_faltantes = reportar_obtener_mapeos_faltantes($_REQUEST);
+            if(count($campos_mapeo_faltantes) > 0){
+                $error_datos = 1;
+                $mensaje_error = "Debe completar todos los campos de mapeo del formulario de coach. Faltan: ".implode(", ", array_values($campos_mapeo_faltantes)).".";
+            }
             $mapeo_oracion = soloNumeros($_REQUEST["mapeo_oracion"]);
             if(empty($mapeo_oracion)) $mapeo_oracion = 0;
             $mapeo_companerismo = soloNumeros($_REQUEST["mapeo_companerismo"]);
@@ -1038,6 +1121,7 @@ else if(isset($_POST["funcion"])){
             $mapeo_trabajadores = null;
         }
         
+        if($error_datos == 0){
         //
         $sql = 'UPDATE  sat_reportes SET 
                     inactivo = "'.$inactivo.'", 
@@ -1179,6 +1263,7 @@ else if(isset($_POST["funcion"])){
             $ultimoQuery = $PSN1->query($sql);
         }
         $varExitoREP_UPD = 1;
+        }
         //
         //
         //if($generacionNumero > 0){
@@ -1242,7 +1327,7 @@ else if(isset($_POST["funcion"])){
 
 switch($error_datos){
     case 1:
-        $texto_error = "Datos requeridos.";
+        $texto_error = ($mensaje_error != "") ? $mensaje_error : "Datos requeridos.";
         break;
     case 2:
         $texto_error = "Error no especificado.";
@@ -1270,7 +1355,7 @@ if($idReporteActual > 0){
         {
             $inactivo = $PSN1->f("inactivo");
             $comentario = $PSN1->f("comentario");
-            $plantador = $PSN1->f("plantador");
+            $plantador = reportar_normalizar_plantador($PSN1->f("plantador"));
             $fechaReporte = $PSN1->f("fechaReporte");
             $fechaInicio = $PSN1->f("fechaInicio");        
             $sitioReunion = $PSN1->f("sitioReunion");
@@ -1409,6 +1494,7 @@ if($idReporteActual > 0){
     }
     ?><div class="container">
     <form method="post" enctype="multipart/form-data" name="form1" id="form1" class="form-horizontal">
+        <div id="form-inline-error" class="alert alert-danger text-center" <?php if($texto_error == ""){ ?>style="display:none;"<?php } ?>><?=reportar_escape_attr($texto_error); ?></div>
         <h2 class="alert alert-info text-center"><?php
             if($idReporteActual == 0){
                 echo "CREACIÓN";
@@ -1489,7 +1575,7 @@ if($idReporteActual > 0){
         <div class="form-group">
             <div class="col-sm-4">
                 <strong>Plantador:</strong>
-                <input type="text" value="<?=$plantador; ?>" class="form-control" readonly />
+                <input type="text" value="<?=reportar_escape_attr($plantador); ?>" class="form-control" readonly />
             </div>
             <div class="col-sm-2">
                 <strong>Fecha reporte:</strong>
@@ -1634,7 +1720,7 @@ if($idReporteActual > 0){
                 <?php if($esActividadEvangelismo){ ?>
                 <div class="col-sm-3">
                     <strong>Plantador:</strong>
-                    <input name="plantador" type="text" id="plantador" maxlength="250" value="<?=$plantador; ?>" class="form-control" required />
+                    <input name="plantador" type="text" id="plantador" maxlength="250" value="<?=reportar_escape_attr($plantador); ?>" class="form-control" required />
                 </div>
                 <?php } ?>
                 <div class="col-sm-2">
@@ -1681,7 +1767,7 @@ if($idReporteActual > 0){
         <div class="form-group">
             <div class="col-sm-3">
                 <strong>Plantador/Pastor/Lider:</strong>
-                <input name="plantador" type="text" id="plantador" maxlength="250" value="<?=$plantador; ?>" class="form-control" required  />
+                <input name="plantador" type="text" id="plantador" maxlength="250" value="<?=reportar_escape_attr($plantador); ?>" class="form-control" required  />
             </div>
             <div class="col-sm-2">
                 <strong>Fecha del reporte:</strong>
@@ -2052,7 +2138,7 @@ if($idReporteActual > 0){
                 <div class="row col-sm-6">
                     <h4 class="alert alert-warning"><?=$array_campos_txt[$i]; ?></h4>
                     <div class="form-group cont-mapeo">
-                        <div class="map-chec"><input type="radio" name="<?=$array_campos[$i]; ?>"  <?php
+                        <div class="map-chec"><input type="radio" name="<?=$array_campos[$i]; ?>" required <?php
                         if($array_campos_valor[$i] == 1){
                             ?>checked="checked"<?php
                         }
@@ -2700,6 +2786,7 @@ else if($idReporteActual == 0){
         </div>
     
     <form method="post" enctype="multipart/form-data" name="form1" id="form1" class="form-horizontal">
+    <div id="form-inline-error" class="alert alert-danger text-center" <?php if($texto_error == ""){ ?>style="display:none;"<?php } ?>><?=reportar_escape_attr($texto_error); ?></div>
     <input name="fechaReporte" type="hidden" id="fechaReporte" value="<?=$fechaReporte; ?>" />
     <fieldset>
         <div class="cont-tit">
@@ -2723,7 +2810,7 @@ else if($idReporteActual == 0){
         <div class="form-group">
             <div class="col-sm-3">
                 <strong>Plantador/Pastor/Lider:</strong>
-                <input name="plantador" type="text" id="plantador" maxlength="250" value="<?=$plantador; ?>" class="form-control" required />
+                <input name="plantador" type="text" id="plantador" maxlength="250" value="<?=reportar_escape_attr($plantador); ?>" class="form-control" required />
             </div>
             <div class="col-sm-3">
                 <strong>Barrio (Evento):</strong></label>
@@ -2810,7 +2897,7 @@ else if($idReporteActual == 0){
             <div class="form-group" id="plantador-section">
                 <div class="col-sm-12">
                     <strong>Plantador/Pastor/Líder:</strong>
-                    <input name="plantador" type="text" id="plantador" maxlength="250" value="<?=$plantador; ?>" 
+                    <input name="plantador" type="text" id="plantador" maxlength="250" value="<?=reportar_escape_attr($plantador); ?>" 
                            class="form-control" list="plantadores-list" autocomplete="off" required />
                     <datalist id="plantadores-list">
                         <!-- Las opciones se llenan dinámicamente con JavaScript -->
@@ -4915,11 +5002,11 @@ window.onclick = function(event) {
             <div class="form-group">
                 <div class="col-sm-4">
                     <strong>Fecha de mapeo:</strong>
-                    <input name="mapeo_fecha" type="date" id="mapeo_fecha" value="<?=date("Y-m-d"); ?>" max='<?=date("Y-m-d"); ?>' class="form-control" />
+                    <input required name="mapeo_fecha" type="date" id="mapeo_fecha" value="<?=date("Y-m-d"); ?>" max='<?=date("Y-m-d"); ?>' class="form-control" />
                 </div>
                 <div class="col-sm-4">
                     <strong>¿Este grupo está comprometido como iglesia?:</strong>
-                    <select name="mapeo_comprometido" id="mapeo_comprometido" class="form-control">
+                    <select required name="mapeo_comprometido" id="mapeo_comprometido" class="form-control">
                         <option value="">Sin seleccionar</option>
                         <option value="3" <?php if($mapeo_comprometido == 3){ ?>selected="selected"<?php } ?>>NO comprometido</option>
                         <option value="4" <?php if($mapeo_comprometido == 4){ ?>selected="selected"<?php } ?>>SI comprometido como iglesia</option>
@@ -4990,7 +5077,7 @@ window.onclick = function(event) {
                             <img style="margin-right: 15px" width="35px" src="mapeo_img/<?=$array_campos[$i]; ?>1.png" class="img-responsive" />
                             <h5>NO REALIZA LA TAREA</h5>
                         </div>
-                        <input style="height: 30px; width: 30px; box-shadow: none;" type="radio" name="<?=$array_campos[$i]; ?>" value="1" <?php
+                        <input style="height: 30px; width: 30px; box-shadow: none;" type="radio" name="<?=$array_campos[$i]; ?>" required value="1" <?php
                     if($array_campos_valor[$i] == 1){
                         ?>checked="checked"<?php
                     }
@@ -5769,14 +5856,74 @@ alert(Mensaje);
             }
         }
        
+        var mapeoLabels = <?=json_encode($campos_mapeo_labels); ?>;
+
+        function limpiarErrorFormulario(){
+            var errorBox = document.getElementById('form-inline-error');
+            if(errorBox){
+                errorBox.style.display = 'none';
+                errorBox.textContent = '';
+            }
+        }
+
+        function mostrarErrorFormulario(mensaje, selectorObjetivo){
+            var errorBox = document.getElementById('form-inline-error');
+            if(errorBox){
+                errorBox.textContent = mensaje;
+                errorBox.style.display = 'block';
+            }
+
+            var objetivo = errorBox;
+            if(selectorObjetivo){
+                objetivo = document.querySelector(selectorObjetivo) || document.getElementById(selectorObjetivo) || errorBox;
+            }
+
+            if(objetivo && typeof objetivo.scrollIntoView === 'function'){
+                objetivo.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        function obtenerMapeosFaltantes(){
+            var faltantes = [];
+            for(var campo in mapeoLabels){
+                if(!Object.prototype.hasOwnProperty.call(mapeoLabels, campo)){
+                    continue;
+                }
+
+                var radioButtons = document.getElementsByName(campo);
+                var seleccionado = false;
+                for(var j = 0; j < radioButtons.length; j++) {
+                    if(radioButtons[j].checked) {
+                        seleccionado = true;
+                        break;
+                    }
+                }
+
+                if(!seleccionado){
+                    faltantes.push({
+                        campo: campo,
+                        etiqueta: mapeoLabels[campo]
+                    });
+                }
+            }
+
+            return faltantes;
+        }
+
         //
         function generarForm(){
             //Completo el formulario  
             if(current == steps){
+                limpiarErrorFormulario();
                 <?php
                  if($generacionActual != "SOPA"){
                 if($generacionActual != "CERO" && $generacionActual != "EVAN" && $generacionActual != "GCEL"){
                     ?>
+                    var mapeosFaltantes = obtenerMapeosFaltantes();
+                    if(mapeosFaltantes.length > 0){
+                        mostrarErrorFormulario("Debe completar todos los campos de mapeo del formulario de coach. Faltan: " + mapeosFaltantes.map(function(item){ return item.etiqueta; }).join(", ") + ".", 'input[name=\"' + mapeosFaltantes[0].campo + '\"]');
+                        return false;
+                    }
                     var checks_total_seleccionados;
                     checks_total_seleccionados = 0;
                     <?php
@@ -5793,13 +5940,13 @@ alert(Mensaje);
                     }
                     ?>
 
-                    if(parseInt(checks_total_seleccionados) < 8){
-                        alert("Debe llenar todos el diagnostico del mapeo por cada uno de los 9 items, oración, dar, etc.");
+                    if(parseInt(checks_total_seleccionados) < 9){
+                        mostrarErrorFormulario("Debe completar todos los campos de mapeo del formulario de coach.", "#mapeo_fecha");
                         return false;
                     }
                     
                     if(parseInt(document.getElementById("final_asistencia_total").value) < 1){
-                        alert("La asistencia total no puede ser menor a 1 persona");
+                        mostrarErrorFormulario("La asistencia total no puede ser menor a 1 persona", "#final_asistencia_total");
                         return false;
                     }
                     
@@ -5818,7 +5965,7 @@ alert(Mensaje);
                         return true;
                     }
                     else{
-                        alert("Por favor verifique la información, debe llenar todo el mapeo.");
+                        mostrarErrorFormulario("Por favor verifique la informacion del mapeo antes de guardar.", "#mapeo_fecha");
                         return false;
                     }
                     <?php
@@ -5855,6 +6002,7 @@ alert(Mensaje);
                 //next_step = $(this).parent().next();
                 
                 current_step = $(this).closest("fieldset");
+                limpiarErrorFormulario();
                 
                 <?php if($generacionActual == "OTRA"): ?>
                 // Validación específica para fieldsets de mapeos (solo para generaciones 1-5)
@@ -5888,7 +6036,11 @@ alert(Mensaje);
                     }
                     
                     if (mapeosCompletos < 9) {
-                        alert("Debe completar el diagnóstico de mapeo para todos los 9 elementos antes de continuar.\n\nElementos faltantes:\n• " + camposFaltantes.join('\n• ') + "\n\nElementos completados: " + mapeosCompletos + " de 9");
+                        var primerCampoFaltante = obtenerMapeosFaltantes();
+                        mostrarErrorFormulario(
+                            "Debe completar el diagnostico de mapeo para todos los 9 elementos antes de continuar. Faltan: " + camposFaltantes.join(", ") + ".",
+                            (primerCampoFaltante.length > 0) ? 'input[name=\"' + primerCampoFaltante[0].campo + '\"]' : '#form-inline-error'
+                        );
                         return false;
                     }
                 }
@@ -5915,8 +6067,8 @@ alert(Mensaje);
                             }
                             
                             if (!seleccionado) {
-                                var nombreCampo = mapeosCampos[i].replace('mapeo_', '').replace('_', ' ');
-                                alert("Debe seleccionar una opción para: " + nombreCampo.toUpperCase());
+                                var nombreCampo = mapeoLabels[mapeosCampos[i]] || mapeosCampos[i];
+                                mostrarErrorFormulario("Debe seleccionar una opcion para: " + nombreCampo + ".", 'input[name=\"' + mapeosCampos[i] + '\"]');
                                 return false;
                             }
                             break; // Solo validar el campo de este fieldset
