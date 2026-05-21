@@ -1512,8 +1512,8 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
 
                     <div class="form-group">
                         <label>Este grupo esta comprometido como iglesia?</label>
-                        <select id="mapeo_comprometido" class="form-control">
-                            <option value="">Selecciona una opcion</option>
+                        <select id="mapeo_comprometido" class="form-control" style="font-size: 12px;">
+                            <option value="">Seleccione</option>
                             <option value="3">NO comprometido</option>
                             <option value="4">SI comprometido como iglesia</option>
                         </select>
@@ -1623,6 +1623,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                         <h4 style="color: #333; border-bottom: 2px solid #2c3e50; padding-bottom: 10px;">Imagen del Mapeo</h4>
                         <canvas id="mapeoCanvas" width="550" height="550" style="max-width: 100%; border: 1px solid #ddd; border-radius: 8px; background: #fff;"></canvas>
                     </div>
+                    <div class="form-field-error" id="reportMapeosError"></div>
                 </div>
 
                 <input type="hidden" id="tipoActividad">
@@ -1979,6 +1980,22 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         }
     }
 
+    function showReportMapeosError(fieldId, message) {
+        ['mapeo_comprometido', 'mapeo_oracion', 'mapeo_companerismo', 'mapeo_adoracion', 'mapeo_biblia', 'mapeo_evangelizar', 'mapeo_cena', 'mapeo_dar', 'mapeo_bautizar', 'mapeo_trabajadores'].forEach(id => {
+            const field = document.getElementById(id);
+            if (field) {
+                field.classList.toggle('form-field-invalid', id === fieldId);
+            }
+        });
+
+        const error = document.getElementById('reportMapeosError');
+        if (error) {
+            error.textContent = message;
+            error.classList.add('active');
+            error.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+
     function clearReportMetricasError() {
         ['discipulado', 'desiciones_extra', 'preparandose'].forEach(id => {
             const field = document.getElementById(id);
@@ -1994,11 +2011,27 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         }
     }
 
+    function clearReportMapeosError() {
+        ['mapeo_comprometido', 'mapeo_oracion', 'mapeo_companerismo', 'mapeo_adoracion', 'mapeo_biblia', 'mapeo_evangelizar', 'mapeo_cena', 'mapeo_dar', 'mapeo_bautizar', 'mapeo_trabajadores'].forEach(id => {
+            const field = document.getElementById(id);
+            if (field) {
+                field.classList.remove('form-field-invalid');
+            }
+        });
+
+        const error = document.getElementById('reportMapeosError');
+        if (error) {
+            error.textContent = '';
+            error.classList.remove('active');
+        }
+    }
+
     function clearReportFormErrors() {
         clearInlineFormError('newReportFormError');
         clearInlineFormError('reportFotosError');
         clearReportAsistenciaError();
         clearReportMetricasError();
+        clearReportMapeosError();
     }
 
     function showInlineFormError(errorId, message) {
@@ -3298,7 +3331,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             ];
 
             if (!compromisoSelect || compromisoSelect.value === '') {
-                showReportFormError('Debe seleccionar si este grupo esta comprometido como iglesia.');
+                showReportMapeosError('mapeo_comprometido', 'Debe seleccionar si este grupo esta comprometido como iglesia.');
                 if (compromisoSelect) {
                     compromisoSelect.focus();
                 }
@@ -3309,7 +3342,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                 const campo = camposMapeo[i];
                 const select = document.getElementById(campo.id);
                 if (!select || parseInt(select.value, 10) < 1) {
-                    showReportFormError('Debe seleccionar una opcion para: ' + campo.etiqueta + '.');
+                    showReportMapeosError(campo.id, 'Debe seleccionar una opcion para: ' + campo.etiqueta + '.');
                     if (select) {
                         select.focus();
                     }
@@ -3398,6 +3431,12 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                 } else if (mensajeNormalizado.includes('preparandose')) {
                     showReportMetricasError('preparandose', mensajeError.replace(/^Error:\s*/i, ''));
                     document.getElementById('preparandose').focus();
+                } else if (mensajeNormalizado.includes('mapeo') || mensajeNormalizado.includes('comprometido como iglesia')) {
+                    showReportMapeosError('mapeo_comprometido', mensajeError.replace(/^Error:\s*/i, ''));
+                    const compromisoSelect = document.getElementById('mapeo_comprometido');
+                    if (compromisoSelect) {
+                        compromisoSelect.focus();
+                    }
                 } else if (mensajeNormalizado.includes('imagen') || mensajeNormalizado.includes('foto')) {
                     showReportFotosError(mensajeError.replace(/^Error:\s*/i, ''));
                 } else {
@@ -4251,8 +4290,15 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
     // Escuchar cambios en selects del formulario
     document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.mapeo-select').forEach(function(select) {
-            select.addEventListener('change', renderMapeoChart);
+            select.addEventListener('change', function() {
+                clearReportMapeosError();
+                renderMapeoChart();
+            });
         });
+        const compromisoSelect = document.getElementById('mapeo_comprometido');
+        if (compromisoSelect) {
+            compromisoSelect.addEventListener('change', clearReportMapeosError);
+        }
         const observer = new MutationObserver(function(mutations) {
             mutations.forEach(function(m) {
                 if (m.attributeName === 'style') {
