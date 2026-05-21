@@ -102,8 +102,10 @@ try {
     $mapeo_dar = intval($data['mapeo_dar'] ?? 0);
     $mapeo_bautizar = intval($data['mapeo_bautizar'] ?? 0);
     $mapeo_trabajadores = intval($data['mapeo_trabajadores'] ?? 0);
+    $mapeo_comprometido = intval($data['mapeo_comprometido'] ?? 0);
 
     if ($idActividad !== 1) {
+        $mapeo_comprometido = 0;
         $mapeo_oracion = 0;
         $mapeo_companerismo = 0;
         $mapeo_adoracion = 0;
@@ -113,6 +115,32 @@ try {
         $mapeo_dar = 0;
         $mapeo_bautizar = 0;
         $mapeo_trabajadores = 0;
+    } else {
+        $camposMapeoCoach = array(
+            'Oracion' => $mapeo_oracion,
+            'Companerismo' => $mapeo_companerismo,
+            'Adoracion' => $mapeo_adoracion,
+            'Aplicar la biblia' => $mapeo_biblia,
+            'Evangelizar' => $mapeo_evangelizar,
+            'Cena del Senor' => $mapeo_cena,
+            'Dar' => $mapeo_dar,
+            'Bautizar' => $mapeo_bautizar,
+            'Entrenar nuevos lideres' => $mapeo_trabajadores
+        );
+        $mapeosFaltantes = array();
+        foreach ($camposMapeoCoach as $etiqueta => $valor) {
+            if ($valor < 1 || $valor > 4) {
+                $mapeosFaltantes[] = $etiqueta;
+            }
+        }
+
+        if (count($mapeosFaltantes) > 0) {
+            throw new Exception('Debe completar todos los campos de mapeo del formulario de coach. Faltan: ' . implode(', ', $mapeosFaltantes) . '.');
+        }
+
+        if ($mapeo_comprometido !== 3 && $mapeo_comprometido !== 4) {
+            throw new Exception('Debe seleccionar si este grupo esta comprometido como iglesia.');
+        }
     }
 
     $PSN1 = new DBbase_Sql;
@@ -251,7 +279,7 @@ try {
         QUARTER(NOW()),
         '',
         NOW(),
-        0,
+        " . (int)$mapeo_comprometido . ",
         " . (int)$mapeo_oracion . ",
         " . (int)$mapeo_companerismo . ",
         " . (int)$mapeo_adoracion . ",

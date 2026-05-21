@@ -178,6 +178,14 @@ if (!function_exists('reportar_obtener_mapeos_faltantes')) {
     }
 }
 
+if (!function_exists('reportar_mapeo_comprometido_es_valido')) {
+    function reportar_mapeo_comprometido_es_valido($valor)
+    {
+        $valor = (int)$valor;
+        return $valor === 3 || $valor === 4;
+    }
+}
+
 // QUITAR
 //print_r( $_SESSION );
 ?> <br/>
@@ -706,6 +714,12 @@ else if(isset($_POST["funcion"])){
         
         // Asignar valores de mapeo solo para reportes tipo OTRA (generaciones 1-5)
         if($generacionActual == "OTRA") {
+            if(!reportar_mapeo_comprometido_es_valido($mapeo_comprometido)){
+                $error_datos = 1;
+                if(empty($mensaje_error)){
+                    $mensaje_error = "Debe seleccionar si este grupo esta comprometido como iglesia.";
+                }
+            }
             $campos_mapeo_faltantes = reportar_obtener_mapeos_faltantes($_REQUEST);
             if(count($campos_mapeo_faltantes) > 0){
                 $error_datos = 1;
@@ -1085,6 +1099,12 @@ else if(isset($_POST["funcion"])){
         
         // Asignar valores de mapeo solo para reportes tipo OTRA (generaciones 1-5)
         if($generacionActual == "OTRA") {
+            if(!reportar_mapeo_comprometido_es_valido($mapeo_comprometido)){
+                $error_datos = 1;
+                if(empty($mensaje_error)){
+                    $mensaje_error = "Debe seleccionar si este grupo esta comprometido como iglesia.";
+                }
+            }
             $campos_mapeo_faltantes = reportar_obtener_mapeos_faltantes($_REQUEST);
             if(count($campos_mapeo_faltantes) > 0){
                 $error_datos = 1;
@@ -2876,7 +2896,7 @@ else if($idReporteActual == 0){
             </div>
 
             <div class="form-group">
-                <div class="col-sm-8">
+                <div class="col-sm-5">
                     <strong>Selecciona el grupo/iglesia:</strong>
                     <input name="nombreGrupo_txt" type="text" id="nombreGrupo_txt" maxlength="250" value="<?=$nombreGrupo_txt; ?>"
                            class="form-control" list="grupos-facilitador-list" autocomplete="off"
@@ -2888,9 +2908,17 @@ else if($idReporteActual == 0){
                     <!-- Campo oculto para almacenar el grupo madre -->
                     <input type="hidden" name="grupoMadre_txt" id="grupoMadre_txt" value="<?=$grupoMadre_txt; ?>" />
                 </div>
-                <div class="col-sm-4">
+                <div class="col-sm-3">
                     <strong>Fecha de inicio:</strong>
                     <input name="fechaInicio" type="date" id="fechaInicio" maxlength="250" value="<?=$fechaInicio; ?>" max='<?=date("Y-m-d"); ?>' class="form-control" required />
+                </div>
+                <div class="col-sm-4">
+                    <strong>¿Este grupo está comprometido como iglesia?:</strong>
+                    <select required name="mapeo_comprometido" id="mapeo_comprometido" class="form-control">
+                        <option value="">Sin seleccionar</option>
+                        <option value="3" <?php if($mapeo_comprometido == 3){ ?>selected="selected"<?php } ?>>NO comprometido</option>
+                        <option value="4" <?php if($mapeo_comprometido == 4){ ?>selected="selected"<?php } ?>>SI comprometido como iglesia</option>
+                    </select>
                 </div>
             </div>
             
@@ -5000,12 +5028,12 @@ window.onclick = function(event) {
                 <div class="hr"><hr></div>
             </div>
             <div class="form-group">
-                <div class="col-sm-4">
+                <div class="col-sm-6">
                     <strong>Fecha de mapeo:</strong>
                     <input required name="mapeo_fecha" type="date" id="mapeo_fecha" value="<?=date("Y-m-d"); ?>" max='<?=date("Y-m-d"); ?>' class="form-control" />
                 </div>
-                <div class="col-sm-4">
-                    <strong>¿Este grupo está comprometido como iglesia?:</strong>
+                <div class="col-sm-6">
+                    <strong>Este grupo esta comprometido como iglesia?:</strong>
                     <select required name="mapeo_comprometido" id="mapeo_comprometido" class="form-control">
                         <option value="">Sin seleccionar</option>
                         <option value="3" <?php if($mapeo_comprometido == 3){ ?>selected="selected"<?php } ?>>NO comprometido</option>

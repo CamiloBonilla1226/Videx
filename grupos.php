@@ -1511,6 +1511,15 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                     <h4 style="margin: 20px 0 15px 0; color: #333; border-bottom: 2px solid #2c3e50; padding-bottom: 10px;">Funciones Realizadas</h4>
 
                     <div class="form-group">
+                        <label>Este grupo esta comprometido como iglesia?</label>
+                        <select id="mapeo_comprometido" class="form-control">
+                            <option value="">Selecciona una opcion</option>
+                            <option value="3">NO comprometido</option>
+                            <option value="4">SI comprometido como iglesia</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
                         <label>Oración</label>
                         <select id="mapeo_oracion" class="mapeo-select">
                             <option value="0">Selecciona una opción</option>
@@ -3209,6 +3218,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
 
     function saveNewReport(event) {
         event.preventDefault();
+        clearReportFormErrors();
 
         if (!selectedGrupo) {
             showReportFormError('No hay grupo seleccionado');
@@ -3274,6 +3284,40 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             datosReporte.comentario = document.getElementById('comentario').value;
         }
         if (document.getElementById('mapeosSection').style.display !== 'none') {
+            const compromisoSelect = document.getElementById('mapeo_comprometido');
+            const camposMapeo = [
+                { id: 'mapeo_oracion', etiqueta: 'Oracion' },
+                { id: 'mapeo_companerismo', etiqueta: 'Companerismo' },
+                { id: 'mapeo_adoracion', etiqueta: 'Adoracion' },
+                { id: 'mapeo_biblia', etiqueta: 'Aplicar la Biblia' },
+                { id: 'mapeo_evangelizar', etiqueta: 'Evangelizar' },
+                { id: 'mapeo_cena', etiqueta: 'Cena del Senor' },
+                { id: 'mapeo_dar', etiqueta: 'Dar (Ofrendas)' },
+                { id: 'mapeo_bautizar', etiqueta: 'Bautizar' },
+                { id: 'mapeo_trabajadores', etiqueta: 'Entrenar Nuevos Lideres' }
+            ];
+
+            if (!compromisoSelect || compromisoSelect.value === '') {
+                showReportFormError('Debe seleccionar si este grupo esta comprometido como iglesia.');
+                if (compromisoSelect) {
+                    compromisoSelect.focus();
+                }
+                return;
+            }
+
+            for (let i = 0; i < camposMapeo.length; i++) {
+                const campo = camposMapeo[i];
+                const select = document.getElementById(campo.id);
+                if (!select || parseInt(select.value, 10) < 1) {
+                    showReportFormError('Debe seleccionar una opcion para: ' + campo.etiqueta + '.');
+                    if (select) {
+                        select.focus();
+                    }
+                    return;
+                }
+            }
+
+            datosReporte.mapeo_comprometido = parseInt(compromisoSelect.value, 10) || 0;
             datosReporte.mapeo_oracion = parseInt(document.getElementById('mapeo_oracion').value) || 0;
             datosReporte.mapeo_companerismo = parseInt(document.getElementById('mapeo_companerismo').value) || 0;
             datosReporte.mapeo_adoracion = parseInt(document.getElementById('mapeo_adoracion').value) || 0;
