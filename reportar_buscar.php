@@ -841,6 +841,7 @@ else{
         $report_ids[] = $PSN_ids->f('id');
     }
 
+    $mensajeSinResultados = "";
     if (count($report_ids) > 0) {
         $sql = "SELECT sat_reportes.*, usuario.nombre as nombreUsuario, sat_grupos.nombre as nombreGrupo, grupo_base.generacionNumero as generacionGrupo, actividad.nombre_actividad, adjuntos.adj_url, adjuntos.total_adjuntos ";
         $sql.=" FROM sat_reportes ";
@@ -856,12 +857,21 @@ else{
         $sql.=" WHERE sat_reportes.id IN (" . implode(',', $report_ids) . ") ORDER BY sat_reportes.id DESC";
     } else {
         $sql = "";
+        if($total_registros > 0){
+            $mensajeSinResultados = "La pagina solicitada no tiene registros para los filtros actuales. Puedes volver a la pagina 1.";
+        }else{
+            $mensajeSinResultados = "No se encontraron reportes con los filtros seleccionados.";
+        }
     }
     //
 
     //echo $sql;
-    $PSN1->query($sql);
-    $numero=$PSN1->num_rows();
+    if($sql != ""){
+        $PSN1->query($sql);
+        $numero=$PSN1->num_rows();
+    }else{
+        $numero = 0;
+    }
     $actividadesFiltroDisponibles = array();
     $PSN_ActividadFiltro = new DBbase_Sql;
     $sqlActividadesFiltro = "SELECT id_actividad, nombre_actividad FROM actividad ORDER BY nombre_actividad ASC";
@@ -1073,6 +1083,11 @@ else{
                         </div>
                         <div class="hr"><hr></div>
                     </div>
+                    <?php if($numero == 0){ ?>
+                    <div class="alert alert-warning" style="margin-bottom:15px;">
+                        <?=$mensajeSinResultados != "" ? $mensajeSinResultados : "No se encontraron reportes con los filtros seleccionados."; ?>
+                    </div>
+                    <?php } ?>
                     <div style="overflow-x: auto;">
                         <?php $columnasAntesTotales = $esFacilitador ? 4 : 5; ?>
                         <table border="0" cellspacing="0" cellpadding="2"  align="center" class="table table-striped tabla-reportes-grupos" style="font-size:12px">
@@ -1179,11 +1194,22 @@ else{
                                         $contador++;
                                     }
                                 }
+                                else
+                                {
+                                    ?>
+                                    <tr>
+                                        <td colspan="<?=($esFacilitador ? 9 : 10); ?>" class="text-center" style="padding:18px;">
+                                            No hay registros para mostrar con los filtros aplicados.
+                                        </td>
+                                    </tr>
+                                    <?php
+                                }
                                 ?>
                             </tbody>
                         </table>
                     </div>       
                 </div>
+                <?php if($total_paginas > 1){ ?>
                 <center>
                 <div class="container">
                     <ul class="pagination">
@@ -1214,6 +1240,7 @@ else{
                         ?>
                     </ul>
                 </div>
+                <?php } ?>
             </div>
             <div role="tabpanel" class="tab-pane fade in" id="Sopas">
                 <div class="container">
