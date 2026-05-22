@@ -73,12 +73,24 @@ try {
     $comentario = addslashes((string)($data['comentario'] ?? ''));
 
     if ($tipoActividad === 'evangelismo') {
+        $bautizados = 0;
         $discipulado = 0;
         $preparandose = 0;
-    } elseif ($tipoActividad === 'gran_celebracion' || $tipoActividad === 'bautizo') {
+    } elseif ($tipoActividad === 'gran_celebracion') {
+        $bautizados = 0;
         $discipulado = 0;
         $desiciones = 0;
         $preparandose = 0;
+    } elseif ($tipoActividad === 'bautizo') {
+        $discipulado = 0;
+        $desiciones = 0;
+        $preparandose = 0;
+    } else {
+        $bautizados = 0;
+    }
+
+    if ($bautizados > $asistencia_total) {
+        throw new Exception('Cantidad de Bautizados no puede ser mayor a la asistencia total');
     }
 
     if ($discipulado > $asistencia_total) {

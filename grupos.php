@@ -1478,7 +1478,6 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                             <input type="number" id="preparandose" min="0" value="0">
                         </div>
                     </div>
-                    <div class="form-field-error" id="reportMetricasError"></div>
                 </div>
 
                 <!-- Campo opcional: Bautizados -->
@@ -1492,6 +1491,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                     <label>Decisiones de Fé</label>
                     <input type="number" id="desiciones" min="0" value="0">
                 </div>
+                <div class="form-field-error" id="reportMetricasError"></div>
 
                 <!-- Campo opcional: Comentarios -->
                 <div class="form-group" id="comentariosSection" style="display: none;">
@@ -1508,6 +1508,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                             <input type="file" class="fotos-evidencia-input" accept="image/jpeg,image/png,image/jpg,image/webp" style="display: block; margin-top: 6px;">
                         </div>
                     </div>
+                    <button type="button" id="addOtraFotoBtn" class="modal-button secondary" style="width: 100%; margin-top: 10px;">Agregar otra foto</button>
                     <small style="color: #666; display: block; margin-top: 8px;">Debe cargar al menos una imagen. Máximo 3 imágenes, 5 MB por imagen. Formatos: JPG, PNG, WebP</small>
                     <div id="fotosPreview" style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px;"></div>
                     <div id="fotosCountMsg" style="margin-top: 8px; font-size: 12px; color: #666;"></div>
@@ -1636,10 +1637,6 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
 
                 <input type="hidden" id="tipoActividad">
                 <input type="hidden" id="reporteIds">
-
-                <div class="form-group" style="margin-top: 10px;">
-                    <button type="button" id="addOtraFotoBtn" class="modal-button secondary" style="width: 100%;">Agregar otra foto</button>
-                </div>
 
                 <div class="modal-button-group">
                     <button type="button" class="modal-button secondary" onclick="backToActivitySelection()">Atrás</button>
@@ -1973,7 +1970,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
     }
 
     function showReportMetricasError(fieldId, message) {
-        ['discipulado', 'desiciones_extra', 'preparandose'].forEach(id => {
+        ['bautizados', 'desiciones', 'discipulado', 'desiciones_extra', 'preparandose'].forEach(id => {
             const field = document.getElementById(id);
             if (field) {
                 field.classList.toggle('form-field-invalid', id === fieldId);
@@ -2005,7 +2002,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
     }
 
     function clearReportMetricasError() {
-        ['discipulado', 'desiciones_extra', 'preparandose'].forEach(id => {
+        ['bautizados', 'desiciones', 'discipulado', 'desiciones_extra', 'preparandose'].forEach(id => {
             const field = document.getElementById(id);
             if (field) {
                 field.classList.remove('form-field-invalid');
@@ -2955,6 +2952,9 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         document.getElementById('discipulado').value = 0;
         document.getElementById('desiciones_extra').value = 0;
         document.getElementById('preparandose').value = 0;
+        document.getElementById('bautizados').value = 0;
+        document.getElementById('desiciones').value = 0;
+        clearReportMetricasError();
 
         // Mostrar según tipo
         if (tipoActividad === 'bautizo') {
@@ -3020,6 +3020,9 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         }
         if (total > 0) {
             clearReportAsistenciaError();
+            validarMetricasContraAsistencia(false);
+        } else {
+            clearReportMetricasError();
         }
     }
 
@@ -3035,30 +3038,53 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         return true;
     }
 
-    function validarMetricasContraAsistencia() {
-        const total = obtenerAsistenciaTotalReporte();
+    function obtenerCamposNumericosValidablesReporte() {
+        const campos = [];
+        const bautizadosSection = document.getElementById('bautizadosSection');
+        const decisionesSection = document.getElementById('decisionesSection');
         const metricasSection = document.getElementById('metricasEvangelismoSection');
-        if (!metricasSection || metricasSection.style.display === 'none') {
+
+        if (bautizadosSection && bautizadosSection.style.display !== 'none') {
+            campos.push({ id: 'bautizados', label: 'Cantidad de Bautizados' });
+        }
+
+        if (decisionesSection && decisionesSection.style.display !== 'none') {
+            campos.push({ id: 'desiciones', label: 'Decisiones de Fe' });
+        }
+
+        if (metricasSection && metricasSection.style.display !== 'none') {
+            [
+                { id: 'discipulado', wrapperId: 'metricFieldDiscipulado', label: 'Discipulado' },
+                { id: 'desiciones_extra', wrapperId: 'metricFieldDecisiones', label: 'Decisiones de Fe' },
+                { id: 'preparandose', wrapperId: 'metricFieldPreparandose', label: 'Preparandose' }
+            ].forEach(campo => {
+                const wrapper = document.getElementById(campo.wrapperId);
+                if (wrapper && wrapper.style.display !== 'none') {
+                    campos.push({ id: campo.id, label: campo.label });
+                }
+            });
+        }
+
+        return campos;
+    }
+
+    function validarMetricasContraAsistencia(enfocarCampo = true) {
+        const total = obtenerAsistenciaTotalReporte();
+        const campos = obtenerCamposNumericosValidablesReporte();
+
+        if (campos.length === 0) {
             clearReportMetricasError();
             return true;
         }
 
-        const campos = [
-            { id: 'discipulado', wrapperId: 'metricFieldDiscipulado', label: 'Discipulado' },
-            { id: 'desiciones_extra', wrapperId: 'metricFieldDecisiones', label: 'Decisiones de Fé' },
-            { id: 'preparandose', wrapperId: 'metricFieldPreparandose', label: 'Preparandose' }
-        ];
-
         for (const campo of campos) {
-            const wrapper = document.getElementById(campo.wrapperId);
-            if (wrapper && wrapper.style.display === 'none') {
-                continue;
-            }
-
-            const valor = parseInt(document.getElementById(campo.id).value) || 0;
+            const input = document.getElementById(campo.id);
+            const valor = parseInt(input.value, 10) || 0;
             if (valor > total) {
                 showReportMetricasError(campo.id, `${campo.label} no puede ser mayor a la asistencia total`);
-                document.getElementById(campo.id).focus();
+                if (enfocarCampo && input) {
+                    input.focus();
+                }
                 return false;
             }
         }
@@ -3236,11 +3262,23 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             }
         });
 
-        ['discipulado', 'desiciones_extra', 'preparandose'].forEach(function(id) {
+        ['bautizados', 'desiciones', 'discipulado', 'desiciones_extra', 'preparandose'].forEach(function(id) {
             const input = document.getElementById(id);
             if (input) {
-                input.addEventListener('input', clearReportMetricasError);
-                input.addEventListener('change', clearReportMetricasError);
+                input.addEventListener('input', function() {
+                    if (obtenerAsistenciaTotalReporte() > 0) {
+                        validarMetricasContraAsistencia(false);
+                    } else {
+                        clearReportMetricasError();
+                    }
+                });
+                input.addEventListener('change', function() {
+                    if (obtenerAsistenciaTotalReporte() > 0) {
+                        validarMetricasContraAsistencia(false);
+                    } else {
+                        clearReportMetricasError();
+                    }
+                });
             }
         });
 
@@ -3430,12 +3468,18 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                 if (mensajeNormalizado.includes('asistencia')) {
                     showReportAsistenciaError(mensajeError.replace(/^Error:\s*/i, ''));
                     document.getElementById('asistencia_hom').focus();
+                } else if (mensajeNormalizado.includes('bautizados')) {
+                    showReportMetricasError('bautizados', mensajeError.replace(/^Error:\s*/i, ''));
+                    document.getElementById('bautizados').focus();
                 } else if (mensajeNormalizado.includes('discipulado')) {
                     showReportMetricasError('discipulado', mensajeError.replace(/^Error:\s*/i, ''));
                     document.getElementById('discipulado').focus();
                 } else if (mensajeNormalizado.includes('decisiones')) {
-                    showReportMetricasError('desiciones_extra', mensajeError.replace(/^Error:\s*/i, ''));
-                    document.getElementById('desiciones_extra').focus();
+                    const campoDecisionesId = document.getElementById('decisionesSection').style.display !== 'none'
+                        ? 'desiciones'
+                        : 'desiciones_extra';
+                    showReportMetricasError(campoDecisionesId, mensajeError.replace(/^Error:\s*/i, ''));
+                    document.getElementById(campoDecisionesId).focus();
                 } else if (mensajeNormalizado.includes('preparandose')) {
                     showReportMetricasError('preparandose', mensajeError.replace(/^Error:\s*/i, ''));
                     document.getElementById('preparandose').focus();
