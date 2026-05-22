@@ -100,9 +100,6 @@ $fechaFinal = eliminarInvalidos($_REQUEST["fechaFinal"]);
 $generacionNumero = "";
 $inactivo = "";
 $actividadFiltro = "";
-$anhoFiltro = "";
-$anhosFiltroDisponibles = range(2021, 2026);
-$periodoAnualTexto = "Selecciona un anio para filtrar del 1 de febrero de ese anio al 31 de enero del siguiente.";
 $esFacilitador = (isset($_SESSION["perfil"]) && $_SESSION["perfil"] == 163);
 $sqlJoinGrupoBase = " LEFT JOIN sat_reportes AS grupo_base ON grupo_base.id = sat_reportes.id_grupo ";
 $sqlFiltro .= " AND COALESCE(sat_reportes.id_grupo, 0) <> 0";
@@ -135,33 +132,6 @@ if (!function_exists('reportar_buscar_actividad_label')) {
         return "Coach";
     }
 }
-
-if (!function_exists('reportar_buscar_rango_anual')) {
-    function reportar_buscar_rango_anual($anhoBase)
-    {
-        $anhoBase = (int)$anhoBase;
-        return array(
-            'inicio' => $anhoBase . '-02-01',
-            'fin' => ($anhoBase + 1) . '-01-31'
-        );
-    }
-}
-
-if(isset($_REQUEST["anhoFiltro"]) && soloNumeros($_REQUEST["anhoFiltro"]) != ""){
-    $anhoFiltro = soloNumeros($_REQUEST["anhoFiltro"]);
-    if((int)$anhoFiltro >= 2021 && (int)$anhoFiltro <= 2026){
-        $rangoAnualFiltro = reportar_buscar_rango_anual($anhoFiltro);
-        $fechaInicial = $rangoAnualFiltro['inicio'];
-        $fechaFinal = $rangoAnualFiltro['fin'];
-        $periodoAnualTexto = "Periodo aplicado: del 1 de febrero de ".$anhoFiltro." al 31 de enero de ".((int)$anhoFiltro + 1).".";
-        $_REQUEST["fechaInicial"] = $fechaInicial;
-        $_REQUEST["fechaFinal"] = $fechaFinal;
-    }else{
-        $anhoFiltro = "";
-    }
-}
-
-
 
 /*
 
@@ -1064,30 +1034,15 @@ else{
                                     <option value="99" <?php if($inactivo == 99){ ?>selected="selected"<?php } ?>>Inactivo</option>
                                 </select>
                             </div>
-                            <div class="col-sm-2 filter-item">
-                                <label class="filter-label">Anio</label>
-                                <select name="anhoFiltro" class="form-control">
-                                    <option value="">Todos</option>
-                                    <?php foreach($anhosFiltroDisponibles as $anhoDisponible){ ?>
-                                        <option value="<?=$anhoDisponible; ?>" <?php if((string)$anhoFiltro === (string)$anhoDisponible){ ?>selected="selected"<?php } ?>><?=$anhoDisponible; ?></option>
-                                    <?php } ?>
-                                </select>
-                            </div>
-                            <div class="col-sm-2 filter-item">
+                            <div class="col-sm-3 filter-item">
                                 <label class="filter-label">Fecha inicial</label>
                                 <input type="date" name="fechaInicial" id="fechaInicial" value="<?=$fechaInicial; ?>" class="form-control" />
                             </div>
-                            <div class="col-sm-2 filter-item">
+                            <div class="col-sm-3 filter-item">
                                 <label class="filter-label">Fecha final</label>
                                 <input type="date" name="fechaFinal" id="fechaFinal" value="<?=$fechaFinal; ?>" class="form-control" />
                             </div>
                             <div class="col-sm-6 filter-item">
-                                <label class="filter-label">Periodo del filtro por anio</label>
-                                <div class="alert alert-info filter-help" style="margin-bottom:0; padding:10px 12px;">
-                                    <?=$periodoAnualTexto; ?>
-                                </div>
-                            </div>
-                            <div class="col-sm-12 filter-item">
                                 <div class="filter-actions">
                                     <input type="submit" value="Filtrar" class="btn btn-success" />
                                     <a href="index.php?doc=reportar_buscar" class="btn btn-default">Limpiar filtros</a>
