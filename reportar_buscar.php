@@ -99,7 +99,10 @@ $fechaInicial = eliminarInvalidos($_REQUEST["fechaInicial"]);
 $fechaFinal = eliminarInvalidos($_REQUEST["fechaFinal"]);
 $generacionNumero = "";
 $inactivo = "";
-$sinmapeo = "";
+$actividadFiltro = "";
+$anhoFiltro = "";
+$anhosFiltroDisponibles = range(2021, 2026);
+$periodoAnualTexto = "Selecciona un anio para filtrar del 1 de febrero de ese anio al 31 de enero del siguiente.";
 $esFacilitador = (isset($_SESSION["perfil"]) && $_SESSION["perfil"] == 163);
 $sqlJoinGrupoBase = " LEFT JOIN sat_reportes AS grupo_base ON grupo_base.id = sat_reportes.id_grupo ";
 $sqlFiltro .= " AND COALESCE(sat_reportes.id_grupo, 0) <> 0";
@@ -130,6 +133,31 @@ if (!function_exists('reportar_buscar_actividad_label')) {
         }
 
         return "Coach";
+    }
+}
+
+if (!function_exists('reportar_buscar_rango_anual')) {
+    function reportar_buscar_rango_anual($anhoBase)
+    {
+        $anhoBase = (int)$anhoBase;
+        return array(
+            'inicio' => $anhoBase . '-02-01',
+            'fin' => ($anhoBase + 1) . '-01-31'
+        );
+    }
+}
+
+if(isset($_REQUEST["anhoFiltro"]) && soloNumeros($_REQUEST["anhoFiltro"]) != ""){
+    $anhoFiltro = soloNumeros($_REQUEST["anhoFiltro"]);
+    if((int)$anhoFiltro >= 2021 && (int)$anhoFiltro <= 2026){
+        $rangoAnualFiltro = reportar_buscar_rango_anual($anhoFiltro);
+        $fechaInicial = $rangoAnualFiltro['inicio'];
+        $fechaFinal = $rangoAnualFiltro['fin'];
+        $periodoAnualTexto = "Periodo aplicado: del 1 de febrero de ".$anhoFiltro." al 31 de enero de ".((int)$anhoFiltro + 1).".";
+        $_REQUEST["fechaInicial"] = $fechaInicial;
+        $_REQUEST["fechaFinal"] = $fechaFinal;
+    }else{
+        $anhoFiltro = "";
     }
 }
 
@@ -747,37 +775,13 @@ else{
         $sqlFiltro .= " AND sat_reportes.idGrupoMadre = '".$buscar_idGrupoMadre."'";
     }
 
-    //
-    if(isset($_REQUEST["sinmapeo"]) && soloNumeros($_REQUEST["sinmapeo"]) != ""){
-        $sinmapeo = soloNumeros($_REQUEST["sinmapeo"]);
-        $sqlFiltro .= " AND sat_reportes.generacionNumero NOT IN (0, 77) AND sat_reportes.generacionNumero NOT IN (0, 8)";
-        $sqlFiltro .= " AND (sat_reportes.mapeo_oracion = 0
-                            OR sat_reportes.mapeo_companerismo = 0
-                            OR sat_reportes.mapeo_adoracion = 0
-                            OR sat_reportes.mapeo_biblia = 0
-                            OR sat_reportes.mapeo_evangelizar = 0
-                            OR sat_reportes.mapeo_cena = 0
-                            OR sat_reportes.mapeo_dar = 0
-                            OR sat_reportes.mapeo_bautizar = 0
-                            OR sat_reportes.mapeo_trabajadores = 0
-                            OR sat_reportes.mapeo_comprometido = 0
-                            OR sat_reportes.mapeo_comprometido = ''
-                            OR sat_reportes.nombreGrupo_txt = ''
-                            OR sat_reportes.mapeo_fecha = '0000-00-00'
-                        )";
-    }
-
-    //
-
     if(isset($_REQUEST["inactivo"]) && soloNumeros($_REQUEST["inactivo"]) != ""){
         $inactivo = soloNumeros($_REQUEST["inactivo"]);
         if($inactivo == 99){
             $sqlFiltro .= " AND sat_reportes.inactivo = 1";
-            $sqlFiltro .= " AND sat_reportes.generacionNumero NOT IN (0, 77) AND sat_reportes.generacionNumero NOT IN (0, 8)";
         }
         else if($inactivo == 1){
             $sqlFiltro .= " AND sat_reportes.inactivo = 0";
-            $sqlFiltro .= " AND sat_reportes.generacionNumero NOT IN (0, 77) AND sat_reportes.generacionNumero NOT IN (0, 8)";
         }
     }
 
@@ -802,19 +806,17 @@ else{
         $sqlFiltro .= " AND sat_reportes.fechaReporte <= '".$fechaFinal."'";
     }
 
+    if(isset($_REQUEST["actividadFiltro"]) && soloNumeros($_REQUEST["actividadFiltro"]) != ""){
+        $actividadFiltro = soloNumeros($_REQUEST["actividadFiltro"]);
+        $sqlFiltro .= " AND sat_reportes.id_actividad = '".$actividadFiltro."'";
+    }
+
     if(isset($_REQUEST["generacionNumero"]) && soloNumeros($_REQUEST["generacionNumero"]) != ""){
         $generacionNumero = eliminarInvalidos($_REQUEST["generacionNumero"]);
-        if($generacionNumero == 99){
-            $generacionNumero_buscar = 0;
-        }
-        else{
-            $generacionNumero_buscar = $generacionNumero;            
-        }
-        if($generacionNumero_buscar == 77 || $generacionNumero_buscar == 8){
-            $sqlFiltro .= " AND (sat_reportes.id_actividad = '".$generacionNumero_buscar."' OR sat_reportes.generacionNumero = '".$generacionNumero_buscar."')";
-        }
-        else{
-            $sqlFiltro .= " AND COALESCE(grupo_base.generacionNumero, sat_reportes.generacionNumero) = '".$generacionNumero_buscar."'";
+        if((int)$generacionNumero >= 0 && (int)$generacionNumero <= 5){
+            $sqlFiltro .= " AND sat_reportes.generacionNumero = '".$generacionNumero."'";
+        }else{
+            $generacionNumero = "";
         }
     } 
 
@@ -890,6 +892,16 @@ else{
     //echo $sql;
     $PSN1->query($sql);
     $numero=$PSN1->num_rows();
+    $actividadesFiltroDisponibles = array();
+    $PSN_ActividadFiltro = new DBbase_Sql;
+    $sqlActividadesFiltro = "SELECT id_actividad, nombre_actividad FROM actividad ORDER BY nombre_actividad ASC";
+    $PSN_ActividadFiltro->query($sqlActividadesFiltro);
+    while($PSN_ActividadFiltro->next_record()){
+        $actividadesFiltroDisponibles[] = array(
+            'id_actividad' => $PSN_ActividadFiltro->f('id_actividad'),
+            'nombre_actividad' => $PSN_ActividadFiltro->f('nombre_actividad')
+        );
+    }
 
     ?>
     <!-- AG -->
@@ -931,6 +943,36 @@ else{
                     .table a{
                         color:#000;
                     }
+                    .report-filters-wrap{
+                        background:#f8fbff;
+                        border:1px solid #d9e6f2;
+                        border-radius:12px;
+                        padding:18px 18px 8px;
+                        margin-bottom:20px;
+                    }
+                    .report-filters-wrap .filter-item{
+                        margin-bottom:14px;
+                    }
+                    .report-filters-wrap .filter-label{
+                        display:block;
+                        font-weight:700;
+                        margin-bottom:6px;
+                        color:#2c3e50;
+                    }
+                    .report-filters-wrap .filter-actions{
+                        display:flex;
+                        gap:10px;
+                        align-items:flex-end;
+                        flex-wrap:wrap;
+                    }
+                    .report-filters-wrap .filter-actions .btn{
+                        min-width:120px;
+                    }
+                    .report-filters-wrap .filter-help{
+                        margin-top:4px;
+                        color:#5f6f81;
+                        font-size:12px;
+                    }
     </style>
     <div class="container">
         <br>
@@ -956,10 +998,11 @@ else{
                             </div>
                             <div class="hr"><hr></div>
                         </div>
-                        <div class="form-group">
-                            <div class="col-sm-3">
-                                <strong>Facilitador:</strong><?php
-                            ?><select name="idUsuario" onchange="this.form.submit()" class="form-control">
+                        <div class="report-filters-wrap">
+                            <div class="row">
+                            <div class="col-sm-4 filter-item">
+                                <label class="filter-label">Facilitador</label><?php
+                            ?><select name="idUsuario" class="form-control">
                             <?php
                             if($_SESSION["perfil"] != 163){
                             ?><option value="">Ver todos</option><?php
@@ -992,50 +1035,65 @@ else{
                             }
                             ?></select>
                             </div>
-                            <div class="col-sm-1">
-                                <strong>Generación:</strong>
-                                <select name="generacionNumero" onchange="this.form.submit()" class="form-control">
-                                <option value="">Ver todos</option>
-                                    <option value="99" <?php if($generacionNumero == 99){ ?>selected="selected"<?php } ?>>0</option>
+                            <div class="col-sm-2 filter-item">
+                                <label class="filter-label">Generacion</label>
+                                <select name="generacionNumero" class="form-control">
+                                    <option value="">Ver todos</option>
+                                    <option value="0" <?php if($generacionNumero === "0" || $generacionNumero === 0){ ?>selected="selected"<?php } ?>>0</option>
                                     <option value="1" <?php if($generacionNumero == 1){ ?>selected="selected"<?php } ?>>1</option>
                                     <option value="2" <?php if($generacionNumero == 2){ ?>selected="selected"<?php } ?>>2</option>
                                     <option value="3" <?php if($generacionNumero == 3){ ?>selected="selected"<?php } ?>>3</option>
                                     <option value="4" <?php if($generacionNumero == 4){ ?>selected="selected"<?php } ?>>4</option>
                                     <option value="5" <?php if($generacionNumero == 5){ ?>selected="selected"<?php } ?>>5</option>
-                                    <option value="77" <?php if($generacionNumero == 77){ ?>selected="selected"<?php } ?>>Evangelismo</option>
-                                    <option value="8" <?php if($generacionNumero == 8){ ?>selected="selected"<?php } ?>>Gran celebración</option>
                                 </select>
-                            </div>   
-                            <div class="col-sm-1">
-                                <strong>Activo/inactivo:</strong>
+                            </div>
+                            <div class="col-sm-3 filter-item">
+                                <label class="filter-label">Actividad</label>
+                                <select name="actividadFiltro" class="form-control">
+                                    <option value="">Ver todas</option>
+                                    <?php foreach($actividadesFiltroDisponibles as $actividadItem){ ?>
+                                        <option value="<?=$actividadItem['id_actividad']; ?>" <?php if($actividadFiltro == $actividadItem['id_actividad']){ ?>selected="selected"<?php } ?>><?=$actividadItem['nombre_actividad']; ?></option>
+                                    <?php } ?>
+                                </select>
+                            </div>
+                            <div class="col-sm-3 filter-item">
+                                <label class="filter-label">Estado</label>
                                 <select name="inactivo" class="form-control">
                                     <option value="">Todos</option>
                                     <option value="1" <?php if($inactivo == 1){ ?>selected="selected"<?php } ?>>Activo</option>
                                     <option value="99" <?php if($inactivo == 99){ ?>selected="selected"<?php } ?>>Inactivo</option>
-                                </select></div>         
-                            <!--<label class="control-label col-sm-2" for="nombre"><strong>Plantador:</strong></label>
-                            <div class="col-sm-4"><input type="text" name="nombre" id="nombre" value="<?=$buscar_nombre; ?>" class="form-control" /></div>//-->
-                            <div class="col-sm-2">
-                                <strong>Fecha Inicial:</strong>
+                                </select>
+                            </div>
+                            <div class="col-sm-2 filter-item">
+                                <label class="filter-label">Anio</label>
+                                <select name="anhoFiltro" class="form-control">
+                                    <option value="">Todos</option>
+                                    <?php foreach($anhosFiltroDisponibles as $anhoDisponible){ ?>
+                                        <option value="<?=$anhoDisponible; ?>" <?php if((string)$anhoFiltro === (string)$anhoDisponible){ ?>selected="selected"<?php } ?>><?=$anhoDisponible; ?></option>
+                                    <?php } ?>
+                                </select>
+                            </div>
+                            <div class="col-sm-2 filter-item">
+                                <label class="filter-label">Fecha inicial</label>
                                 <input type="date" name="fechaInicial" id="fechaInicial" value="<?=$fechaInicial; ?>" class="form-control" />
                             </div>
-                            <div class="col-sm-2">
-                                <strong>Fecha Final:</strong>
+                            <div class="col-sm-2 filter-item">
+                                <label class="filter-label">Fecha final</label>
                                 <input type="date" name="fechaFinal" id="fechaFinal" value="<?=$fechaFinal; ?>" class="form-control" />
                             </div>
-                            <div class="col-sm-2" style="display: flex;align-items: center;">
-                                <br>
-                                <strong>Solo los que no tengan mapeo: </strong><br>
-                            <input type="checkbox" name="sinmapeo" id="sinmapeo" value="1" <?php
-                                if($sinmapeo == 1){
-                                    ?>checked="checked"<?php
-                                }
-                                ?> class="form-control" style="width: 30px;" />
+                            <div class="col-sm-6 filter-item">
+                                <label class="filter-label">Periodo del filtro por anio</label>
+                                <div class="alert alert-info filter-help" style="margin-bottom:0; padding:10px 12px;">
+                                    <?=$periodoAnualTexto; ?>
+                                </div>
                             </div>
-                            <div class="col-sm-1" >
-                                <br>
-                                <input type="submit" value="Filtrar" class="btn btn-success" />
+                            <div class="col-sm-12 filter-item">
+                                <div class="filter-actions">
+                                    <input type="submit" value="Filtrar" class="btn btn-success" />
+                                    <a href="index.php?doc=reportar_buscar" class="btn btn-default">Limpiar filtros</a>
+                                </div>
                             </div>
+                        </div>
                         </div>
                     </form>
                 </div>
@@ -1130,10 +1188,7 @@ else{
                                         $url_baut  = $PSN1->f("adj_url");
                                         $iglesias_reconocidas = $PSN1->f("iglesias_reconocidas");  
                                         $idActividad = $PSN1->f("id_actividad");
-                                        $generacionGrupo = $PSN1->f("generacionGrupo");
-                                        if($generacionGrupo === "" || $generacionGrupo === null){
-                                            $generacionGrupo = $generacionNumero;
-                                        }
+                                        $generacionGrupo = intval($PSN1->f("generacionNumero"));
                                         $actividadReporte = trim($PSN1->f("nombre_actividad"));
                                         if($actividadReporte == ""){
                                             $actividadReporte = reportar_buscar_actividad_label($idActividad, $generacionNumero);
@@ -1264,11 +1319,11 @@ else{
                                 </div>
                             </div>
                             <div class="col-sm-2">
-                                <strong>Fecha Inicial:</strong>
+                                <label class="filter-label">Fecha inicial</label>
                                 <input type="date" name="FechaIni" id="FechaIni" value="<?=$FechaIni; ?>" class="form-control" />
                             </div>
                             <div class="col-sm-2">
-                                <strong>Fecha Final:</strong>
+                                <label class="filter-label">Fecha final</label>
                                 <input type="date" name="FechaFin" id="FechaFin" value="<?=$FechaFin; ?>" class="form-control" />
                             </div>
                             <div class="col-sm-1" >
@@ -1557,3 +1612,4 @@ else{
     </script><?php
 }
 ?>
+
