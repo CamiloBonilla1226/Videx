@@ -1073,13 +1073,6 @@ else{
                         <div class="tit-cen">
                             <h3 class="text-center">RESULTADOS DE BUSQUEDA</h3>
                             <h5><?php echo $total_registros; ?> Registros encontrados</h5>
-                            <h5>
-                                Totales del filtro actual:
-                                Deci. <?=$totalesFiltroProceso["desiciones"]; ?> |
-                                Prep. <?=$totalesFiltroProceso["preparandose"]; ?> |
-                                Disc. <?=$totalesFiltroProceso["discipulado"]; ?> |
-                                Baut. <?=$totalesFiltroProceso["bautizados"]; ?>
-                            </h5>
                         </div>
                         <div class="hr"><hr></div>
                     </div>
