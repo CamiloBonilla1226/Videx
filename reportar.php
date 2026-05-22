@@ -1208,7 +1208,8 @@ else if(isset($_POST["funcion"])){
                     modificacionUsuario = "'.$_SESSION["id"].'"
                 WHERE id = "'.$idReporteActual.'"';
         $PSN1->query($sql);
-        if (isset($_REQUEST['act_bau_id'])) {
+        $act_bau_id = array();
+        if (isset($_REQUEST['act_bau_id']) && isset($_REQUEST['act_bau_fec']) && isset($_REQUEST['act_bau_can'])) {
             $act_bau_img = $_FILES["act_bau_img"];
             $act_bau_imgAn = $_REQUEST["act_bau_img_an"];
             $act_bau_fec = $_REQUEST['act_bau_fec'];
@@ -1243,8 +1244,8 @@ else if(isset($_POST["funcion"])){
                 $PSN1->query($sqlA);
             }
         }
-        $act_bau_can = $_REQUEST['act_bau_can'];
-        $act_bau_fec = $_REQUEST['act_bau_fec'];
+        $act_bau_can = isset($_REQUEST['act_bau_can']) && is_array($_REQUEST['act_bau_can']) ? $_REQUEST['act_bau_can'] : array();
+        $act_bau_fec = isset($_REQUEST['act_bau_fec']) && is_array($_REQUEST['act_bau_fec']) ? $_REQUEST['act_bau_fec'] : array();
         $totalReg= 0;
         //var_dump($act_bau_can);
         for ($i=0; $i < sizeof($act_bau_can); $i++) { 
@@ -1862,6 +1863,40 @@ if($idReporteActual > 0){
                 if (generacionInput && generacionInput.previousElementSibling) {
                     generacionInput.previousElementSibling.textContent = 'Generación:';
                 }
+
+                if (generacionInput && generacionInput.previousElementSibling) {
+                    generacionInput.previousElementSibling.textContent = 'Generación:';
+                }
+
+                if (generacionInput && generacionInput.previousElementSibling) {
+                    generacionInput.previousElementSibling.textContent = 'Generaci\u00F3n:';
+                }
+
+                var disciplinaInput = document.getElementById('final_discipulado');
+                if (disciplinaInput) {
+                    var resumenRow = disciplinaInput.closest('.form-group');
+                    if (resumenRow) {
+                        resumenRow.style.textAlign = 'center';
+                    }
+                }
+
+                ['final_discipulado', 'final_desiciones', 'final_preparandose'].forEach(function (fieldId) {
+                    var input = document.getElementById(fieldId);
+                    if (!input) {
+                        return;
+                    }
+
+                    var column = input.parentElement;
+                    if (!column) {
+                        return;
+                    }
+
+                    column.style.cssFloat = 'none';
+                    column.style.display = 'inline-block';
+                    column.style.verticalAlign = 'top';
+                    column.style.textAlign = 'left';
+                    column.style.width = '30%';
+                });
             });
         </script>
         <?php } ?>
@@ -2095,7 +2130,7 @@ if($idReporteActual > 0){
                     <input name="final_bautizados" type="number" id="final_bautizados" readonly value="<?=$bautizados; ?>" class="form-control"  />
                 </div>
                 <?php } ?>
-                <div class="col-sm-2">
+                <div class="<?php if($esActividadCoach){ ?>col-sm-3<?php }else{ ?>col-sm-2<?php } ?>">
                     <strong>En discipulado:</strong>
                     <input name="final_discipulado" type="number" id="final_discipulado" readonly value="<?=$discipulado; ?>" class="form-control"  />
                 </div>
@@ -2230,7 +2265,65 @@ if($idReporteActual > 0){
                 </div>     
             </div>
 
-            <?php if ($generacionNumero != 0 && $generacionNumero != 77 && $generacionNumero != 8 ) {?>
+            <?php if($esActividadCoach){ ?>
+                <div class="cont-tit">
+                <div class="hr"><hr></div>
+                <div class="tit-cen">
+                    <h3 class="text-center">EVIDENCIA FOTOGRAFICA</h3>
+                    <h5>MAXIMO 3 FOTOS</h5>
+                    <p>Valide o actualice las fotografias del reporte</p>
+                </div>
+                <div class="hr"><hr></div>
+            </div>
+            <div class="cont-flex fl-sard">
+                <div class="cont-item col-sm-4">
+                    <div class="form-group">
+                        <div class="col-sm-12">
+                            <strong style="font-size: 18px;display: block;margin-top: 10px;">Foto 1:</strong>
+                            <?php if($rutaFoto1 == ""){ ?>
+                                <div class='alert alert-danger'>Sin foto cargada</div>
+                            <?php }else{ ?>
+                                <a href="<?=$rutaFoto1; ?>" target="_blank"><img src="<?=$rutaFoto1; ?>" width="100%" /></a>
+                            <?php } ?>
+                            <br>
+                            <strong>Cargar foto 1:</strong>
+                            <input name="archivo1" type="file" id="archivo1" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+                <div class="cont-item col-sm-4">
+                    <div class="form-group">
+                        <div class="col-sm-12">
+                            <strong style="font-size: 18px;display: block;margin-top: 10px;">Foto 2:</strong>
+                            <?php if($rutaFoto2 == ""){ ?>
+                                <div class='alert alert-danger'>Sin foto cargada</div>
+                            <?php }else{ ?>
+                                <a href="<?=$rutaFoto2; ?>" target="_blank"><img src="<?=$rutaFoto2; ?>" width="100%" /></a>
+                            <?php } ?>
+                            <br>
+                            <strong>Cargar foto 2:</strong>
+                            <input name="archivo2" type="file" id="archivo2" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+                <div class="cont-item col-sm-4">
+                    <div class="form-group">
+                        <div class="col-sm-12">
+                            <strong style="font-size: 18px;display: block;margin-top: 10px;">Foto 3:</strong>
+                            <?php if($rutaFoto3 == ""){ ?>
+                                <div class='alert alert-danger'>Sin foto cargada</div>
+                            <?php }else{ ?>
+                                <a href="<?=$rutaFoto3; ?>" target="_blank"><img src="<?=$rutaFoto3; ?>" width="100%" /></a>
+                            <?php } ?>
+                            <br>
+                            <strong>Cargar foto 3:</strong>
+                            <input name="archivo3" type="file" id="archivo3" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <input type="hidden" name="inactivo" id="inactivo" value="<?=$inactivo; ?>" />
+            <?php }else if ($generacionNumero != 0 && $generacionNumero != 77 && $generacionNumero != 8 ) {?>
                 <div class="cont-tit">
                 <div class="hr"><hr></div>
                 <div class="tit-cen">
@@ -2355,6 +2448,7 @@ if($idReporteActual > 0){
             </div>
 
             <?php } ?>
+            <?php if(!$esActividadCoach){ ?>
             <div class="cont-tit">
                 <div class="hr"><hr></div>
                 <div class="tit-cen">
@@ -2396,6 +2490,7 @@ if($idReporteActual > 0){
                 </div>
                 <div class="col-sm-4"></div>
             </div>
+            <?php } ?>
         <?php } ?>
         <?php if (($generacionNumero == 8 || $generacionNumero == 77) && !$esActividadEvangelismo && !$esActividadGranCelebracion && !$esActividadBautizo) {?>
             <div class="col-sm-12">
@@ -2471,6 +2566,16 @@ if($idReporteActual > 0){
                     <?php } ?>
                     <?php
                 }
+                else if($esActividadCoach){
+                    ?>
+                    var bautizados = 0;
+                    var bautizadosPeriodo = 0;
+                    var desiciones = 0;
+                    if(document.getElementById("final_desiciones").value != ""){
+                        var desiciones = document.getElementById("final_desiciones").value;
+                    }
+                    <?php
+                }
                 else{
                     ?>
                     var bautizados = 0;
@@ -2511,6 +2616,12 @@ if($idReporteActual > 0){
                     document.getElementById("final_bautizadosPeriodo").value = 0;
                     document.getElementById("final_desiciones").value = 0;
                     document.getElementById("final_preparandose").value = 0;
+                <?php }else if($esActividadCoach){ ?>
+                    document.getElementById("final_bautizados").value = 0;
+                    document.getElementById("final_discipulado").value = parseInt(var_suma);
+                    document.getElementById("final_bautizadosPeriodo").value = 0;
+                    document.getElementById("final_desiciones").value = parseInt(desiciones);
+                    document.getElementById("final_preparandose").value = parseInt(var_suma);
                 <?php }else{ ?>
                     document.getElementById("final_bautizados").value = parseInt(bautizados);
                     document.getElementById("final_discipulado").value = parseInt(var_suma);
