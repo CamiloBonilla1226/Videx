@@ -2087,10 +2087,14 @@ if($idReporteActual > 0){
             </div> 
             <div class="form-group">
                 <div class="col-sm-1"></div>
+                <?php if($esActividadCoach){ ?>
+                    <input name="final_bautizados" type="hidden" id="final_bautizados" value="<?=$bautizados; ?>" />
+                <?php }else{ ?>
                 <div class="col-sm-2">
                     <strong>Miembros Bautizados:</strong>
                     <input name="final_bautizados" type="number" id="final_bautizados" readonly value="<?=$bautizados; ?>" class="form-control"  />
                 </div>
+                <?php } ?>
                 <div class="col-sm-2">
                     <strong>En discipulado:</strong>
                     <input name="final_discipulado" type="number" id="final_discipulado" readonly value="<?=$discipulado; ?>" class="form-control"  />
@@ -2102,10 +2106,14 @@ if($idReporteActual > 0){
                 <div class="col-sm-2">
                     <strong>Preparándose para bautismo:</strong>
                 <input name="final_preparandose" type="number" id="final_preparandose" readonly value="<?=$preparandose; ?>" class="form-control"  /></div>
+                <?php if($esActividadCoach){ ?>
+                    <input name="final_bautizadosPeriodo" type="hidden" id="final_bautizadosPeriodo" value="<?=$bautizadosPeriodo; ?>" />
+                <?php }else{ ?>
                 <div class="col-sm-2">
                     <strong>Bautizados este periodo:</strong>
                     <input readonly name="final_bautizadosPeriodo" type="number" id="final_bautizadosPeriodo" value="<?=$bautizadosPeriodo;  ?>" class="form-control"  onChange="sumar()" />
                 </div>
+                <?php } ?>
                 <div class="col-sm-1"></div>
             </div>        
 
@@ -5547,10 +5555,14 @@ if ($generacionActual == "GCEL" || $generacionActual == "EVAN") {?>
                 <div class="hr"><hr></div>
             </div>  
                 <div class="form-group">
+                    <?php if(isset($esActividadCoach) && $esActividadCoach){ ?>
+                        <input name="final_bautizados" type="hidden" id="final_bautizados" value="0" />
+                    <?php }else{ ?>
                     <div class="col-sm-2">
                         <strong>Miembros Bautizados:</strong>
                         <input name="final_bautizados" type="number" id="final_bautizados" value="0" class="form-control" readonly />
                     </div>
+                    <?php } ?>
                     <div class="col-sm-2">
                         <strong>En discipulado:</strong>
                         <input name="final_discipulado" type="number" id="final_discipulado" value="0" class="form-control" readonly />
@@ -5563,10 +5575,14 @@ if ($generacionActual == "GCEL" || $generacionActual == "EVAN") {?>
                         <strong>Preparándose para bautismo:</strong>
                         <input name="final_preparandose" type="number" id="final_preparandose" value="0" class="form-control" readonly />
                     </div>
+                    <?php if(isset($esActividadCoach) && $esActividadCoach){ ?>
+                        <input name="final_bautizadosPeriodo" type="hidden" id="final_bautizadosPeriodo" value="0" />
+                    <?php }else{ ?>
                     <div class="col-sm-2">
                         <strong>Bautizados este periodo:</strong>
                         <input name="final_bautizadosPeriodo" type="number" id="final_bautizadosPeriodo" value="0" class="form-control" readonly />
                     </div>
+                    <?php } ?>
                 </div>
                 <?php
         }
