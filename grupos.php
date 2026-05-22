@@ -1813,6 +1813,8 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         if (nuevoLider && !createGroupFormData.lideresArray.includes(nuevoLider)) {
             createGroupFormData.lideresArray.push(nuevoLider);
             liderInput.value = '';
+            clearFormError('liderInput', 'liderInputError');
+            clearFormError('liderInput', 'liderInputError');
             renderNewGroupLideresUI();
         } else if (createGroupFormData.lideresArray.includes(nuevoLider)) {
             showFormError('newGroupLiderInput', 'newGroupLiderError', 'Este líder ya existe');
@@ -3737,6 +3739,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         if (nuevoLider && !editFormData.lideresArray.includes(nuevoLider)) {
             editFormData.lideresArray.push(nuevoLider);
             liderInput.value = '';
+            clearFormError('liderInput', 'liderInputError');
             renderLideresUI();
         } else if (editFormData.lideresArray.includes(nuevoLider)) {
             showFormError('liderInput', 'liderInputError', 'Este líder ya existe');
@@ -3745,7 +3748,13 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
     }
 
     function removeLider(index) {
+        if (editFormData.lideresArray.length <= 1) {
+            showFormError('liderInput', 'liderInputError', 'Debe quedar al menos un lÃ­der capacitador en el grupo');
+            return;
+        }
+
         editFormData.lideresArray.splice(index, 1);
+        clearFormError('liderInput', 'liderInputError');
         renderLideresUI();
     }
 
@@ -4159,6 +4168,12 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         }
         clearFormError('editNombre', 'editNombreError');
 
+        if (!Array.isArray(editFormData.lideresArray) || editFormData.lideresArray.length === 0) {
+            showFormError('liderInput', 'liderInputError', 'Debe agregar al menos un lÃ­der capacitador');
+            document.getElementById('liderInput').focus();
+            return;
+        }
+
         // Obtener el valor de grupo madre del selector
         const grupoMadreValue = selectedGrupo.grupo_madre || '';
         const idGrupo = obtenerIdGrupoSeleccionado(selectedGrupo);
@@ -4234,6 +4249,9 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                 if (mensajeError.toLowerCase().includes('grupo') || mensajeError.toLowerCase().includes('nombre')) {
                     showFormError('editNombre', 'editNombreError', mensajeError.replace(/^Error:\s*/i, ''));
                     document.getElementById('editNombre').focus();
+                } else if (mensajeError.toLowerCase().includes('lider')) {
+                    showFormError('liderInput', 'liderInputError', mensajeError.replace(/^Error:\s*/i, ''));
+                    document.getElementById('liderInput').focus();
                 } else {
                     showEditFormError(mensajeError.replace(/^Error:\s*/i, ''));
                 }

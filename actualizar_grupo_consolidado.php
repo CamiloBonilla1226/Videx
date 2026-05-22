@@ -74,6 +74,10 @@ try {
         }
     }
 
+    if (count($lideresNormalizados) === 0) {
+        throw new Exception('Debe agregar al menos un lider capacitador');
+    }
+
     $plantador = implode(', ', $lideresNormalizados);
     $ciudad = preg_replace('/\s+/', ' ', trim((string)($data['ciudad'] ?? '')));
     $barrio = preg_replace('/\s+/', ' ', trim((string)($data['barrio'] ?? '')));
