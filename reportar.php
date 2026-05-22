@@ -1101,7 +1101,7 @@ else if(isset($_POST["funcion"])){
                 //echo $sql;
                 $ultimoQuery = $PSN1->query($sql);
             }
-            if (((isset($idActividad) && ((int)$idActividad === 1 || (int)$idActividad === 99)) || $idActividadReporteActual === 1 || $idActividadReporteActual === 99)) {
+            if (((isset($idActividad) && ((int)$idActividad === 1 || (int)$idActividad === 99 || (int)$idActividad === 8)) || $idActividadReporteActual === 1 || $idActividadReporteActual === 99 || $idActividadReporteActual === 8)) {
                 reportar_guardar_fotos_coach_adjuntos($ultimoId, $fechaReporte);
             }
             //      
@@ -1480,7 +1480,7 @@ else if(isset($_POST["funcion"])){
                         }
                     }
                 }
-                if (((isset($idActividad) && ((int)$idActividad === 1 || (int)$idActividad === 99)) || $idActividadReporteActual === 1 || $idActividadReporteActual === 99)) {
+                if (((isset($idActividad) && ((int)$idActividad === 1 || (int)$idActividad === 99 || (int)$idActividad === 8)) || $idActividadReporteActual === 1 || $idActividadReporteActual === 99 || $idActividadReporteActual === 8)) {
                     reportar_guardar_fotos_coach_adjuntos($idReporteActual, $fechaReporte);
                 }
                 //
@@ -2278,7 +2278,9 @@ if($idReporteActual > 0){
                             <?php if(!$fotoBautizoActual || trim((string)$fotoBautizoActual["url"]) === ""){ ?>
                                 <div class='alert alert-danger'>Sin foto cargada</div>
                             <?php }else{ ?>
-                                <a href="<?=$fotoBautizoActual["url"]; ?>" target="_blank"><img src="<?=$fotoBautizoActual["url"]; ?>" style="width: 100%; height: 220px; object-fit: contain; border-radius: 8px; background: #f5f7fa; border: 1px solid #dfe6ee; padding: 6px;" /></a>
+                                <a href="<?=$fotoBautizoActual["url"]; ?>" target="_blank" style="display:flex; align-items:center; justify-content:center; width:100%; min-height:260px; border-radius:8px; background:#f5f7fa; border:1px solid #dfe6ee; padding:10px;">
+                                    <img src="<?=$fotoBautizoActual["url"]; ?>" style="display:block; max-width:100%; max-height:240px; width:auto; height:auto; object-fit:contain;" />
+                                </a>
                                 <?php if(trim((string)$fotoBautizoActual["nombre"]) !== ""){ ?><small style="display:block; margin-top:8px; color:#666;"><?=$fotoBautizoActual["nombre"]; ?></small><?php } ?>
                             <?php } ?>
                         </div>
