@@ -1010,6 +1010,14 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         font-family: inherit;
     }
 
+    #mapeosSection #mapeo_comprometido {
+        min-height: 40px;
+        padding-top: 8px;
+        padding-bottom: 8px;
+        line-height: 1.4;
+        font-size: 13px;
+    }
+
     .form-group input:focus,
     .form-group textarea:focus,
     .form-group select:focus {
@@ -1512,8 +1520,8 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
 
                     <div class="form-group">
                         <label>Este grupo esta comprometido como iglesia?</label>
-                        <select id="mapeo_comprometido" class="form-control" style="font-size: 12px;">
-                            <option value="">Seleccione</option>
+                        <select id="mapeo_comprometido" class="form-control">
+                            <option value="">Seleccione una opción</option>
                             <option value="3">NO comprometido</option>
                             <option value="4">SI comprometido como iglesia</option>
                         </select>
