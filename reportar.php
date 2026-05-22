@@ -602,6 +602,107 @@ function obtenerRutaImagenReporte($idReporte, $numeroFoto, $extension = ""){
     return "";
 }
 
+function reportar_guardar_fotos_coach_adjuntos($idReporte, $fechaReferencia = "")
+{
+    $idReporte = (int)$idReporte;
+    if ($idReporte <= 0) {
+        return;
+    }
+
+    $uploadDir = 'archivos/reportes';
+    $uploadDirAbsolute = __DIR__ . DIRECTORY_SEPARATOR . 'archivos' . DIRECTORY_SEPARATOR . 'reportes';
+    if (!is_dir($uploadDirAbsolute)) {
+        @mkdir($uploadDirAbsolute, 0775, true);
+    }
+
+    $fechaAdjunto = trim((string)$fechaReferencia);
+    if ($fechaAdjunto === '') {
+        $fechaAdjunto = date('Y-m-d');
+    }
+
+    $dbAdj = new DBbase_Sql;
+    $adjuntosExistentes = array();
+    $sqlAdj = "SELECT adj_id, adj_url FROM tbl_adjuntos WHERE adj_rep_fk = " . $idReporte . " ORDER BY adj_id ASC";
+    $dbAdj->query($sqlAdj);
+    while ($dbAdj->next_record()) {
+        $adjuntosExistentes[] = array(
+            'id' => (int)$dbAdj->f('adj_id'),
+            'url' => trim((string)$dbAdj->f('adj_url'))
+        );
+    }
+
+    for ($slot = 1; $slot <= 3; $slot++) {
+        $campo = 'archivo' . $slot;
+        if (
+            !isset($_FILES[$campo]) ||
+            !isset($_FILES[$campo]['error']) ||
+            $_FILES[$campo]['error'] !== UPLOAD_ERR_OK ||
+            trim((string)$_FILES[$campo]['name']) === ''
+        ) {
+            continue;
+        }
+
+        $nombreOriginal = trim((string)$_FILES[$campo]['name']);
+        $extension = strtolower((string)extension_archivo($nombreOriginal));
+        if ($extension === '') {
+            continue;
+        }
+
+        $fileName = 'reporte_' . $idReporte . '_' . time() . '_' . $slot . '.' . $extension;
+        $relativePath = $uploadDir . '/' . $fileName;
+        $absolutePath = $uploadDirAbsolute . DIRECTORY_SEPARATOR . $fileName;
+        $tmpName = $_FILES[$campo]['tmp_name'];
+
+        $guardado = false;
+        if (in_array($extension, array('png', 'jpg', 'jpeg', 'gif', 'webp'), true)) {
+            $guardado = compressImage($tmpName, $absolutePath, 80);
+        } else {
+            $guardado = move_uploaded_file($tmpName, $absolutePath);
+        }
+
+        if (!$guardado) {
+            continue;
+        }
+
+        $nombreOriginalSql = addslashes($nombreOriginal);
+        $relativePathSql = addslashes(str_replace("\\", "/", $relativePath));
+
+        if (isset($adjuntosExistentes[$slot - 1])) {
+            $adjuntoActual = $adjuntosExistentes[$slot - 1];
+            $rutaAnterior = trim((string)$adjuntoActual['url']);
+            if ($rutaAnterior !== '') {
+                $rutaAnteriorAbsoluta = __DIR__ . DIRECTORY_SEPARATOR . str_replace("/", DIRECTORY_SEPARATOR, $rutaAnterior);
+                if (is_file($rutaAnteriorAbsoluta) && str_replace("\\", "/", realpath($rutaAnteriorAbsoluta) ?: '') !== str_replace("\\", "/", realpath($absolutePath) ?: '')) {
+                    @unlink($rutaAnteriorAbsoluta);
+                }
+            }
+
+            $sqlUpdateAdj = "UPDATE tbl_adjuntos SET
+                adj_nom = '" . $nombreOriginalSql . "',
+                adj_url = '" . $relativePathSql . "',
+                adj_fec = '" . addslashes($fechaAdjunto) . "',
+                adj_can = 0
+                WHERE adj_id = " . (int)$adjuntoActual['id'];
+            $dbAdj->query($sqlUpdateAdj);
+        } else {
+            $sqlInsertAdj = "INSERT INTO tbl_adjuntos (
+                adj_nom,
+                adj_url,
+                adj_fec,
+                adj_can,
+                adj_rep_fk
+            ) VALUES (
+                '" . $nombreOriginalSql . "',
+                '" . $relativePathSql . "',
+                '" . addslashes($fechaAdjunto) . "',
+                0,
+                " . $idReporte . "
+            )";
+            $dbAdj->query($sqlInsertAdj);
+        }
+    }
+}
+
 
 
 /*
@@ -965,6 +1066,9 @@ else if(isset($_POST["funcion"])){
                 $sql = substr($sql, 0, -1);
                 //echo $sql;
                 $ultimoQuery = $PSN1->query($sql);
+            }
+            if (isset($idActividad) && (int)$idActividad === 1) {
+                reportar_guardar_fotos_coach_adjuntos($ultimoId, $fechaReporte);
             }
             //      
             //if($generacionNumero > 0){
@@ -1338,6 +1442,9 @@ else if(isset($_POST["funcion"])){
                         }
                     }
                 }
+                if (isset($idActividad) && (int)$idActividad === 1) {
+                    reportar_guardar_fotos_coach_adjuntos($idReporteActual, $fechaReporte);
+                }
                 //
             //}        
         
@@ -1510,6 +1617,24 @@ if($idReporteActual > 0){
                     "fecha" => $PSNAdj->f("adj_fec"),
                     "cantidad" => $PSNAdj->f("adj_can")
                 );
+            }
+        }
+    }
+    $coachFotosReporte = array();
+    if($esActividadCoach){
+        $coachFotosReporte = array_slice($adjuntosReporte, 0, 3);
+        if(count($coachFotosReporte) === 0){
+            $rutasCoachFallback = array($rutaFoto1, $rutaFoto2, $rutaFoto3);
+            foreach($rutasCoachFallback as $indiceCoach => $rutaCoachFallback){
+                if(trim((string)$rutaCoachFallback) !== ""){
+                    $coachFotosReporte[] = array(
+                        "id" => 0,
+                        "nombre" => "Foto ".($indiceCoach + 1),
+                        "url" => str_replace("\\", "/", $rutaCoachFallback),
+                        "fecha" => $fechaReporte,
+                        "cantidad" => 0
+                    );
+                }
             }
         }
     }
@@ -2280,10 +2405,11 @@ if($idReporteActual > 0){
                     <div class="form-group">
                         <div class="col-sm-12">
                             <strong style="font-size: 18px;display: block;margin-top: 10px;">Foto 1:</strong>
-                            <?php if($rutaFoto1 == ""){ ?>
+                            <?php if(!isset($coachFotosReporte[0]["url"]) || trim((string)$coachFotosReporte[0]["url"]) === ""){ ?>
                                 <div class='alert alert-danger'>Sin foto cargada</div>
                             <?php }else{ ?>
-                                <a href="<?=$rutaFoto1; ?>" target="_blank"><img src="<?=$rutaFoto1; ?>" width="100%" /></a>
+                                <a href="<?=$coachFotosReporte[0]["url"]; ?>" target="_blank"><img src="<?=$coachFotosReporte[0]["url"]; ?>" width="100%" /></a>
+                                <?php if(trim((string)$coachFotosReporte[0]["nombre"]) !== ""){ ?><small style="display:block; margin-top:8px; color:#666;"><?=$coachFotosReporte[0]["nombre"]; ?></small><?php } ?>
                             <?php } ?>
                             <br>
                             <strong>Cargar foto 1:</strong>
@@ -2295,10 +2421,11 @@ if($idReporteActual > 0){
                     <div class="form-group">
                         <div class="col-sm-12">
                             <strong style="font-size: 18px;display: block;margin-top: 10px;">Foto 2:</strong>
-                            <?php if($rutaFoto2 == ""){ ?>
+                            <?php if(!isset($coachFotosReporte[1]["url"]) || trim((string)$coachFotosReporte[1]["url"]) === ""){ ?>
                                 <div class='alert alert-danger'>Sin foto cargada</div>
                             <?php }else{ ?>
-                                <a href="<?=$rutaFoto2; ?>" target="_blank"><img src="<?=$rutaFoto2; ?>" width="100%" /></a>
+                                <a href="<?=$coachFotosReporte[1]["url"]; ?>" target="_blank"><img src="<?=$coachFotosReporte[1]["url"]; ?>" width="100%" /></a>
+                                <?php if(trim((string)$coachFotosReporte[1]["nombre"]) !== ""){ ?><small style="display:block; margin-top:8px; color:#666;"><?=$coachFotosReporte[1]["nombre"]; ?></small><?php } ?>
                             <?php } ?>
                             <br>
                             <strong>Cargar foto 2:</strong>
@@ -2310,10 +2437,11 @@ if($idReporteActual > 0){
                     <div class="form-group">
                         <div class="col-sm-12">
                             <strong style="font-size: 18px;display: block;margin-top: 10px;">Foto 3:</strong>
-                            <?php if($rutaFoto3 == ""){ ?>
+                            <?php if(!isset($coachFotosReporte[2]["url"]) || trim((string)$coachFotosReporte[2]["url"]) === ""){ ?>
                                 <div class='alert alert-danger'>Sin foto cargada</div>
                             <?php }else{ ?>
-                                <a href="<?=$rutaFoto3; ?>" target="_blank"><img src="<?=$rutaFoto3; ?>" width="100%" /></a>
+                                <a href="<?=$coachFotosReporte[2]["url"]; ?>" target="_blank"><img src="<?=$coachFotosReporte[2]["url"]; ?>" width="100%" /></a>
+                                <?php if(trim((string)$coachFotosReporte[2]["nombre"]) !== ""){ ?><small style="display:block; margin-top:8px; color:#666;"><?=$coachFotosReporte[2]["nombre"]; ?></small><?php } ?>
                             <?php } ?>
                             <br>
                             <strong>Cargar foto 3:</strong>
