@@ -622,13 +622,33 @@ function reportar_guardar_fotos_coach_adjuntos($idReporte, $fechaReferencia = ""
 
     $dbAdj = new DBbase_Sql;
     $adjuntosExistentes = array();
-    $sqlAdj = "SELECT adj_id, adj_url FROM tbl_adjuntos WHERE adj_rep_fk = " . $idReporte . " ORDER BY adj_id ASC";
+    $sqlAdj = "SELECT adj_id, adj_url, adj_can FROM tbl_adjuntos WHERE adj_rep_fk = " . $idReporte . " ORDER BY adj_id ASC";
     $dbAdj->query($sqlAdj);
     while ($dbAdj->next_record()) {
         $adjuntosExistentes[] = array(
             'id' => (int)$dbAdj->f('adj_id'),
-            'url' => trim((string)$dbAdj->f('adj_url'))
+            'url' => trim((string)$dbAdj->f('adj_url')),
+            'slot' => (int)$dbAdj->f('adj_can')
         );
+    }
+
+    $adjuntosPorSlot = array();
+    $adjuntosSecuenciales = array();
+    foreach ($adjuntosExistentes as $adjuntoExistente) {
+        if ($adjuntoExistente['slot'] >= 1 && $adjuntoExistente['slot'] <= 3 && !isset($adjuntosPorSlot[$adjuntoExistente['slot']])) {
+            $adjuntosPorSlot[$adjuntoExistente['slot']] = $adjuntoExistente;
+        } else {
+            $adjuntosSecuenciales[] = $adjuntoExistente;
+        }
+    }
+
+    foreach ($adjuntosSecuenciales as $adjuntoSecuencial) {
+        for ($slotSec = 1; $slotSec <= 3; $slotSec++) {
+            if (!isset($adjuntosPorSlot[$slotSec])) {
+                $adjuntosPorSlot[$slotSec] = $adjuntoSecuencial;
+                break;
+            }
+        }
     }
 
     for ($slot = 1; $slot <= 3; $slot++) {
@@ -667,8 +687,8 @@ function reportar_guardar_fotos_coach_adjuntos($idReporte, $fechaReferencia = ""
         $nombreOriginalSql = addslashes($nombreOriginal);
         $relativePathSql = addslashes(str_replace("\\", "/", $relativePath));
 
-        if (isset($adjuntosExistentes[$slot - 1])) {
-            $adjuntoActual = $adjuntosExistentes[$slot - 1];
+        if (isset($adjuntosPorSlot[$slot])) {
+            $adjuntoActual = $adjuntosPorSlot[$slot];
             $rutaAnterior = trim((string)$adjuntoActual['url']);
             if ($rutaAnterior !== '') {
                 $rutaAnteriorAbsoluta = __DIR__ . DIRECTORY_SEPARATOR . str_replace("/", DIRECTORY_SEPARATOR, $rutaAnterior);
@@ -681,7 +701,7 @@ function reportar_guardar_fotos_coach_adjuntos($idReporte, $fechaReferencia = ""
                 adj_nom = '" . $nombreOriginalSql . "',
                 adj_url = '" . $relativePathSql . "',
                 adj_fec = '" . addslashes($fechaAdjunto) . "',
-                adj_can = 0
+                adj_can = " . (int)$slot . "
                 WHERE adj_id = " . (int)$adjuntoActual['id'];
             $dbAdj->query($sqlUpdateAdj);
         } else {
@@ -695,7 +715,7 @@ function reportar_guardar_fotos_coach_adjuntos($idReporte, $fechaReferencia = ""
                 '" . $nombreOriginalSql . "',
                 '" . $relativePathSql . "',
                 '" . addslashes($fechaAdjunto) . "',
-                0,
+                " . (int)$slot . ",
                 " . $idReporte . "
             )";
             $dbAdj->query($sqlInsertAdj);
@@ -730,6 +750,16 @@ if(isset($_REQUEST["id"]) && $_REQUEST["id"] != ""){
     }  
 }else{
     $idReporteActual = 0;
+}
+
+$idActividadReporteActual = 0;
+if($idReporteActual > 0){
+    $PSNActividadReporte = new DBbase_Sql;
+    $sqlActividadReporte = "SELECT id_actividad FROM sat_reportes WHERE id = '".$idReporteActual."' LIMIT 1";
+    $PSNActividadReporte->query($sqlActividadReporte);
+    if($PSNActividadReporte->next_record()){
+        $idActividadReporteActual = (int)$PSNActividadReporte->f("id_actividad");
+    }
 }
 
 $soloLecturaReporteFacilitador = (isset($_SESSION["perfil"]) && $_SESSION["perfil"] == 163 && $idReporteActual != 0);
@@ -1067,7 +1097,7 @@ else if(isset($_POST["funcion"])){
                 //echo $sql;
                 $ultimoQuery = $PSN1->query($sql);
             }
-            if (isset($idActividad) && (int)$idActividad === 1) {
+            if (((isset($idActividad) && (int)$idActividad === 1) || $idActividadReporteActual === 1)) {
                 reportar_guardar_fotos_coach_adjuntos($ultimoId, $fechaReporte);
             }
             //      
@@ -1442,7 +1472,7 @@ else if(isset($_POST["funcion"])){
                         }
                     }
                 }
-                if (isset($idActividad) && (int)$idActividad === 1) {
+                if (((isset($idActividad) && (int)$idActividad === 1) || $idActividadReporteActual === 1)) {
                     reportar_guardar_fotos_coach_adjuntos($idReporteActual, $fechaReporte);
                 }
                 //
@@ -1622,7 +1652,19 @@ if($idReporteActual > 0){
     }
     $coachFotosReporte = array();
     if($esActividadCoach){
-        $coachFotosReporte = array_slice($adjuntosReporte, 0, 3);
+        foreach($adjuntosReporte as $adjuntoCoach){
+            $slotCoach = (int)$adjuntoCoach["cantidad"];
+            if($slotCoach >= 1 && $slotCoach <= 3){
+                $coachFotosReporte[$slotCoach - 1] = $adjuntoCoach;
+            }
+        }
+        if(count($coachFotosReporte) === 0){
+            $adjuntosCoachSecuenciales = array_slice($adjuntosReporte, 0, 3);
+            foreach($adjuntosCoachSecuenciales as $indiceCoachSec => $adjuntoCoachSec){
+                $coachFotosReporte[$indiceCoachSec] = $adjuntoCoachSec;
+            }
+        }
+        ksort($coachFotosReporte);
         if(count($coachFotosReporte) === 0){
             $rutasCoachFallback = array($rutaFoto1, $rutaFoto2, $rutaFoto3);
             foreach($rutasCoachFallback as $indiceCoach => $rutaCoachFallback){
@@ -2408,7 +2450,7 @@ if($idReporteActual > 0){
                             <?php if(!isset($coachFotosReporte[0]["url"]) || trim((string)$coachFotosReporte[0]["url"]) === ""){ ?>
                                 <div class='alert alert-danger'>Sin foto cargada</div>
                             <?php }else{ ?>
-                                <a href="<?=$coachFotosReporte[0]["url"]; ?>" target="_blank"><img src="<?=$coachFotosReporte[0]["url"]; ?>" width="100%" /></a>
+                                <a href="<?=$coachFotosReporte[0]["url"]; ?>" target="_blank"><img src="<?=$coachFotosReporte[0]["url"]; ?>" style="width: 100%; height: 220px; object-fit: contain; border-radius: 8px; background: #f5f7fa; border: 1px solid #dfe6ee; padding: 6px;" /></a>
                                 <?php if(trim((string)$coachFotosReporte[0]["nombre"]) !== ""){ ?><small style="display:block; margin-top:8px; color:#666;"><?=$coachFotosReporte[0]["nombre"]; ?></small><?php } ?>
                             <?php } ?>
                             <br>
@@ -2424,7 +2466,7 @@ if($idReporteActual > 0){
                             <?php if(!isset($coachFotosReporte[1]["url"]) || trim((string)$coachFotosReporte[1]["url"]) === ""){ ?>
                                 <div class='alert alert-danger'>Sin foto cargada</div>
                             <?php }else{ ?>
-                                <a href="<?=$coachFotosReporte[1]["url"]; ?>" target="_blank"><img src="<?=$coachFotosReporte[1]["url"]; ?>" width="100%" /></a>
+                                <a href="<?=$coachFotosReporte[1]["url"]; ?>" target="_blank"><img src="<?=$coachFotosReporte[1]["url"]; ?>" style="width: 100%; height: 220px; object-fit: contain; border-radius: 8px; background: #f5f7fa; border: 1px solid #dfe6ee; padding: 6px;" /></a>
                                 <?php if(trim((string)$coachFotosReporte[1]["nombre"]) !== ""){ ?><small style="display:block; margin-top:8px; color:#666;"><?=$coachFotosReporte[1]["nombre"]; ?></small><?php } ?>
                             <?php } ?>
                             <br>
@@ -2440,7 +2482,7 @@ if($idReporteActual > 0){
                             <?php if(!isset($coachFotosReporte[2]["url"]) || trim((string)$coachFotosReporte[2]["url"]) === ""){ ?>
                                 <div class='alert alert-danger'>Sin foto cargada</div>
                             <?php }else{ ?>
-                                <a href="<?=$coachFotosReporte[2]["url"]; ?>" target="_blank"><img src="<?=$coachFotosReporte[2]["url"]; ?>" width="100%" /></a>
+                                <a href="<?=$coachFotosReporte[2]["url"]; ?>" target="_blank"><img src="<?=$coachFotosReporte[2]["url"]; ?>" style="width: 100%; height: 220px; object-fit: contain; border-radius: 8px; background: #f5f7fa; border: 1px solid #dfe6ee; padding: 6px;" /></a>
                                 <?php if(trim((string)$coachFotosReporte[2]["nombre"]) !== ""){ ?><small style="display:block; margin-top:8px; color:#666;"><?=$coachFotosReporte[2]["nombre"]; ?></small><?php } ?>
                             <?php } ?>
                             <br>
