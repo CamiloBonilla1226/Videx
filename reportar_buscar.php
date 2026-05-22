@@ -929,11 +929,15 @@ else{
                         margin-bottom:6px;
                         color:#2c3e50;
                     }
+                    .report-filters-wrap .filter-label-empty{
+                        visibility:hidden;
+                    }
                     .report-filters-wrap .filter-actions{
                         display:flex;
                         gap:10px;
-                        align-items:flex-end;
+                        align-items:center;
                         flex-wrap:wrap;
+                        min-height:34px;
                     }
                     .report-filters-wrap .filter-actions .btn{
                         min-width:120px;
@@ -1043,6 +1047,7 @@ else{
                                 <input type="date" name="fechaFinal" id="fechaFinal" value="<?=$fechaFinal; ?>" class="form-control" />
                             </div>
                             <div class="col-sm-6 filter-item">
+                                <label class="filter-label filter-label-empty">Acciones</label>
                                 <div class="filter-actions">
                                     <input type="submit" value="Filtrar" class="btn btn-success" />
                                     <a href="index.php?doc=reportar_buscar" class="btn btn-default">Limpiar filtros</a>
