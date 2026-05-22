@@ -1736,6 +1736,7 @@ if($idReporteActual > 0){
         <?php if ($soloLecturaReporteFacilitador) { ?>
         <fieldset id="reporte_solo_lectura" disabled="disabled">
         <?php } ?>
+        <?php if(!$esActividadBautizo){ ?>
         <div class="cont-tit" <?php if($esActividadEvangelismo){ ?>style="display:none;"<?php } ?>>
             <div class="hr"><hr></div>
             <div class="tit-cen">
@@ -1743,10 +1744,11 @@ if($idReporteActual > 0){
                 <h5>REGISTRO ID: <?=str_pad($idReporteActual, 6, "0", STR_PAD_LEFT); ?></h5>
             </div>
             <div class="hr"><hr></div>
-        </div> 
+        </div>
+        <?php } ?> 
         
         <?php if($esActividadResumen){ ?>
-        <?php if(!$esActividadEvangelismo){ ?>
+        <?php if(!$esActividadEvangelismo && !$esActividadBautizo){ ?>
         <div class="cont-tit">
             <div class="hr"><hr></div>
             <div class="tit-cen">
