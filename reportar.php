@@ -1718,6 +1718,36 @@ if($idReporteActual > 0){
             }
         }
     }
+    $granCelebracionFotosReporte = array();
+    if($esActividadGranCelebracion){
+        foreach($adjuntosReporte as $adjuntoGranCelebracion){
+            $slotGranCelebracion = (int)$adjuntoGranCelebracion["cantidad"];
+            if($slotGranCelebracion >= 1 && $slotGranCelebracion <= 3 && !isset($granCelebracionFotosReporte[$slotGranCelebracion - 1])){
+                $granCelebracionFotosReporte[$slotGranCelebracion - 1] = $adjuntoGranCelebracion;
+            }
+        }
+        if(count($granCelebracionFotosReporte) === 0){
+            $adjuntosGranCelebracionSecuenciales = array_slice($adjuntosReporte, 0, 3);
+            foreach($adjuntosGranCelebracionSecuenciales as $indiceGranCelebracionSec => $adjuntoGranCelebracionSec){
+                $granCelebracionFotosReporte[$indiceGranCelebracionSec] = $adjuntoGranCelebracionSec;
+            }
+        }
+        ksort($granCelebracionFotosReporte);
+        if(count($granCelebracionFotosReporte) === 0){
+            $rutasGranCelebracionFallback = array($rutaFoto1, $rutaFoto2, $rutaFoto3);
+            foreach($rutasGranCelebracionFallback as $indiceGranCelebracion => $rutaGranCelebracionFallback){
+                if(trim((string)$rutaGranCelebracionFallback) !== ""){
+                    $granCelebracionFotosReporte[$indiceGranCelebracion] = array(
+                        "id" => 0,
+                        "nombre" => "Foto ".($indiceGranCelebracion + 1),
+                        "url" => str_replace("\\", "/", $rutaGranCelebracionFallback),
+                        "fecha" => $fechaReporte,
+                        "cantidad" => $indiceGranCelebracion + 1
+                    );
+                }
+            }
+        }
+    }
     ?><div class="container">
     <form method="post" enctype="multipart/form-data" name="form1" id="form1" class="form-horizontal">
         <div id="form-inline-error" class="alert alert-danger text-center" <?php if($texto_error == ""){ ?>style="display:none;"<?php } ?>><?=reportar_escape_attr($texto_error); ?></div>
@@ -2289,6 +2319,31 @@ if($idReporteActual > 0){
                         <div class="col-sm-12">
                             <strong>Cargar foto <?=($indiceBautizoFoto + 1); ?>:</strong>
                             <input name="archivo<?=($indiceBautizoFoto + 1); ?>" type="file" id="archivo<?=($indiceBautizoFoto + 1); ?>" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+                <?php } ?>
+                <?php }else if($esActividadGranCelebracion){ ?>
+                <?php for($indiceGranCelebracionFoto = 0; $indiceGranCelebracionFoto < 3; $indiceGranCelebracionFoto++){ ?>
+                <?php $fotoGranCelebracionActual = isset($granCelebracionFotosReporte[$indiceGranCelebracionFoto]) ? $granCelebracionFotosReporte[$indiceGranCelebracionFoto] : null; ?>
+                <div class="cont-item col-sm-4">
+                    <div class="form-group">
+                        <div class="col-sm-12">
+                            <strong style="font-size: 18px;display: block;margin-top: 10px;">Foto <?=($indiceGranCelebracionFoto + 1); ?>:</strong>
+                            <?php if(!$fotoGranCelebracionActual || trim((string)$fotoGranCelebracionActual["url"]) === ""){ ?>
+                                <div class='alert alert-danger'>Sin foto cargada</div>
+                            <?php }else{ ?>
+                                <a href="<?=$fotoGranCelebracionActual["url"]; ?>" target="_blank" style="display:flex; align-items:center; justify-content:center; width:100%; min-height:260px; border-radius:8px; background:#f5f7fa; border:1px solid #dfe6ee; padding:10px;">
+                                    <img src="<?=$fotoGranCelebracionActual["url"]; ?>" style="display:block; max-width:100%; max-height:240px; width:auto; height:auto; object-fit:contain;" />
+                                </a>
+                                <?php if(trim((string)$fotoGranCelebracionActual["nombre"]) !== ""){ ?><small style="display:block; margin-top:8px; color:#666;"><?=$fotoGranCelebracionActual["nombre"]; ?></small><?php } ?>
+                            <?php } ?>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-12">
+                            <strong>Cargar foto <?=($indiceGranCelebracionFoto + 1); ?>:</strong>
+                            <input name="archivo<?=($indiceGranCelebracionFoto + 1); ?>" type="file" id="archivo<?=($indiceGranCelebracionFoto + 1); ?>" class="form-control" />
                         </div>
                     </div>
                 </div>
