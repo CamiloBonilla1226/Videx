@@ -1845,6 +1845,26 @@ if($idReporteActual > 0){
                 </div>
             <?php  } ?>            
         </div>
+        <?php if($esActividadCoach){ ?>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var plantadorInput = document.getElementById('plantador');
+                if (plantadorInput && plantadorInput.previousElementSibling) {
+                    plantadorInput.previousElementSibling.textContent = 'Plantador:';
+                }
+
+                var grupoMadreInput = document.getElementById('grupoMadre_txt');
+                if (grupoMadreInput && grupoMadreInput.previousElementSibling) {
+                    grupoMadreInput.previousElementSibling.textContent = 'Grupo madre:';
+                }
+
+                var generacionInput = document.getElementById('temporal_solotxt');
+                if (generacionInput && generacionInput.previousElementSibling) {
+                    generacionInput.previousElementSibling.textContent = 'Generación:';
+                }
+            });
+        </script>
+        <?php } ?>
         <?php } ?>
         <?php  if($generacionNumero != 0 && $generacionNumero != 77 && $generacionNumero != 8 && !$esActividadCoach && !$esActividadBautizo){?>            
             <div class="col-sm-12" style="clear: both; margin-top: 15px;">
