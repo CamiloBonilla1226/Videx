@@ -1315,20 +1315,27 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             </div>
 
             <div class="edit-modal-section">
-                <label>Ubicación (Ciudad, Barrio)</label>
+                <label>Ubicación (Ciudad, Barrio) *</label>
                 <div style="display: flex; gap: 10px;">
-                    <input type="text" id="newGroupCiudad" name="ciudad" placeholder="Ciudad" style="flex: 1;">
-                    <input type="text" id="newGroupBarrio" name="barrio" placeholder="Barrio" style="flex: 1;">
+                    <div style="flex: 1;">
+                        <input type="text" id="newGroupCiudad" name="ciudad" placeholder="Ciudad" style="width: 100%;" oninput="clearFormError('newGroupCiudad', 'newGroupCiudadError')">
+                        <div class="form-field-error" id="newGroupCiudadError"></div>
+                    </div>
+                    <div style="flex: 1;">
+                        <input type="text" id="newGroupBarrio" name="barrio" placeholder="Barrio" style="width: 100%;" oninput="clearFormError('newGroupBarrio', 'newGroupBarrioError')">
+                        <div class="form-field-error" id="newGroupBarrioError"></div>
+                    </div>
                 </div>
             </div>
 
             <div class="edit-modal-section">
-                <label>Dirección</label>
-                <input type="text" id="newGroupDireccion" name="direccion" placeholder="Dirección del lugar de reunión">
+                <label>Dirección *</label>
+                <input type="text" id="newGroupDireccion" name="direccion" placeholder="Dirección del lugar de reunión" oninput="clearFormError('newGroupDireccion', 'newGroupDireccionError')">
+                <div class="form-field-error" id="newGroupDireccionError"></div>
             </div>
 
             <div class="edit-modal-section">
-                <label>Líder del Grupo</label>
+                <label>Líder del Grupo *</label>
                 <input type="text" id="newGroupLider" name="lider" placeholder="Nombre del líder" oninput="clearFormError('newGroupLider', 'newGroupLiderError')">
                 <div class="form-field-error" id="newGroupLiderError"></div>
                 <div id="newGroupLideresUi" style="margin-top: 10px;">
@@ -1352,7 +1359,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             </div>
 
             <div class="edit-modal-section" id="newGroupAsistenciaSection">
-                <label>Asistencia en el Primer Encuentro</label>
+                <label>Asistencia en el Primer Encuentro *</label>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <div>
                         <label style="font-size: 13px;">👨 Hombres</label>
@@ -1772,6 +1779,9 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
     function clearCreateGroupFormErrors() {
         clearInlineFormError('createGroupFormError');
         clearFormError('newGroupName', 'newGroupNameError');
+        clearFormError('newGroupCiudad', 'newGroupCiudadError');
+        clearFormError('newGroupBarrio', 'newGroupBarrioError');
+        clearFormError('newGroupDireccion', 'newGroupDireccionError');
         clearFormError('newGroupLider', 'newGroupLiderError');
         clearFormError('newGroupLiderInput', 'newGroupLiderError');
         clearFormError('newGroupFecha', 'newGroupFechaError');
@@ -4045,6 +4055,24 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             return;
         }
 
+        if (!ciudad) {
+            showFormError('newGroupCiudad', 'newGroupCiudadError', 'Debes ingresar la ciudad');
+            document.getElementById('newGroupCiudad').focus();
+            return;
+        }
+
+        if (!barrio) {
+            showFormError('newGroupBarrio', 'newGroupBarrioError', 'Debes ingresar el barrio');
+            document.getElementById('newGroupBarrio').focus();
+            return;
+        }
+
+        if (!direccion) {
+            showFormError('newGroupDireccion', 'newGroupDireccionError', 'Debes ingresar la dirección');
+            document.getElementById('newGroupDireccion').focus();
+            return;
+        }
+
         if (lideres.length === 0) {
             showFormError('newGroupLiderInput', 'newGroupLiderError', 'Debes agregar al menos un líder');
             document.getElementById('newGroupLiderInput').focus();
@@ -4128,6 +4156,18 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                     } else if (mensajeNormalizado.includes('madre')) {
                         showFormError('grupoMadreDropdown', 'grupoMadreError', mensajeError.replace(/^Error:\s*/i, ''));
                         document.getElementById('grupoMadreDropdown').focus();
+                    } else if (mensajeNormalizado.includes('ciudad')) {
+                        showFormError('newGroupCiudad', 'newGroupCiudadError', mensajeError.replace(/^Error:\s*/i, ''));
+                        document.getElementById('newGroupCiudad').focus();
+                    } else if (mensajeNormalizado.includes('barrio')) {
+                        showFormError('newGroupBarrio', 'newGroupBarrioError', mensajeError.replace(/^Error:\s*/i, ''));
+                        document.getElementById('newGroupBarrio').focus();
+                    } else if (mensajeNormalizado.includes('direcci') || mensajeNormalizado.includes('direccion')) {
+                        showFormError('newGroupDireccion', 'newGroupDireccionError', mensajeError.replace(/^Error:\s*/i, ''));
+                        document.getElementById('newGroupDireccion').focus();
+                    } else if (mensajeNormalizado.includes('fecha')) {
+                        showFormError('newGroupFecha', 'newGroupFechaError', mensajeError.replace(/^Error:\s*/i, ''));
+                        document.getElementById('newGroupFecha').focus();
                     } else if (mensajeNormalizado.includes('grupo') || mensajeNormalizado.includes('nombre')) {
                         showFormError('newGroupName', 'newGroupNameError', mensajeError.replace(/^Error:\s*/i, ''));
                         document.getElementById('newGroupName').focus();

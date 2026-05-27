@@ -51,10 +51,23 @@ try {
 
     $idFacilitador = $_SESSION['id'];
     $nombre = $nombreGrupoOriginal;
-    $descripcion = $data['descripcion'] ?? '';
-    $ciudad = $data['ciudad'] ?? '';
-    $barrio = $data['barrio'] ?? '';
-    $direccion = $data['direccion'] ?? '';
+    $descripcion = trim((string)($data['descripcion'] ?? ''));
+    $ciudad = preg_replace('/\s+/', ' ', trim((string)($data['ciudad'] ?? '')));
+    $barrio = preg_replace('/\s+/', ' ', trim((string)($data['barrio'] ?? '')));
+    $direccion = preg_replace('/\s+/', ' ', trim((string)($data['direccion'] ?? '')));
+
+    if ($ciudad === '') {
+        throw new Exception('La ciudad es obligatoria');
+    }
+
+    if ($barrio === '') {
+        throw new Exception('El barrio es obligatorio');
+    }
+
+    if ($direccion === '') {
+        throw new Exception('La direccion es obligatoria');
+    }
+
     $lideresEntrada = $data['lideres'] ?? array();
     if (!is_array($lideresEntrada)) {
         $lideresEntrada = array($data['lider'] ?? '');
@@ -97,7 +110,10 @@ try {
 
     // Datos del primer reporte
     $tipoActividad = $data['tipoActividad'] ?? 'reunion_cotidiana';
-    $fechaActividad = $data['fechaActividad'] ?? date('Y-m-d');
+    $fechaActividad = trim((string)($data['fechaActividad'] ?? ''));
+    if ($fechaActividad === '') {
+        throw new Exception('La fecha del primer encuentro es obligatoria');
+    }
     $asistencia_hom = intval($data['asistencia_hom'] ?? 0);
     $asistencia_muj = intval($data['asistencia_muj'] ?? 0);
     $asistencia_jov = intval($data['asistencia_jov'] ?? 0);
