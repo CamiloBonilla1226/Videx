@@ -92,7 +92,13 @@ if($PSN->num_rows() == 0){
 /* =========================
    2) FILTROS GLOBALES
    ========================= */
-$fechaInicial = "2021-02-01";
+// Fecha inicial: 01-02 del año actual, o del anterior si aún no llegamos al 1-02
+$today = new DateTime();
+$febrero01 = new DateTime(date('Y-02-01'));
+if ($today < $febrero01) {
+    $febrero01->modify('-1 year');
+}
+$fechaInicial = $febrero01->format('Y-m-d');
 $fechaFinal   = date("Y-m-d");
 
 // Si es cliente/perfil 163: forzamos idUsuario
