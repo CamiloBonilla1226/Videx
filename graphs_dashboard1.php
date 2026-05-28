@@ -366,10 +366,22 @@ if($row = db_first_row($PSN, $sql)){
     $varErrorG5 = 1;
 }
 
+// Conteo IPG (id_grupo = 0)
+foreach([1 => 'satura_iglesias', 2 => 'satura_iglesias2', 3 => 'satura_iglesias3'] as $genN => $varName){
+    $sql = "SELECT COUNT(id) as conteo FROM sat_reportes
+            WHERE ".$sqlUser." id_grupo = 0 AND generacionNumero = ".$genN." ".$sqlFiltroBaseProcesoReporte;
+    if($row = db_first_row($PSN, $sql)){
+        $$varName = (int)$row->f('conteo');
+    }
+}
+
 // Metas (usuario_metas)
 $meta_evangelismo = 0;
 $meta_discipulado = 0;
 $meta_bautizos = 0;
+$meta_iglesias = 0;
+$meta_iglesias2 = 0;
+$meta_iglesias3 = 0;
 
 $aini = date('Y', strtotime($fechaInicial));
 $afin = date('Y', strtotime($fechaFinal));
@@ -379,11 +391,14 @@ if($num_anios > 0){
     $sql = "SELECT
                 SUM(evangelismo) as evangelismo,
                 SUM(discipulado) as discipulado,
-                SUM(bautizos) as bautizos
+                SUM(bautizos) as bautizos,
+                SUM(iglesias) as iglesias,
+                SUM(iglesias2) as iglesias2,
+                SUM(iglesias3) as iglesias3
             FROM usuario_metas
             WHERE (anho >= '".$aini."' AND anho <= '".$afin."')";
 } else {
-    $sql = "SELECT evangelismo, discipulado, bautizos
+    $sql = "SELECT evangelismo, discipulado, bautizos, iglesias, iglesias2, iglesias3
             FROM usuario_metas
             WHERE anho = '".$aini."'";
 }
@@ -393,6 +408,9 @@ if($row = db_first_row($PSN, $sql)){
     $meta_evangelismo = (int)$row->f('evangelismo');
     $meta_discipulado = (int)$row->f('discipulado');
     $meta_bautizos    = (int)$row->f('bautizos');
+    $meta_iglesias    = (int)$row->f('iglesias');
+    $meta_iglesias2   = (int)$row->f('iglesias2');
+    $meta_iglesias3   = (int)$row->f('iglesias3');
 } else {
     $varErrorG5 = 1;
 }
@@ -417,6 +435,24 @@ if($varErrorG5 != 1){
         obtenerPorcentaje($satura_bautizos, $meta_bautizos)."% Bautizos",
         (int)$meta_bautizos,
         (int)$satura_bautizos
+    ];
+
+    $datosG5[] = [
+        obtenerPorcentaje($satura_iglesias, $meta_iglesias)."% IPG Gen 1",
+        (int)$meta_iglesias,
+        (int)$satura_iglesias
+    ];
+
+    $datosG5[] = [
+        obtenerPorcentaje($satura_iglesias2, $meta_iglesias2)."% IPG Gen 2",
+        (int)$meta_iglesias2,
+        (int)$satura_iglesias2
+    ];
+
+    $datosG5[] = [
+        obtenerPorcentaje($satura_iglesias3, $meta_iglesias3)."% IPG Gen 3",
+        (int)$meta_iglesias3,
+        (int)$satura_iglesias3
     ];
 }
 
