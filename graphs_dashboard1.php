@@ -349,11 +349,12 @@ $satura_evangelismo_real = 0;
 $sqlUser = ($idUsuarioMetas > 0) ? " sat_reportes.idUsuario = '".$idUsuarioMetas."' AND " : "";
 
 // 1) Totales.
-// Discipulado y bautizos siguen la misma lógica visible de reportar_buscar.
+// Evangelismo: Solo gen 77
+// Discipulado y bautizos: suma de todas columnas
 $sql = "SELECT
-            SUM(asistencia_total) as evangelismo,
-            SUM(CASE WHEN ".$sqlGenExcluidaProceso." THEN 0 ELSE sat_reportes.discipulado END) as discipulado,
-            SUM(CASE WHEN ".$sqlGenExcluidaProceso." THEN 0 ELSE sat_reportes.bautizados END) as bautizos
+            SUM(CASE WHEN sat_reportes.id_actividad = 77 THEN asistencia_total ELSE 0 END) as evangelismo,
+            SUM(discipulado) as discipulado,
+            SUM(bautizados) as bautizos
         FROM sat_reportes
         WHERE ".$sqlUser." 1 ".$sqlFiltroBaseProcesoReporte;
 
@@ -365,48 +366,10 @@ if($row = db_first_row($PSN, $sql)){
     $varErrorG5 = 1;
 }
 
-// Base iglesias
-$sqlIglesias = "SELECT
-                    COUNT(id) as iglesias
-                FROM sat_reportes
-                WHERE ".$sqlUser." 1 ".$sqlFiltroBaseProcesoReporte." ";
-
-$gens = [1 => 'satura_iglesias', 2 => 'satura_iglesias2', 3 => 'satura_iglesias3'];
-foreach($gens as $genN => $varName){
-    $PSN->query($sqlIglesias." AND generacionNumero = ".$genN);
-    if($PSN->num_rows() > 0){
-        $PSN->next_record();
-        $$varName = (int)$PSN->f('iglesias');
-    } else {
-        $varErrorG5 = 1;
-    }
-}
-
-// Evangelismo REAL = gen 77 + gen 8 (filtro limpio)
-$sumMap = [77 => 'sum_evangelismos', 8 => 'sum_gran_celebracion'];
-foreach($sumMap as $genN => $varName){
-    $alias = ($genN == 77) ? "evangelismo" : "gran_celebracion";
-    $sql = "SELECT
-                SUM(asistencia_total) as ".$alias."
-            FROM sat_reportes
-            WHERE ".$sqlUser." (sat_reportes.generacionNumero = ".$genN." ".$sqlFiltroLimpio.")";
-
-    if($row = db_first_row($PSN, $sql)){
-        $$varName = (int)$row->f($alias);
-    } else {
-        $varErrorG5 = 1;
-    }
-}
-
-$satura_evangelismo_real = (int)$sum_evangelismos + (int)$sum_gran_celebracion;
-
 // Metas (usuario_metas)
 $meta_evangelismo = 0;
 $meta_discipulado = 0;
 $meta_bautizos = 0;
-$meta_iglesias = 0;
-$meta_iglesias2 = 0;
-$meta_iglesias3 = 0;
 
 $aini = date('Y', strtotime($fechaInicial));
 $afin = date('Y', strtotime($fechaFinal));
@@ -416,14 +379,11 @@ if($num_anios > 0){
     $sql = "SELECT
                 SUM(evangelismo) as evangelismo,
                 SUM(discipulado) as discipulado,
-                SUM(bautizos) as bautizos,
-                SUM(iglesias) as iglesias,
-                SUM(iglesias2) as iglesias2,
-                SUM(iglesias3) as iglesias3
+                SUM(bautizos) as bautizos
             FROM usuario_metas
             WHERE (anho >= '".$aini."' AND anho <= '".$afin."')";
 } else {
-    $sql = "SELECT *
+    $sql = "SELECT evangelismo, discipulado, bautizos
             FROM usuario_metas
             WHERE anho = '".$aini."'";
 }
@@ -433,9 +393,6 @@ if($row = db_first_row($PSN, $sql)){
     $meta_evangelismo = (int)$row->f('evangelismo');
     $meta_discipulado = (int)$row->f('discipulado');
     $meta_bautizos    = (int)$row->f('bautizos');
-    $meta_iglesias    = (int)$row->f('iglesias');
-    $meta_iglesias2   = (int)$row->f('iglesias2');
-    $meta_iglesias3   = (int)$row->f('iglesias3');
 } else {
     $varErrorG5 = 1;
 }
@@ -445,9 +402,9 @@ $datosG5 = [];
 if($varErrorG5 != 1){
 
     $datosG5[] = [
-        obtenerPorcentaje($satura_evangelismo_real, $meta_evangelismo)."% Evangelismo",
+        obtenerPorcentaje($satura_evangelismo, $meta_evangelismo)."% Evangelismo",
         (int)$meta_evangelismo,
-        (int)$satura_evangelismo_real
+        (int)$satura_evangelismo
     ];
 
     $datosG5[] = [
@@ -460,30 +417,6 @@ if($varErrorG5 != 1){
         obtenerPorcentaje($satura_bautizos, $meta_bautizos)."% Bautizos",
         (int)$meta_bautizos,
         (int)$satura_bautizos
-    ];
-
-    $datosG5[] = [
-        obtenerPorcentaje($satura_iglesias, $meta_iglesias)."% IPG Gen 1",
-        (int)$meta_iglesias,
-        (int)$satura_iglesias
-    ];
-
-    $datosG5[] = [
-        obtenerPorcentaje($satura_iglesias2, $meta_iglesias2)."% IPG Gen 2",
-        (int)$meta_iglesias2,
-        (int)$satura_iglesias2
-    ];
-
-    $datosG5[] = [
-        obtenerPorcentaje($satura_iglesias3, $meta_iglesias3)."% IPG Gen 3",
-        (int)$meta_iglesias3,
-        (int)$satura_iglesias3
-    ];
-
-    $datosG5[] = [
-        "Total grupos y Asistencia",
-        (int)($satura_iglesias + $satura_iglesias2 + $satura_iglesias3),
-        (int)$satura_evangelismo
     ];
 }
 
