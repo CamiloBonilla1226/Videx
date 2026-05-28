@@ -132,7 +132,7 @@ $nombreSankey = "FLUJO POR GENERACIÓN (GEN 0-5)";
 $rowsJson = "[]";
 $rowsJsonShort = "[]";
 
-$sqlFiltroSankey = $sqlFiltroBase." AND sat_reportes.generacionNumero BETWEEN 0 AND 5";
+$sqlFiltroSankey = $sqlFiltroBase." AND sat_reportes.id_grupo = 0 AND sat_reportes.generacionNumero BETWEEN 0 AND 5";
 
 $sql = "SELECT
             sat_reportes.generacionNumero,
