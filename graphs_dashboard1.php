@@ -246,12 +246,12 @@ $totalProceso = 0;
 $datosProceso = [];
 
 // Parte 1: métricas visibles en reportar_buscar.
-// La tabla pone en 0 estos campos para gen 0, 77 y 8; aquí replicamos exactamente esa lógica.
+// Suma las columnas de TODOS los reportes sin exclusiones por generación
 $sql = "SELECT
-            SUM(CASE WHEN ".$sqlGenExcluidaProceso." THEN 0 ELSE sat_reportes.bautizados END) as bautizados,
-            SUM(CASE WHEN ".$sqlGenExcluidaProceso." THEN 0 ELSE sat_reportes.discipulado END) as discipulado,
-            SUM(CASE WHEN ".$sqlGenExcluidaProceso." THEN 0 ELSE sat_reportes.desiciones END) as desiciones,
-            SUM(CASE WHEN ".$sqlGenExcluidaProceso." THEN 0 ELSE sat_reportes.preparandose END) as preparandose
+            SUM(sat_reportes.bautizados) as bautizados,
+            SUM(sat_reportes.discipulado) as discipulado,
+            SUM(sat_reportes.desiciones) as desiciones,
+            SUM(sat_reportes.preparandose) as preparandose
         FROM sat_reportes
         WHERE 1 ".$sqlFiltroBaseProcesoReporte;
 
