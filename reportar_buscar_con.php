@@ -304,13 +304,10 @@ if(isset($_REQUEST["excelXML"])){
                  WHERE sat_reportes_asistencia.idUsuario = sat_reportes.idUsuario
                  ".$sqlFiltroAsistencia.") as asistencia_nin,
                 
-                SUM(CASE WHEN ".$sqlGenIncluidaReporte." THEN sat_reportes.bautizados ELSE 0 END) as bautizados,
-                SUM(CASE WHEN ".$sqlGenIncluidaReporte." THEN sat_reportes.bautizadosPeriodo ELSE 0 END) as bautizadosPeriodo,
-                SUM(CASE WHEN ".$sqlGenIncluidaReporte." THEN sat_reportes.discipulado ELSE 0 END) as discipulado,
-                SUM(CASE WHEN ".$sqlGenIncluidaReporte." THEN sat_reportes.desiciones ELSE 0 END) as desiciones,
-                SUM(CASE WHEN ".$sqlGenIncluidaReporte." THEN sat_reportes.preparandose ELSE 0 END) as preparandose,
-                SUM(CASE WHEN ".$sqlGenIncluidaReporte." THEN sat_reportes.iglesias_reconocidas ELSE 0 END) as iglesias_reconocidas,
-                SUM(CASE WHEN ".$sqlGenIncluidaReporte." THEN sat_reportes.bautizados ELSE 0 END) as bautizados,
+                SUM(sat_reportes.bautizados) as bautizados,
+SUM(sat_reportes.discipulado) as discipulado,
+SUM(sat_reportes.desiciones) as desiciones,
+SUM(sat_reportes.preparandose) as preparandose,
                 usuario.nombre as nombreUsuario,
                 usuario_empresa.empresa_sitio,
                 usuario_empresa.empresa_rm,
