@@ -173,28 +173,24 @@ if($PSN->num_rows() > 0){
         $totalSankey += (int)$conteo;
     }
 
-    $maxGen = 0;
-    foreach($genConteos as $g => $c){
-        if((int)$c > 0){
-            $maxGen = max($maxGen, (int)$g);
+    $totalBase = 0;
+    for($g = 1; $g <= 5; $g++){
+        $peso = (int)$genConteos[$g - 1];
+        if($peso > 0){
+            $totalBase += $peso;
         }
     }
 
-    if($maxGen < 1){
+    if($totalBase <= 0){
         $varErrorSankey = 1;
     } else {
-
-        $totalBase = 0;
-        for($g=1; $g <= $maxGen; $g++){
-            $totalBase += (int)$genConteos[$g];
-        }
-        if($totalBase <= 0){ $totalBase = 1; }
 
         $rows = [];
         $rowsShort = [];
 
-        for($g=1; $g <= $maxGen; $g++){
-            $peso = (int)$genConteos[$g];
+        for($g = 1; $g <= 5; $g++){
+            // Se dibuja la flecha si la generación origen tiene grupos
+            $peso = (int)$genConteos[$g - 1];
             if($peso <= 0) continue;
 
             $pct = round(($peso * 100) / $totalBase, 2);
@@ -205,7 +201,7 @@ if($PSN->num_rows() > 0){
             $fromLabelS = "G".($g - 1);
             $toLabelS   = "G".$g;
 
-            $tooltip = "Generación ".($g - 1)." --> Generación ".$g."\n(".$peso.") ".$pct."%";
+            $tooltip = "Grupos Gen ".($g - 1)." --> Gen ".$g."\n(".$peso." grupos) ".$pct."%";
 
             $rows[]      = [$fromLabel,  $toLabel,  $peso, $tooltip];
             $rowsShort[] = [$fromLabelS, $toLabelS, $peso, $tooltip];
@@ -617,7 +613,7 @@ if($varErrorG5 != 1){
 }
 .db-info-modal__close:hover{ color: #333; }
 .db-info-modal__title{
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: .4px;
@@ -626,8 +622,8 @@ if($varErrorG5 != 1){
   padding-right: 24px;
 }
 .db-info-modal__body{
-  font-size: 13px;
-  line-height: 1.7;
+  font-size: 16px;
+  line-height: 1.8;
   color: #333;
 }
 .db-info-modal__body p{
