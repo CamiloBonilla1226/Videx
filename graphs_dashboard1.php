@@ -132,7 +132,20 @@ $nombreSankey = "FLUJO POR GENERACIÓN (GEN 0-5)";
 $rowsJson = "[]";
 $rowsJsonShort = "[]";
 
-$sqlFiltroSankey = $sqlFiltroBase." AND sat_reportes.id_grupo = 0 AND sat_reportes.generacionNumero BETWEEN 0 AND 5";
+// Filtro Sankey: sin restricción de fechas (solo usuario y país)
+$sqlFiltroSankeyBase = "";
+if($buscar_idUsuario !== ""){
+    $sqlFiltroSankeyBase .= " AND sat_reportes.idUsuario = '".$buscar_idUsuario."'";
+}
+if($empresa_paisid !== ""){
+    $sqlFiltroSankeyBase .= " AND EXISTS (
+        SELECT 1
+        FROM usuario_empresa
+        WHERE usuario_empresa.idUsuario = sat_reportes.idUsuario
+          AND usuario_empresa.empresa_paisid = '".$empresa_paisid."'
+    )";
+}
+$sqlFiltroSankey = $sqlFiltroSankeyBase." AND sat_reportes.id_grupo = 0 AND sat_reportes.generacionNumero BETWEEN 0 AND 5";
 
 $sql = "SELECT
             sat_reportes.generacionNumero,
