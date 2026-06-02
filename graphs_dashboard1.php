@@ -539,6 +539,95 @@ if($varErrorG5 != 1){
   line-height:1.2;
 }
 
+/* ===== Botón de información ===== */
+.db-info-btn{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #0259a5;
+  background: transparent;
+  color: #0259a5;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+  transition: background .18s, color .18s;
+  flex-shrink: 0;
+  padding: 0;
+}
+.db-info-btn:hover{
+  background: #0259a5;
+  color: #fff;
+}
+
+/* ===== Modal de descripción ===== */
+.db-info-overlay{
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 9998;
+  align-items: center;
+  justify-content: center;
+}
+.db-info-overlay.active{
+  display: flex;
+}
+.db-info-modal{
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.18);
+  max-width: 480px;
+  width: calc(100% - 32px);
+  padding: 28px 28px 22px 28px;
+  position: relative;
+  animation: dbModalIn .18s ease;
+}
+@keyframes dbModalIn{
+  from{ transform: scale(.94); opacity:0; }
+  to  { transform: scale(1);   opacity:1; }
+}
+.db-info-modal__close{
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: #888;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+}
+.db-info-modal__close:hover{ color: #333; }
+.db-info-modal__title{
+  font-size: 14px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  margin: 0 0 16px 0;
+  color: #0259a5;
+  padding-right: 24px;
+}
+.db-info-modal__body{
+  font-size: 13px;
+  line-height: 1.7;
+  color: #333;
+}
+.db-info-modal__body p{
+  margin: 0 0 8px 0;
+}
+.db-info-modal__body ul{
+  margin: 0 0 8px 14px;
+  padding: 0;
+}
+.db-info-modal__body li{
+  margin-bottom: 5px;
+}
+
 /* Responsive */
 @media (max-width: 992px){
   .chart-top{ height: 340px; }
@@ -688,6 +777,9 @@ if($varErrorG5 != 1){
     <div class="db-card db-card--eq">
       <div class="db-card__head">
         <h4 class="db-card__title">METAS</h4>
+        <div class="db-card__meta">
+          <button class="db-info-btn" onclick="dbOpenInfo('metas')" title="Ver descripción">i</button>
+        </div>
       </div>
       <div class="db-card__body">
         <?php if($varErrorG5 == 1){ ?>
@@ -708,6 +800,7 @@ if($varErrorG5 != 1){
         <h4 class="db-card__title"><?=$nombreG4;?></h4>
         <div class="db-card__meta">
           <span class="db-pill">Total: <?=$totalG4;?></span>
+          <button class="db-info-btn" onclick="dbOpenInfo('capacitacion')" title="Ver descripción">i</button>
         </div>
       </div>
       <div class="db-card__body">
@@ -733,6 +826,7 @@ if($varErrorG5 != 1){
         <h4 class="db-card__title"><?=$nombreSankey;?></h4>
         <div class="db-card__meta">
           <span class="db-pill">Total: <?=$totalSankey;?></span>
+          <button class="db-info-btn" onclick="dbOpenInfo('sankey')" title="Ver descripción">i</button>
         </div>
       </div>
       <div class="db-card__body">
@@ -759,6 +853,7 @@ if($varErrorG5 != 1){
         <h4 class="db-card__title">GRÁFICA DE ASISTENCIA</h4>
         <div class="db-card__meta">
           <span class="db-pill">Total: <?=$totalAsistencia;?></span>
+          <button class="db-info-btn" onclick="dbOpenInfo('asistencia')" title="Ver descripción">i</button>
         </div>
       </div>
       <div class="db-card__body">
@@ -779,6 +874,7 @@ if($varErrorG5 != 1){
         <h4 class="db-card__title">DATOS DEL PROCESO</h4>
         <div class="db-card__meta">
           <span class="db-pill">Total: <?=$totalProceso;?></span>
+          <button class="db-info-btn" onclick="dbOpenInfo('proceso')" title="Ver descripción">i</button>
         </div>
       </div>
       <div class="db-card__body">
@@ -796,6 +892,89 @@ if($varErrorG5 != 1){
 </div>
 
 </div> <!-- /container -->
+
+<!-- ===== Modal de información de gráficas ===== -->
+<div class="db-info-overlay" id="dbInfoOverlay">
+  <div class="db-info-modal">
+    <button class="db-info-modal__close" id="dbInfoClose" title="Cerrar">&times;</button>
+    <h4 class="db-info-modal__title" id="dbInfoTitle"></h4>
+    <div class="db-info-modal__body" id="dbInfoBody"></div>
+  </div>
+</div>
+
+<script type="text/javascript">
+/* ===== Sistema de Info ===== */
+(function(){
+  var INFO = {
+    'metas': {
+      title: '🎯 Gráfica de Metas',
+      html: '<ul>'
+          + '<li><strong>📣 Evangelismo:</strong> Representa la suma total de la asistencia registrada en todos los reportes de evangelismo.</li>'
+          + '<li><strong>📖 En Discipulado:</strong> Corresponde al total de personas que actualmente se encuentran en proceso de discipulado, según los reportes de coaching.</li>'
+          + '<li><strong>✝️ Bautizados:</strong> Muestra la suma total de bautizados registrados en los reportes de bautismo.</li>'
+          + '<li><strong>🌱 Generación 1, Generación 2 y Generación 3:</strong> Representan la cantidad total de grupos pertenecientes a cada una de estas generaciones.</li>'
+          + '</ul>'
+    },
+    'capacitacion': {
+      title: '🎓 Capacitación',
+      html: '<ul>'
+          + '<li><strong>👨‍🏫 Líderes Capacitados:</strong> Corresponde a la suma total de la asistencia registrada en reportes y grupos pertenecientes a la Generación 0.</li>'
+          + '<li><strong>📋 Total Capacitadores:</strong> Representa la cantidad total de reportes y grupos creados que pertenecen a la Generación 0.</li>'
+          + '</ul>'
+    },
+    'sankey': {
+      title: '🔄 Flujo por Generación',
+      html: '<ul>'
+          + '<li><strong>📈 Flujo generacional:</strong> Esta gráfica muestra cómo los grupos han avanzado y se han multiplicado de una generación a otra, permitiendo visualizar el crecimiento y desarrollo del proceso.</li>'
+          + '</ul>'
+    },
+    'asistencia': {
+      title: '👥 Gráfica de Asistencia',
+      html: '<ul>'
+          + '<li><strong>📊 Distribución:</strong> Presenta la asistencia total registrada en reportes y grupos, mostrando cómo se distribuye la participación (Hombres, Mujeres, Jóvenes y Niños) dentro del proceso.</li>'
+          + '</ul>'
+    },
+    'proceso': {
+      title: '📋 Datos del Proceso',
+      html: '<ul>'
+          + '<li><strong>✝️ Bautizados:</strong> Suma total de bautizados registrados en los reportes de bautismo.</li>'
+          + '<li><strong>📖 En Discipulado:</strong> Suma total de personas que se encuentran en proceso de discipulado registradas en reportes de coaching.</li>'
+          + '<li><strong>❤️ Decisiones:</strong> Suma total de decisiones de fe registradas en reportes de evangelismo y coaching.</li>'
+          + '<li><strong>🌟 Preparándose:</strong> Suma total de personas que se encuentran en proceso de preparación registradas en reportes de coaching.</li>'
+          + '<li><strong>🎓 Líderes Capacitados:</strong> Suma total de la asistencia registrada en reportes y grupos pertenecientes a la Generación 0.</li>'
+          + '</ul>'
+    }
+  };
+
+  function openInfo(key){
+    var data = INFO[key];
+    if(!data) return;
+    document.getElementById('dbInfoTitle').textContent = data.title;
+    document.getElementById('dbInfoBody').innerHTML   = data.html;
+    document.getElementById('dbInfoOverlay').classList.add('active');
+  }
+
+  function closeInfo(){
+    document.getElementById('dbInfoOverlay').classList.remove('active');
+  }
+
+  // Cerrar con botón X
+  document.getElementById('dbInfoClose').addEventListener('click', closeInfo);
+
+  // Cerrar clickeando el overlay (fuera del modal)
+  document.getElementById('dbInfoOverlay').addEventListener('click', function(e){
+    if(e.target === this) closeInfo();
+  });
+
+  // Cerrar con Escape
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape') closeInfo();
+  });
+
+  // Exponer función globalmente para los botones
+  window.dbOpenInfo = openInfo;
+})();
+</script>
 
 <script type="text/javascript">
 google.charts.load("current", {packages:["corechart","treemap","sankey"]});
