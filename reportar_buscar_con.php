@@ -471,12 +471,64 @@ SUM(sat_reportes.preparandose) as preparandose,
                 <button type="button" class="btn btn-info" data-toggle="collapse" data-target="#infoReporte">
                     <span class="glyphicon glyphicon-info-sign"></span>
                     Más información
+                    
                 </button>
             </div>
 
-            <div id="infoReporte" class="collapse alert alert-info" style="margin-top:10px; text-align:left;">
-                Aquí irá la explicación del reporte.
-            </div>
+            <div id="infoReporte" class="collapse" style="margin-top:15px;">
+
+    <div class="alert alert-info" style="text-align:left; padding:20px;">
+
+        <h3 style="margin-top:0;">
+            📊 Guía de Interpretación del Reporte
+        </h3>
+
+        <p style="font-size:15px; margin-bottom:20px;">
+            Esta tabla presenta un resumen consolidado de la información registrada por cada facilitador.
+        </p>
+
+        <div style="font-size:15px; line-height:1.8;">
+
+            <p>
+                👥 <strong>Grupos:</strong>
+                Total histórico de grupos creados. Este valor <strong>no se ve afectado por los filtros de fecha</strong>.
+            </p>
+
+            <p>
+                📈 <strong>Asistencia:</strong>
+                Suma total de asistentes registrados en los grupos y reportes consultados.
+            </p>
+
+            <p>
+                🙌 <strong>Bautizados:</strong>
+                Suma total de bautizados registrados en los reportes de bautismo.
+            </p>
+
+            <p>
+                ❤️ <strong>Decisiones:</strong>
+                Suma total de decisiones de fe registradas en reportes de evangelismo y coaching.
+            </p>
+
+            <p>
+                📚 <strong>Preparándose:</strong>
+                Total de personas que se encuentran en proceso de preparación.
+            </p>
+
+            <p>
+                🎯 <strong>En Discipulado:</strong>
+                Total de personas que se encuentran en proceso de discipulado.
+            </p>
+
+            <p>
+                👨‍🏫 <strong>Líderes Capacitándose:</strong>
+                Suma de la asistencia total registrada en los reportes y grupos de <strong>Generación 0</strong>.
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
         </div>
 
         <div class="hr"><hr></div>
