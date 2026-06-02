@@ -460,14 +460,28 @@ SUM(sat_reportes.preparandose) as preparandose,
     </style>
 
     <div class="container">
-        <div class="cont-tit">
-            <div class="hr"><hr></div>
-            <div class="tit-cen">
-                <h3>RESULTADOS DE BUSQUEDA</h3>
-                <h5><?php echo $total_registros; ?> Registros encontrados</h5>
+    <div class="cont-tit">
+        <div class="hr"><hr></div>
+
+        <div class="tit-cen">
+            <h3>RESULTADOS DE BUSQUEDA</h3>
+            <h5><?php echo $total_registros; ?> Registros encontrados</h5>
+
+            <div style="margin-top:10px;">
+                <button type="button" class="btn btn-info" data-toggle="collapse" data-target="#infoReporte">
+                    <span class="glyphicon glyphicon-info-sign"></span>
+                    Más información
+                </button>
             </div>
-            <div class="hr"><hr></div>
+
+            <div id="infoReporte" class="collapse alert alert-info" style="margin-top:10px; text-align:left;">
+                Aquí irá la explicación del reporte.
+            </div>
         </div>
+
+        <div class="hr"><hr></div>
+    </div>
+
     <table border="0" cellspacing="0" cellpadding="2"  align="center" class="table table-bordered" style="font-size:12px">
         <thead>
             <tr> 
