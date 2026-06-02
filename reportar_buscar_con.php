@@ -456,6 +456,7 @@ SUM(sat_reportes.preparandose) as preparandose,
     .table a{
         color:#000;
     }
+    
 
     </style>
 
@@ -486,12 +487,19 @@ SUM(sat_reportes.preparandose) as preparandose,
         <p style="font-size:15px; margin-bottom:20px;">
             Esta tabla presenta un resumen consolidado de la información registrada por cada facilitador.
         </p>
+        <style>
+#infoReporte,
+#infoReporte p,
+#infoReporte strong{
+    font-size:15px;
+}
+</style>
 
         <div style="font-size:15px; line-height:1.8;">
 
             <p>
                 👥 <strong>Grupos:</strong>
-                Total histórico de grupos creados. Este valor <strong>no se ve afectado por los filtros de fecha</strong>.
+                Total histórico de grupos creados. Este valor no se ve afectado por los filtros de fecha.
             </p>
 
             <p>
@@ -521,7 +529,7 @@ SUM(sat_reportes.preparandose) as preparandose,
 
             <p>
                 👨‍🏫 <strong>Líderes Capacitándose:</strong>
-                Suma de la asistencia total registrada en los reportes y grupos de <strong>Generación 0</strong>.
+                Suma de la asistencia total registrada en los reportes y grupos de Generación 0
             </p>
 
         </div>
@@ -720,7 +728,13 @@ SUM(sat_reportes.preparandose) as preparandose,
     }
     </script>
 
-
+<style>
+#infoReporte,
+#infoReporte p,
+#infoReporte strong{
+    font-size:15px;
+}
+</style>
     <script>
     jQuery(document).ready(function($) {
         $(".clickable-row").click(function() {
