@@ -18,14 +18,14 @@ if(!isset($_REQUEST["fechaInicial"]) || eliminarInvalidos($_REQUEST["fechaInicia
     $_REQUEST["fechaInicial"] = date("2021-02-01");
 }
 
-// Si la fecha final no fue declarada y no existe, se toma la fecha del d¨ªa como fecha final
+// Si la fecha final no fue declarada y no existe, se toma la fecha del dï¿½ï¿½a como fecha final
 if(!isset($_REQUEST["fechaFinal"]) || eliminarInvalidos($_REQUEST["fechaFinal"]) == ""){
     $siguiente_anho = date("Y", strtotime("+1 year"));
     //$_REQUEST["fechaFinal"] = $siguiente_anho."-01-31";
     $_REQUEST["fechaFinal"] = date("Y-m-d");
 }
 
-// Si el a0Š9o fue declarado, se toma ese a0Š9o de referencia de lo contratio, se tomar¨¢ el a0Š9o actual
+// Si el aï¿½0ï¿½9o fue declarado, se toma ese aï¿½0ï¿½9o de referencia de lo contratio, se tomarï¿½ï¿½ el aï¿½0ï¿½9o actual
 if (!empty($_REQUEST['rep_ani'])) {
     $anio = $_REQUEST['rep_ani'];
 }else{
@@ -276,7 +276,12 @@ if(isset($_REQUEST["excelXML"])){
     $sqlGenIncluidaReporte = "(sat_reportes.generacionNumero != 0 AND sat_reportes.generacionNumero != 77)";
     $sql = "SELECT
                 sat_reportes.idUsuario,
-                SUM(CASE WHEN ".$sqlGenIncluidaReporte." THEN 1 ELSE 0 END) AS gruposConteo,
+                (
+    SELECT COUNT(*)
+    FROM sat_reportes sr_grupos
+    WHERE sr_grupos.idUsuario = sat_reportes.idUsuario
+    AND sr_grupos.id_grupo = 0
+) AS gruposConteo,
                 
                 (SELECT SUM(sat_reportes_asistencia.asistencia_total)
                  FROM sat_reportes AS sat_reportes_asistencia
@@ -471,19 +476,16 @@ if(isset($_REQUEST["excelXML"])){
             <tr> 
                 <th>Id</th>
                 <th>Facilitador</th>
-                    <th>RM</th>
-                    <th>Proceso</th>
-                    <th>Sitio</th>
+                <th>RM</th>
+                <th>Proceso</th>
+                <th>Sitio</th>
                 <th>Grupos</th>
-                <th>Grupos Nuevos</th>
+                <th>Asistencia</th>
                 <th>Bautizados</th>
-                    <th>Asistencia</th>
                 <th>Decisiones</th>
                 <th>Preparandose</th>
-                    <th>Bautizados este periodo</th>
                 <th>En Discipulado</th>
-                    <th>Lideres capacitandose</th>
-                <th>Iglesias Reconocidas</th>
+                <th>Lideres capacitandose</th>
             </tr>
         </thead>
         <tbody>
@@ -587,19 +589,16 @@ if(isset($_REQUEST["excelXML"])){
                     ?><tr>
                         <td><?=$contador; ?></td>
                         <td><?=$nombreUsuario; ?></td>
-                            <td><?=$empresa_rm; ?></td>
-                            <td><?=$empresa_proceso; ?></td>
-                            <td><?=$empresa_sitio; ?></td>
+                        <td><?=$empresa_rm; ?></td>
+                        <td><?=$empresa_proceso; ?></td>
+                        <td><?=$empresa_sitio; ?></td>
                         <td align="center"><?=$gruposConteo; ?></td>
-                        <td align="center"><?=$gruposNuevos; ?></td>
+                        <td align="center"><?=$asistencia_total; ?></td>
                         <td align="center"><?=$bautizados; ?></td>
-                            <td align="center"><?=$asistencia_total; ?></td>
                         <td align="center"><?=$desiciones; ?></td>
                         <td align="center"><?=$preparandose; ?></td>
-                            <td align="center"><?=$bautizadosPeriodo; ?></td>
                         <td align="center"><?=$discipulado; ?></td>
-                            <td align="center"><?=$lideresCapacitandose; ?></td>
-                        <td align="center"><?=$iglesias_reconocidas; ?></td>
+                        <td align="center"><?=$lideresCapacitandose; ?></td>
                     </tr>
                     <?php
                     $contador++;
