@@ -1,30 +1,26 @@
 <?php
 /*******************************************
-DASHBOARD 3 - 5 VISUALES
+DASHBOARD 3 - 4 VISUALES (REDISEÑO)
 Archivo: graphs_dashboard3.php
 
-#1 (DOBLE, juntos): GRAN CELEBRACIÓN (gen=8)
-   - ColumnChart: Personas alcanzadas vs Actividades
-   - Donut: Distribución H/M/J/N
+#1: MADUREZ ESPIRITUAL (mapeo_*, solo reportes de Coach id_actividad=1)
+    - ColumnChart: promedio (escala 1-4) de cada área de madurez
 
-#2: GRUPOS POR GENERACIÓN (excluye 0,77,8) - Donut
+#2: ACTIVIDADES ESPECIALES (id_actividad IN 5,10,11,12,13,14)
+    - PieChart: frecuencia de actividades poco comunes
 
-#3: PORCENTAJES DE EFECTIVIDAD (excluye 0 y 77)
-   - Filtros extra SOLO aquí: meta1 y meta2
+#3: IGLESIAS RECONOCIDAS
+    - LineChart: tendencia mensual de iglesias_reconocidas
 
-#4: ASISTENCIA MENSUAL X FACILITADOR (excluye 0,77,8)
-   - Requiere facilitador seleccionado (idUsuario)
+#4: CRECIMIENTO ACUMULADO DE PERSONAS ALCANZADAS
+    - LineChart: suma acumulada de asistencia_total mes a mes
+
+ID MENU (permiso): 23
 *******************************************/
 
 /* =========================
    HELPERS
    ========================= */
-function obtenerPorcentajeSeguro($cantidad, $total){
-    $total = (float)$total;
-    if($total <= 0) return 0;
-    $porcentaje = ((float)$cantidad * 100) / $total;
-    return round($porcentaje, 2);
-}
 function db_first_row(DBbase_Sql $db, $sql){
     $db->query($sql);
     if($db->num_rows() > 0){
@@ -35,13 +31,6 @@ function db_first_row(DBbase_Sql $db, $sql){
 }
 function req_num($key){
     return (isset($_REQUEST[$key]) && soloNumeros($_REQUEST[$key]) != "") ? soloNumeros($_REQUEST[$key]) : "";
-}
-function req_int_or_default($key, $default){
-    if(isset($_REQUEST[$key]) && eliminarInvalidos($_REQUEST[$key]) != ""){
-        return (int)eliminarInvalidos($_REQUEST[$key]);
-    }
-    $_REQUEST[$key] = $default;
-    return (int)$default;
 }
 function req_date_or_default($key, $default){
     if(isset($_REQUEST[$key]) && soloNumeros($_REQUEST[$key]) != ""){
@@ -66,38 +55,7 @@ function build_filtros_sat($idUsuario, $fechaInicial, $fechaFinal, $paisId){
         $base .= " AND usuario_empresa.empresa_paisid = '".$paisId."'";
     }
 
-    $excl = $base;
-    $excl .= " AND sat_reportes.generacionNumero != 0";
-    $excl .= " AND sat_reportes.generacionNumero != 77";
-    $excl .= " AND sat_reportes.generacionNumero != 8";
-
-    return [$excl, $base];
-}
-function g3_label($k){
-    switch((int)$k){
-        case 1: return "Evangelismo (real)";
-        case 2: return "Discipulado";
-        case 3: return "Decisiones para Cristo";
-        case 4: return "Bautizos";
-        case 5: return "IPG Gen 1";
-        case 6: return "IPG Gen 2";
-        case 7: return "IPG Gen 3";
-        case 8: return "Asistencia";
-        default: return "Meta";
-    }
-}
-function g3_pick_val($k, $ev_real, $dis, $dec, $bau, $ig1, $ig2, $ig3, $asis){
-    switch((int)$k){
-        case 1: return (int)$ev_real;
-        case 2: return (int)$dis;
-        case 3: return (int)$dec;
-        case 4: return (int)$bau;
-        case 5: return (int)$ig1;
-        case 6: return (int)$ig2;
-        case 7: return (int)$ig3;
-        case 8: return (int)$asis;
-        default: return 0;
-    }
+    return $base;
 }
 
 /* =========================
@@ -108,7 +66,7 @@ $PSN  = new DBbase_Sql;
 $PSN2 = new DBbase_Sql;
 
 /* =========================
-   AUTORIZACIÓN (1, 2 o 11)
+   AUTORIZACIÓN
    ========================= */
 $sql = "SELECT idMenu
         FROM usuarios_menu_graphs
@@ -135,229 +93,155 @@ $fechaFinal   = req_date_or_default("fechaFinal",   $fechaFinal);
 $buscar_idUsuario = req_num("idUsuario");
 $empresa_paisid   = req_num("empresa_paisid");
 
-list($sqlFiltroExcl, $sqlFiltroBase) = build_filtros_sat($buscar_idUsuario, $fechaInicial, $fechaFinal, $empresa_paisid);
+$sqlFiltroBase = build_filtros_sat($buscar_idUsuario, $fechaInicial, $fechaFinal, $empresa_paisid);
 
 /* =========================
-   FILTROS EXTRA SOLO G3
+   #1: MADUREZ ESPIRITUAL (reportes de Coach, id_actividad = 1)
    ========================= */
-$meta1 = req_int_or_default("meta1", 1);
-$meta2 = req_int_or_default("meta2", 2);
-if($meta1 < 1 || $meta1 > 8) $meta1 = 1;
-if($meta2 < 1 || $meta2 > 8) $meta2 = 2;
+$varErrorMadurez = 0;
+$nombreMadurez = "MADUREZ ESPIRITUAL DE LOS GRUPOS";
+$datosMadurez = [];
 
-/* =========================
-   #1 (DOBLE): GRAN CELEBRACIÓN (gen=8, filtro BASE)
-   ========================= */
-$varErrorGc = 0;
-$nombreGc = "GRAN CELEBRACIÓN";
+$camposMadurez = [
+    'mapeo_oracion'       => 'Oración',
+    'mapeo_companerismo'  => 'Compañerismo',
+    'mapeo_adoracion'     => 'Adoración',
+    'mapeo_biblia'        => 'Aplicar la Biblia',
+    'mapeo_evangelizar'   => 'Evangelizar',
+    'mapeo_cena'          => 'Cena del Señor',
+    'mapeo_dar'           => 'Dar ofrenda',
+    'mapeo_bautizar'      => 'Bautizar',
+    'mapeo_trabajadores'  => 'Entrenar líderes',
+];
 
-$gc_asistencia = 0;
-$gc_conteo = 0;
-$gc_hom = 0;
-$gc_muj = 0;
-$gc_jov = 0;
-$gc_nin = 0;
+$selectAvg = [];
+foreach($camposMadurez as $campo => $label){
+    $selectAvg[] = "AVG(sat_reportes.".$campo.") as ".$campo;
+}
 
-$datosGcCol = [];
-$datosGcPie = [];
-
-$sql = "SELECT
-            COUNT(sat_reportes.id) as conteo,
-            SUM(sat_reportes.asistencia_total) as asistencia_total,
-            SUM(sat_reportes.asistencia_hom) as asistencia_hom,
-            SUM(sat_reportes.asistencia_muj) as asistencia_muj,
-            SUM(sat_reportes.asistencia_jov) as asistencia_jov,
-            SUM(sat_reportes.asistencia_nin) as asistencia_nin
+$sql = "SELECT ".implode(", ", $selectAvg)."
         FROM sat_reportes
         LEFT JOIN usuario_empresa ON usuario_empresa.idUsuario = sat_reportes.idUsuario
-        WHERE sat_reportes.generacionNumero = 8 ".$sqlFiltroBase;
+        WHERE sat_reportes.id_grupo > 0
+          AND sat_reportes.id_actividad = 1
+          ".$sqlFiltroBase;
 
 if($row = db_first_row($PSN, $sql)){
-    $gc_asistencia = (int)$row->f('asistencia_total');
-    $gc_conteo     = (int)$row->f('conteo');
-    $gc_hom = (int)$row->f('asistencia_hom');
-    $gc_muj = (int)$row->f('asistencia_muj');
-    $gc_jov = (int)$row->f('asistencia_jov');
-    $gc_nin = (int)$row->f('asistencia_nin');
-
-    if($gc_conteo <= 0 && $gc_asistencia <= 0){
-        $varErrorGc = 1;
-    } else {
-        $datosGcCol[] = ["Personas alcanzadas", $gc_asistencia];
-        $datosGcCol[] = ["Actividades", $gc_conteo];
-
-        $datosGcPie[] = ["Hombres", $gc_hom];
-        $datosGcPie[] = ["Mujeres", $gc_muj];
-        $datosGcPie[] = ["Jóvenes", $gc_jov];
-        $datosGcPie[] = ["Niños",   $gc_nin];
+    $hayDatos = false;
+    foreach($camposMadurez as $campo => $label){
+        $valor = round((float)$row->f($campo), 2);
+        if($valor > 0) $hayDatos = true;
+        $datosMadurez[] = [$label, $valor];
     }
+    if(!$hayDatos) $varErrorMadurez = 1;
 } else {
-    $varErrorGc = 1;
+    $varErrorMadurez = 1;
 }
 
 /* =========================
-   #2: GRUPOS POR GENERACIÓN (filtro EXCL)
+   #2: ACTIVIDADES ESPECIALES
    ========================= */
-$varErrorG2 = 0;
-$nombreG2 = "GRUPOS POR GENERACIÓN";
-$totalG2 = 0;
-$textoG2 = "";
-$datosG2 = [];
+$varErrorEspeciales = 0;
+$nombreEspeciales = "ACTIVIDADES ESPECIALES";
+$totalEspeciales = 0;
+$datosEspeciales = [];
+
+$nombresActividad = [
+    5  => 'Otra',
+    10 => 'Siembra abundante',
+    11 => 'Caminata de oración',
+    12 => 'Identificar al hijo de paz',
+    13 => 'Oración Exp y Ferviente',
+    14 => 'Taller',
+];
 
 $sql = "SELECT
-            sat_reportes.generacionNumero,
-            COUNT(sat_reportes.id) AS conteo
+            sat_reportes.id_actividad,
+            COUNT(sat_reportes.id) as conteo
         FROM sat_reportes
         LEFT JOIN usuario_empresa ON usuario_empresa.idUsuario = sat_reportes.idUsuario
-        WHERE 1 ".$sqlFiltroExcl."
-        GROUP BY sat_reportes.generacionNumero
-        ORDER BY sat_reportes.generacionNumero ASC";
+        WHERE sat_reportes.id_grupo > 0
+          AND sat_reportes.id_actividad IN (5, 10, 11, 12, 13, 14)
+          ".$sqlFiltroBase."
+        GROUP BY sat_reportes.id_actividad
+        ORDER BY conteo DESC";
 
 $PSN->query($sql);
 if($PSN->num_rows() > 0){
     while($PSN->next_record()){
-        $gen = (int)$PSN->f('generacionNumero');
-        $cnt = (int)$PSN->f('conteo');
+        $idAct  = (int)$PSN->f('id_actividad');
+        $conteo = (int)$PSN->f('conteo');
+        $nombre = isset($nombresActividad[$idAct]) ? $nombresActividad[$idAct] : "Otra";
 
-        $textoG2 .= "| GENERACIÓN ".$gen.": ".$cnt." ";
-        $datosG2[] = ["GENERACIÓN ".$gen, $cnt];
-        $totalG2 += $cnt;
+        $datosEspeciales[] = [$nombre, $conteo];
+        $totalEspeciales += $conteo;
     }
-    if($totalG2 <= 0) $varErrorG2 = 1;
+    if($totalEspeciales <= 0) $varErrorEspeciales = 1;
 } else {
-    $varErrorG2 = 1;
+    $varErrorEspeciales = 1;
 }
 
 /* =========================
-   #3: PORCENTAJES DE EFECTIVIDAD (meta1/meta2 SOLO aquí)
+   #3: IGLESIAS RECONOCIDAS (tendencia mensual)
    ========================= */
-$varErrorG3 = 0;
-$nombreG3 = "PORCENTAJES DE EFECTIVIDAD";
-$nombre_actual_g3 = "";
-
-$anho_actual = date("Y", strtotime($fechaInicial));
-
-$sqlFiltroG3_limpio = $sqlFiltroBase; // permite gen 77 para evangelismo real
-$sqlFiltroG3        = $sqlFiltroBase." AND sat_reportes.generacionNumero != 0 AND sat_reportes.generacionNumero != 77";
-
-$idUsuarioMetas = 0;
-if($buscar_idUsuario !== "") $idUsuarioMetas = (int)$buscar_idUsuario;
-if(isset($_SESSION["perfil"]) && $_SESSION["perfil"] == 163) $idUsuarioMetas = (int)$_SESSION["id"];
-
-if($idUsuarioMetas == 0){
-    $nombreG3 .= " (SATURA NACIONES)";
-} else {
-    $sql = "SELECT nombre FROM usuario WHERE id = '".$idUsuarioMetas."' LIMIT 1";
-    if($row = db_first_row($PSN, $sql)){
-        $nombre_actual_g3 = " ".$row->f('nombre');
-    }
-}
-
-$satura_evangelismo = 0;
-$satura_discipulado = 0;
-$satura_bautizos = 0;
+$varErrorIglesias = 0;
+$nombreIglesias = "IGLESIAS RECONOCIDAS";
+$totalIglesias = 0;
+$datosIglesias = [];
 
 $sql = "SELECT
-            SUM(sat_reportes.asistencia_total) as evangelismo,
-            SUM(sat_reportes.discipulado) as discipulado,
-            SUM(sat_reportes.bautizadosPeriodo) as bautizos
+            DATE_FORMAT(sat_reportes.fechaReporte, '%Y-%m') as ym,
+            DATE_FORMAT(sat_reportes.fechaReporte, '%b %Y') as periodo,
+            SUM(sat_reportes.iglesias_reconocidas) as total
         FROM sat_reportes
         LEFT JOIN usuario_empresa ON usuario_empresa.idUsuario = sat_reportes.idUsuario
-        WHERE 1 ".$sqlFiltroG3;
+        WHERE sat_reportes.id_grupo > 0
+          ".$sqlFiltroBase."
+        GROUP BY ym, periodo
+        ORDER BY ym ASC";
 
-if($row = db_first_row($PSN, $sql)){
-    $satura_evangelismo = (int)$row->f('evangelismo');
-    $satura_discipulado = (int)$row->f('discipulado');
-    $satura_bautizos    = (int)$row->f('bautizos');
+$PSN->query($sql);
+if($PSN->num_rows() > 0){
+    while($PSN->next_record()){
+        $valor = (int)$PSN->f('total');
+        $datosIglesias[] = [$PSN->f('periodo'), $valor];
+        $totalIglesias += $valor;
+    }
+    if($totalIglesias <= 0) $varErrorIglesias = 1;
 } else {
-    $varErrorG3 = 1;
-}
-
-$satura_iglesias  = 0;
-$satura_iglesias2 = 0;
-$satura_iglesias3 = 0;
-
-$sqlIglesias = "SELECT COUNT(sat_reportes.id) as iglesias
-                FROM sat_reportes
-                LEFT JOIN usuario_empresa ON usuario_empresa.idUsuario = sat_reportes.idUsuario
-                WHERE 1 ".$sqlFiltroG3;
-
-if($varErrorG3 == 0){
-    if($row = db_first_row($PSN, $sqlIglesias." AND sat_reportes.generacionNumero = 1")) $satura_iglesias = (int)$row->f('iglesias');
-    if($row = db_first_row($PSN, $sqlIglesias." AND sat_reportes.generacionNumero = 2")) $satura_iglesias2 = (int)$row->f('iglesias');
-    if($row = db_first_row($PSN, $sqlIglesias." AND sat_reportes.generacionNumero = 3")) $satura_iglesias3 = (int)$row->f('iglesias');
-}
-
-$satura_evangelismo_real = 0;
-$sql = "SELECT SUM(sat_reportes.asistencia_total) as evangelismo
-        FROM sat_reportes
-        LEFT JOIN usuario_empresa ON usuario_empresa.idUsuario = sat_reportes.idUsuario
-        WHERE sat_reportes.generacionNumero = 77 ".$sqlFiltroG3_limpio;
-if($varErrorG3 == 0){
-    if($row = db_first_row($PSN, $sql)) $satura_evangelismo_real = (int)$row->f('evangelismo');
-}
-
-$desiciones = 0;
-$sql = "SELECT SUM(sat_reportes.desiciones) as desiciones
-        FROM sat_reportes
-        LEFT JOIN usuario_empresa ON usuario_empresa.idUsuario = sat_reportes.idUsuario
-        WHERE 1 ".$sqlFiltroG3;
-if($varErrorG3 == 0){
-    if($row = db_first_row($PSN, $sql)) $desiciones = (int)$row->f('desiciones');
-}
-
-$g3_meta1_valor = 0;
-$g3_rows = [];
-
-if($varErrorG3 == 0){
-    $g3_meta1_valor = g3_pick_val($meta1, $satura_evangelismo_real, $satura_discipulado, $desiciones, $satura_bautizos, $satura_iglesias, $satura_iglesias2, $satura_iglesias3, $satura_evangelismo);
-    $g3_rows[] = [g3_label($meta1), $g3_meta1_valor];
-
-    $val2 = g3_pick_val($meta2, $satura_evangelismo_real, $satura_discipulado, $desiciones, $satura_bautizos, $satura_iglesias, $satura_iglesias2, $satura_iglesias3, $satura_evangelismo);
-    $pct2 = obtenerPorcentajeSeguro($val2, max(1, $g3_meta1_valor));
-    $g3_rows[] = [$pct2."% ".g3_label($meta2), $val2];
-
-    if($g3_meta1_valor <= 0 && $val2 <= 0) $varErrorG3 = 1;
+    $varErrorIglesias = 1;
 }
 
 /* =========================
-   #4: ASISTENCIA MENSUAL X FACILITADOR (filtro EXCL)
-   - REQUIERE idUsuario (facilitador)
-   - Serie única: SUM(asistencia_total) por mes
+   #4: CRECIMIENTO ACUMULADO DE PERSONAS ALCANZADAS
    ========================= */
-$varErrorG4 = 0;
-$nombreG4 = "ASISTENCIA MENSUAL X FACILITADOR";
-$totalG4 = 0;
-$datosG4 = []; // [ ['Mes', valor], ... ]
+$varErrorCrecimiento = 0;
+$nombreCrecimiento = "CRECIMIENTO ACUMULADO DE PERSONAS ALCANZADAS";
+$totalCrecimiento = 0;
+$datosCrecimiento = [];
 
-if($buscar_idUsuario == ""){
-    $varErrorG4 = 2; // estado: falta facilitador
-} else {
-    $sql = "SELECT
-                YEAR(sat_reportes.fechaReporte) as anho,
-                MONTH(sat_reportes.fechaReporte) as mes,
-                SUM(sat_reportes.asistencia_total) as total_mes
-            FROM sat_reportes
-            LEFT JOIN usuario_empresa ON usuario_empresa.idUsuario = sat_reportes.idUsuario
-            WHERE 1 ".$sqlFiltroExcl."
-            GROUP BY anho, mes
-            ORDER BY anho ASC, mes ASC";
+$sql = "SELECT
+            DATE_FORMAT(sat_reportes.fechaReporte, '%Y-%m') as ym,
+            DATE_FORMAT(sat_reportes.fechaReporte, '%b %Y') as periodo,
+            SUM(sat_reportes.asistencia_total) as total_mes
+        FROM sat_reportes
+        LEFT JOIN usuario_empresa ON usuario_empresa.idUsuario = sat_reportes.idUsuario
+        WHERE sat_reportes.id_grupo > 0
+          ".$sqlFiltroBase."
+        GROUP BY ym, periodo
+        ORDER BY ym ASC";
 
-    $PSN->query($sql);
-    if($PSN->num_rows() > 0){
-        while($PSN->next_record()){
-            $anho = (int)$PSN->f('anho');
-            $mes  = (int)$PSN->f('mes');
-            $val  = (int)$PSN->f('total_mes');
-
-            $labelMes = $mesesNom[$mes]." ".$anho;
-            $datosG4[] = [$labelMes, $val];
-            $totalG4 += $val;
-        }
-        if($totalG4 <= 0) $varErrorG4 = 1;
-    } else {
-        $varErrorG4 = 1;
+$PSN->query($sql);
+if($PSN->num_rows() > 0){
+    $acumulado = 0;
+    while($PSN->next_record()){
+        $acumulado += (int)$PSN->f('total_mes');
+        $datosCrecimiento[] = [$PSN->f('periodo'), $acumulado];
     }
+    $totalCrecimiento = $acumulado;
+    if($totalCrecimiento <= 0) $varErrorCrecimiento = 1;
+} else {
+    $varErrorCrecimiento = 1;
 }
 ?>
 
@@ -381,6 +265,11 @@ if($buscar_idUsuario == ""){
   justify-content:space-between;
   gap: 10px;
   flex-wrap: wrap;
+}
+.db-card__title-wrap{
+  display:flex;
+  align-items:center;
+  gap: 8px;
 }
 .db-card__title{
   margin:0;
@@ -409,28 +298,102 @@ if($buscar_idUsuario == ""){
 
 .chart-box{ width:100%; height: 360px; }
 
-.duo-grid{ display:flex; flex-wrap:wrap; margin-left:-8px; margin-right:-8px; }
-.duo-col{ padding-left:8px; padding-right:8px; width:50%; }
-.duo-title{
-  margin: 0 0 8px 0;
+/* ===== Botón de información ===== */
+.db-info-btn{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #0259a5;
+  background: transparent;
+  color: #0259a5;
+  font-size: 13px;
   font-weight: 900;
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: .3px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background .18s, color .18s;
+  flex-shrink: 0;
+  padding: 0;
 }
-.chart-duo{ height: 360px; }
+.db-info-btn:hover{
+  background: #0259a5;
+  color: #fff;
+}
+
+/* ===== Modal de descripción ===== */
+.db-info-overlay{
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 9998;
+  align-items: center;
+  justify-content: center;
+}
+.db-info-overlay.active{
+  display: flex;
+}
+.db-info-modal{
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.18);
+  max-width: 480px;
+  width: calc(100% - 32px);
+  padding: 28px 28px 22px 28px;
+  position: relative;
+  animation: dbModalIn .18s ease;
+}
+@keyframes dbModalIn{
+  from{ transform: scale(.94); opacity:0; }
+  to  { transform: scale(1);   opacity:1; }
+}
+.db-info-modal__close{
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: #888;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+}
+.db-info-modal__close:hover{ color: #333; }
+.db-info-modal__title{
+  font-size: 18px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  margin: 0 0 16px 0;
+  color: #0259a5;
+  padding-right: 24px;
+}
+.db-info-modal__body{
+  font-size: 16px;
+  line-height: 1.8;
+  color: #333;
+}
+.db-info-modal__body p{
+  margin: 0 0 8px 0;
+}
+.db-info-modal__body ul{
+  margin: 0 0 8px 14px;
+  padding: 0;
+}
+.db-info-modal__body li{
+  margin-bottom: 5px;
+}
 
 @media (max-width: 992px){
   .chart-box{ height: 340px; }
-  .chart-duo{ height: 340px; }
 }
 @media (max-width: 767px){
   .db-card{ border-radius: 12px; }
   .db-card__title{ font-size: 12px; }
   .chart-box{ height: 320px; }
-  .chart-duo{ height: 320px; }
-  .duo-col{ width:100%; }
-  .duo-col + .duo-col{ margin-top: 14px; }
 
   form.form-horizontal .form-group > [class*="col-"]{
     width: 100% !important;
@@ -468,7 +431,7 @@ if($buscar_idUsuario == ""){
   </div>
 
   <div class="form-group">
-    <div class="col-sm-3">
+    <div class="col-sm-4">
       <strong>Facilitador Satura:</strong>
       <select name="idUsuario" onchange="this.form.submit()" class="form-control">
         <?php if($_SESSION["perfil"] != 163){ ?>
@@ -493,9 +456,6 @@ if($buscar_idUsuario == ""){
         }
         ?>
       </select>
-      <small style="display:block; margin-top:6px; opacity:.75;">
-        * Para la gráfica de <b>Asistencia mensual</b> debes seleccionar un facilitador.
-      </small>
     </div>
 
     <?php if($_SESSION["perfil"] != 163){ ?>
@@ -532,23 +492,7 @@ if($buscar_idUsuario == ""){
       <input type="date" name="fechaFinal" id="fechaFinal" value="<?=$fechaFinal;?>" class="form-control" />
     </div>
 
-    <div class="col-sm-2">
-      <strong>Meta 1 / Meta 2 (solo Efectividad):</strong>
-      <div style="display:flex; gap:8px;">
-        <select name="meta1" class="form-control" onchange="this.form.submit()">
-          <?php for($i=1;$i<=8;$i++){ $sel = ($meta1 == $i) ? 'selected="selected"' : ''; ?>
-            <option value="<?=$i;?>" <?=$sel;?>><?=g3_label($i);?></option>
-          <?php } ?>
-        </select>
-        <select name="meta2" class="form-control" onchange="this.form.submit()">
-          <?php for($i=1;$i<=8;$i++){ $sel = ($meta2 == $i) ? 'selected="selected"' : ''; ?>
-            <option value="<?=$i;?>" <?=$sel;?>><?=g3_label($i);?></option>
-          <?php } ?>
-        </select>
-      </div>
-    </div>
-
-    <div class="col-sm-12" style="margin-top:10px;">
+    <div class="col-sm-1"><br>
       <input type="submit" value="Filtrar" class="btn btn-success" />
     </div>
   </div>
@@ -560,59 +504,26 @@ if($buscar_idUsuario == ""){
   <div class="hr"><hr></div>
 </div>
 
-<!-- #1 BLOQUE DOBLE -->
-<div class="row">
-  <div class="col-lg-12 col-md-12 col-sm-12">
-    <div class="db-card">
-      <div class="db-card__head">
-        <h4 class="db-card__title"><?=$nombreGc;?></h4>
-        <div class="db-card__meta">
-          <?php if($varErrorGc == 0){ ?>
-            <span class="db-pill">Personas: <?=$gc_asistencia;?></span>
-            <span class="db-pill">Actividades: <?=$gc_conteo;?></span>
-          <?php } ?>
-        </div>
-      </div>
-      <div class="db-card__body">
-        <?php if($varErrorGc == 1){ ?>
-          <div class="alert alert-warning text-center" style="margin-bottom:0;">
-            No se ha encontrado ningún registro para el rango de fechas seleccionado.
-          </div>
-        <?php } else { ?>
-          <div class="duo-grid">
-            <div class="duo-col">
-              <div class="duo-title">Total (Personas vs Actividades)</div>
-              <div id="chart_gc_col" class="chart-box chart-duo"></div>
-            </div>
-            <div class="duo-col">
-              <div class="duo-title">Distribución (H/M/J/N)</div>
-              <div id="chart_gc_pie" class="chart-box chart-duo"></div>
-            </div>
-          </div>
-        <?php } ?>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- FILA: #2 y #3 -->
+<!-- #1 y #2 -->
 <div class="row">
   <div class="col-lg-6 col-md-6 col-sm-12">
     <div class="db-card">
       <div class="db-card__head">
-        <h4 class="db-card__title"><?=$nombreG2;?></h4>
+        <div class="db-card__title-wrap">
+          <h4 class="db-card__title"><?=$nombreMadurez;?></h4>
+          <button class="db-info-btn" onclick="dbOpenInfo('madurez')" type="button" title="Ver descripción">i</button>
+        </div>
         <div class="db-card__meta">
-          <?php if($varErrorG2 == 0){ ?><span class="db-pill">Total: <?=$totalG2;?></span><?php } ?>
+          <span class="db-pill">Escala 1 a 4</span>
         </div>
       </div>
       <div class="db-card__body">
-        <?php if($varErrorG2 == 1){ ?>
+        <?php if($varErrorMadurez == 1){ ?>
           <div class="alert alert-warning text-center" style="margin-bottom:0;">
-            No se ha encontrado ningún registro para el rango de fechas seleccionado.
+            No se ha encontrado información de reportes de Coach para el rango de fechas seleccionado.
           </div>
         <?php } else { ?>
-          <div style="margin-bottom:8px; opacity:.9; font-size:12px; line-height:1.2;"><?=$textoG2;?></div>
-          <div id="chart_g2" class="chart-box"></div>
+          <div id="chart_madurez" class="chart-box"></div>
         <?php } ?>
       </div>
     </div>
@@ -621,53 +532,70 @@ if($buscar_idUsuario == ""){
   <div class="col-lg-6 col-md-6 col-sm-12">
     <div class="db-card">
       <div class="db-card__head">
-        <h4 class="db-card__title"><?=$nombreG3.$nombre_actual_g3;?></h4>
+        <div class="db-card__title-wrap">
+          <h4 class="db-card__title"><?=$nombreEspeciales;?></h4>
+          <button class="db-info-btn" onclick="dbOpenInfo('especiales')" type="button" title="Ver descripción">i</button>
+        </div>
         <div class="db-card__meta">
-          <?php if($varErrorG3 == 0){ ?>
-            <span class="db-pill"><?=g3_label($meta1);?>: <?=$g3_meta1_valor;?></span>
-          <?php } ?>
+          <?php if($varErrorEspeciales == 0){ ?><span class="db-pill">Total: <?=$totalEspeciales;?></span><?php } ?>
         </div>
       </div>
       <div class="db-card__body">
-        <?php if($varErrorG3 == 1){ ?>
+        <?php if($varErrorEspeciales == 1){ ?>
           <div class="alert alert-warning text-center" style="margin-bottom:0;">
-            No se ha encontrado ningún registro o no hay base para calcular.
+            No se ha encontrado ningún registro de actividades especiales para el rango de fechas seleccionado.
           </div>
         <?php } else { ?>
-          <div style="margin-bottom:8px; opacity:.9; font-size:12px;">
-            Comparación: <b><?=g3_label($meta2);?></b> como porcentaje relativo a <b><?=g3_label($meta1);?></b>.
-          </div>
-          <div id="chart_g3" class="chart-box"></div>
+          <div id="chart_especiales" class="chart-box"></div>
         <?php } ?>
       </div>
     </div>
   </div>
 </div>
 
-<!-- #4 FULL WIDTH -->
+<!-- #3 y #4 -->
 <div class="row">
-  <div class="col-lg-12 col-md-12 col-sm-12">
+  <div class="col-lg-6 col-md-6 col-sm-12">
     <div class="db-card">
       <div class="db-card__head">
-        <h4 class="db-card__title"><?=$nombreG4;?></h4>
+        <div class="db-card__title-wrap">
+          <h4 class="db-card__title"><?=$nombreIglesias;?></h4>
+          <button class="db-info-btn" onclick="dbOpenInfo('iglesias')" type="button" title="Ver descripción">i</button>
+        </div>
         <div class="db-card__meta">
-          <?php if($varErrorG4 == 0){ ?><span class="db-pill">Total: <?=$totalG4;?></span><?php } ?>
+          <?php if($varErrorIglesias == 0){ ?><span class="db-pill">Total: <?=$totalIglesias;?></span><?php } ?>
         </div>
       </div>
       <div class="db-card__body">
-        <?php if($varErrorG4 == 2){ ?>
-          <div class="alert alert-warning text-center" style="margin-bottom:0;">
-            Debes seleccionar un facilitador para ver esta gráfica.
-          </div>
-        <?php } else if($varErrorG4 == 1){ ?>
+        <?php if($varErrorIglesias == 1){ ?>
           <div class="alert alert-warning text-center" style="margin-bottom:0;">
             No se ha encontrado ningún registro para el rango de fechas seleccionado.
           </div>
         <?php } else { ?>
-          <div style="margin-bottom:8px; opacity:.9; font-size:12px;">
-            Muestra la <b>asistencia total</b> por mes para el facilitador seleccionado.
+          <div id="chart_iglesias" class="chart-box"></div>
+        <?php } ?>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6 col-md-6 col-sm-12">
+    <div class="db-card">
+      <div class="db-card__head">
+        <div class="db-card__title-wrap">
+          <h4 class="db-card__title"><?=$nombreCrecimiento;?></h4>
+          <button class="db-info-btn" onclick="dbOpenInfo('crecimiento')" type="button" title="Ver descripción">i</button>
+        </div>
+        <div class="db-card__meta">
+          <?php if($varErrorCrecimiento == 0){ ?><span class="db-pill">Total: <?=number_format($totalCrecimiento);?></span><?php } ?>
+        </div>
+      </div>
+      <div class="db-card__body">
+        <?php if($varErrorCrecimiento == 1){ ?>
+          <div class="alert alert-warning text-center" style="margin-bottom:0;">
+            No se ha encontrado ningún registro para el rango de fechas seleccionado.
           </div>
-          <div id="chart_g4" class="chart-box"></div>
+        <?php } else { ?>
+          <div id="chart_crecimiento" class="chart-box"></div>
         <?php } ?>
       </div>
     </div>
@@ -675,6 +603,15 @@ if($buscar_idUsuario == ""){
 </div>
 
 </div><!-- /container -->
+
+<!-- ===== Modal de información de gráficas ===== -->
+<div class="db-info-overlay" id="dbInfoOverlay">
+  <div class="db-info-modal">
+    <button class="db-info-modal__close" id="dbInfoClose" title="Cerrar">&times;</button>
+    <h4 class="db-info-modal__title" id="dbInfoTitle"></h4>
+    <div class="db-info-modal__body" id="dbInfoBody"></div>
+  </div>
+</div>
 
 <script type="text/javascript">
 google.charts.load("current", {packages:["corechart"]});
@@ -698,7 +635,7 @@ google.charts.setOnLoadCallback(drawAllCharts);
       if(window.__dbRoTimer) clearTimeout(window.__dbRoTimer);
       window.__dbRoTimer = setTimeout(drawAllCharts, 220);
     });
-    ['chart_gc_col','chart_gc_pie','chart_g2','chart_g3','chart_g4'].forEach(function(id){
+    ['chart_madurez','chart_especiales','chart_iglesias','chart_crecimiento'].forEach(function(id){
       var el = document.getElementById(id);
       if(el) ro.observe(el);
     });
@@ -706,76 +643,56 @@ google.charts.setOnLoadCallback(drawAllCharts);
 })();
 
 function drawAllCharts(){
-  drawGranCelebracion();
-  drawG2();
-  drawG3();
-  drawG4();
+  drawMadurez();
+  drawEspeciales();
+  drawIglesias();
+  drawCrecimiento();
 }
 
-/* ===== #1 BLOQUE DOBLE ===== */
-function drawGranCelebracion(){
-  <?php if($varErrorGc == 0){ ?>
-  var dataCol = google.visualization.arrayToDataTable([
-    ['Tipo', 'Cantidad', { role:'annotation' }],
+/* ===== #1 Madurez Espiritual (ColumnChart escala 1-4) ===== */
+function drawMadurez(){
+  <?php if($varErrorMadurez == 0){ ?>
+  var data = google.visualization.arrayToDataTable([
+    ['Área', 'Promedio', { role:'annotation' }],
     <?php
       $rows = [];
-      foreach($datosGcCol as $r){
+      foreach($datosMadurez as $r){
         $label = str_replace("'", "\\'", $r[0]);
-        $val = (int)$r[1];
-        $rows[] = "['".$label."', ".$val.", '".number_format($val, 0, ",", ".")."']";
+        $val = (float)$r[1];
+        $rows[] = "['".$label."', ".$val.", '".number_format($val, 2)."']";
       }
       echo implode(",\n    ", $rows);
     ?>
   ]);
 
-  var elCol = document.getElementById('chart_gc_col');
-  var w = (elCol && elCol.clientWidth) ? elCol.clientWidth : 700;
+  var el = document.getElementById('chart_madurez');
+  if(!el) return;
+  var w = el.clientWidth || 600;
   var isMobile = (w <= 480);
 
-  var optionsCol = {
-    animation:{ startup:true, duration:1200, easing:'out' },
+  var options = {
+    animation:{ startup:true, duration:1000, easing:'out' },
     legend: { position: 'none' },
-    bar: { groupWidth: "70%" },
-    chartArea: isMobile ? { width:'84%', height:'74%' } : { width:'80%', height:'78%' },
-    vAxis: { title: 'Cantidad', minValue: 0 },
-    hAxis: { textStyle: { fontSize: isMobile ? 10 : 12 } },
+    colors: ['#0259a5'],
+    bar: { groupWidth: isMobile ? "70%" : "62%" },
+    chartArea: isMobile ? { width:'88%', height:'62%' } : { width:'84%', height:'70%' },
+    vAxis: { minValue: 0, maxValue: 4, ticks: [0,1,2,3,4] },
+    hAxis: { textStyle: { fontSize: isMobile ? 9 : 11 }, slantedText: true, slantedTextAngle: 30 },
     annotations: { textStyle: { fontSize: isMobile ? 10 : 12 } }
   };
 
-  new google.visualization.ColumnChart(elCol).draw(dataCol, optionsCol);
-
-  var dataPie = google.visualization.arrayToDataTable([
-    ['Tipo', 'Cantidad'],
-    <?php
-      $rows = [];
-      foreach($datosGcPie as $r){
-        $label = str_replace("'", "\\'", $r[0]);
-        $rows[] = "['".$label."', ".(int)$r[1]."]";
-      }
-      echo implode(",\n    ", $rows);
-    ?>
-  ]);
-
-  var optionsPie = {
-    pieHole: 0.45,
-    sliceVisibilityThreshold: 0,
-    legend: { position: 'bottom' },
-    chartArea: { width: '94%', height: '80%' },
-    tooltip: { text: 'both' }
-  };
-
-  new google.visualization.PieChart(document.getElementById('chart_gc_pie')).draw(dataPie, optionsPie);
+  new google.visualization.ColumnChart(el).draw(data, options);
   <?php } ?>
 }
 
-/* ===== #2 ===== */
-function drawG2(){
-  <?php if($varErrorG2 == 0){ ?>
+/* ===== #2 Actividades Especiales (PieChart) ===== */
+function drawEspeciales(){
+  <?php if($varErrorEspeciales == 0){ ?>
   var data = google.visualization.arrayToDataTable([
-    ['Generación', 'Grupos'],
+    ['Actividad', 'Cantidad'],
     <?php
       $rows = [];
-      foreach($datosG2 as $r){
+      foreach($datosEspeciales as $r){
         $label = str_replace("'", "\\'", $r[0]);
         $rows[] = "['".$label."', ".(int)$r[1]."]";
       }
@@ -783,15 +700,15 @@ function drawG2(){
     ?>
   ]);
 
-  var el = document.getElementById('chart_g2');
+  var el = document.getElementById('chart_especiales');
   if(!el) return;
-
   var w = el.clientWidth || 600;
   var isMobile = (w <= 480);
 
   var options = {
     pieHole: 0.45,
     sliceVisibilityThreshold: 0,
+    colors: ['#0259a5','#27ae60','#f39c12','#8e44ad','#e74c3c','#16a085'],
     legend: { position: 'bottom', textStyle: { fontSize: isMobile ? 10 : 12 } },
     chartArea: isMobile ? { width:'96%', height:'78%' } : { width:'94%', height:'80%' },
     tooltip: { text: 'both' }
@@ -801,50 +718,14 @@ function drawG2(){
   <?php } ?>
 }
 
-/* ===== #3 ===== */
-function drawG3(){
-  <?php if($varErrorG3 == 0){ ?>
+/* ===== #3 Iglesias Reconocidas (LineChart) ===== */
+function drawIglesias(){
+  <?php if($varErrorIglesias == 0){ ?>
   var data = google.visualization.arrayToDataTable([
-    ['Nombre', 'Valor', {role:'annotation'}],
+    ['Mes', 'Iglesias reconocidas'],
     <?php
       $rows = [];
-      foreach($g3_rows as $r){
-        $label = str_replace("'", "\\'", $r[0]);
-        $val = (int)$r[1];
-        $rows[] = "['".$label."', ".$val.", '".number_format($val, 0, ",", ".")."']";
-      }
-      echo implode(",\n    ", $rows);
-    ?>
-  ]);
-
-  var el = document.getElementById('chart_g3');
-  if(!el) return;
-
-  var w = el.clientWidth || 600;
-  var isMobile = (w <= 480);
-
-  var options = {
-    animation:{ startup:true, duration:1200, easing:'out' },
-    legend: { position: 'none' },
-    bar: { groupWidth: isMobile ? "70%" : "62%" },
-    chartArea: isMobile ? { width:'86%', height:'74%' } : { width:'82%', height:'78%' },
-    vAxis: { title: 'Valor', minValue: 0 },
-    hAxis: { textStyle: { fontSize: isMobile ? 10 : 12 } },
-    annotations: { textStyle: { fontSize: isMobile ? 10 : 12 } }
-  };
-
-  new google.visualization.ColumnChart(el).draw(data, options);
-  <?php } ?>
-}
-
-/* ===== #4 ===== */
-function drawG4(){
-  <?php if($varErrorG4 == 0){ ?>
-  var data = google.visualization.arrayToDataTable([
-    ['Mes', 'Asistencia'],
-    <?php
-      $rows = [];
-      foreach($datosG4 as $r){
+      foreach($datosIglesias as $r){
         $label = str_replace("'", "\\'", $r[0]);
         $rows[] = "['".$label."', ".(int)$r[1]."]";
       }
@@ -852,17 +733,19 @@ function drawG4(){
     ?>
   ]);
 
-  var el = document.getElementById('chart_g4');
+  var el = document.getElementById('chart_iglesias');
   if(!el) return;
-
   var w = el.clientWidth || 700;
   var isMobile = (w <= 480);
 
   var options = {
-    animation:{ startup:true, duration:1200, easing:'out' },
-    curveType: 'none',
-    legend: { position: 'bottom', textStyle: { fontSize: isMobile ? 10 : 12 } },
-    chartArea: isMobile ? { width:'92%', height:'70%' } : { width:'90%', height:'74%' },
+    animation:{ startup:true, duration:1000, easing:'out' },
+    curveType: 'function',
+    colors: ['#27ae60'],
+    lineWidth: 3,
+    pointSize: 6,
+    legend: { position: 'none' },
+    chartArea: isMobile ? { width:'90%', height:'68%' } : { width:'88%', height:'74%' },
     hAxis: { textStyle: { fontSize: isMobile ? 10 : 12 }, slantedText: true, slantedTextAngle: isMobile ? 45 : 30 },
     vAxis: { minValue: 0 }
   };
@@ -870,4 +753,98 @@ function drawG4(){
   new google.visualization.LineChart(el).draw(data, options);
   <?php } ?>
 }
+
+/* ===== #4 Crecimiento Acumulado de Personas Alcanzadas (LineChart) ===== */
+function drawCrecimiento(){
+  <?php if($varErrorCrecimiento == 0){ ?>
+  var data = google.visualization.arrayToDataTable([
+    ['Mes', 'Acumulado'],
+    <?php
+      $rows = [];
+      foreach($datosCrecimiento as $r){
+        $label = str_replace("'", "\\'", $r[0]);
+        $rows[] = "['".$label."', ".(int)$r[1]."]";
+      }
+      echo implode(",\n    ", $rows);
+    ?>
+  ]);
+
+  var el = document.getElementById('chart_crecimiento');
+  if(!el) return;
+  var w = el.clientWidth || 700;
+  var isMobile = (w <= 480);
+
+  var options = {
+    animation:{ startup:true, duration:1000, easing:'out' },
+    curveType: 'function',
+    colors: ['#8e44ad'],
+    lineWidth: 3,
+    pointSize: 0,
+    areaOpacity: 0.15,
+    legend: { position: 'none' },
+    chartArea: isMobile ? { width:'90%', height:'68%' } : { width:'88%', height:'74%' },
+    hAxis: { textStyle: { fontSize: isMobile ? 10 : 12 }, slantedText: true, slantedTextAngle: isMobile ? 45 : 30 },
+    vAxis: { minValue: 0 }
+  };
+
+  new google.visualization.AreaChart(el).draw(data, options);
+  <?php } ?>
+}
+
+/* ===== Sistema de Info ===== */
+(function(){
+  var INFO = {
+    'madurez': {
+      title: '🌱 Madurez Espiritual de los Grupos',
+      html: '<ul>'
+          + '<li><strong>📊 Promedio por área:</strong> Muestra el promedio (en una escala de 1 a 4) de cómo califican los coaches a los grupos en Oración, Compañerismo, Adoración, Aplicar la Biblia, Evangelizar, Cena del Señor, Dar ofrenda, Bautizar y Entrenar líderes.</li>'
+          + '<li><strong>📋 Fuente:</strong> Solo se calcula con los reportes de tipo Coach, donde se evalúa la madurez del grupo como iglesia.</li>'
+          + '<li><strong>💡 Úsala para:</strong> identificar qué áreas necesitan más acompañamiento en los grupos.</li>'
+          + '</ul>'
+    },
+    'especiales': {
+      title: '🎉 Actividades Especiales',
+      html: '<ul>'
+          + '<li><strong>📌 Actividades:</strong> Frecuencia de actividades poco comunes registradas: Siembra abundante, Caminata de oración, Identificar al hijo de paz, Oración Expectante y Ferviente, Taller y Otra.</li>'
+          + '<li><strong>💡 Úsala para:</strong> ver qué tipo de actividades complementarias se están realizando además del proceso regular de grupos.</li>'
+          + '</ul>'
+    },
+    'iglesias': {
+      title: '⛪ Iglesias Reconocidas',
+      html: '<ul>'
+          + '<li><strong>📈 Tendencia mensual:</strong> Muestra cuántas iglesias han sido reconocidas oficialmente cada mes, según lo registrado en los reportes.</li>'
+          + '<li><strong>💡 Úsala para:</strong> medir el avance formal de los grupos hacia convertirse en iglesias reconocidas.</li>'
+          + '</ul>'
+    },
+    'crecimiento': {
+      title: '📈 Crecimiento Acumulado de Personas Alcanzadas',
+      html: '<ul>'
+          + '<li><strong>👥 Acumulado:</strong> Suma, mes a mes, el total de personas alcanzadas (asistencia) desde el inicio del rango de fechas seleccionado.</li>'
+          + '<li><strong>💡 Úsala para:</strong> visualizar el alcance total del movimiento a lo largo del tiempo, sin importar si hubo meses con menor actividad.</li>'
+          + '</ul>'
+    }
+  };
+
+  function openInfo(key){
+    var data = INFO[key];
+    if(!data) return;
+    document.getElementById('dbInfoTitle').textContent = data.title;
+    document.getElementById('dbInfoBody').innerHTML   = data.html;
+    document.getElementById('dbInfoOverlay').classList.add('active');
+  }
+
+  function closeInfo(){
+    document.getElementById('dbInfoOverlay').classList.remove('active');
+  }
+
+  document.getElementById('dbInfoClose').addEventListener('click', closeInfo);
+  document.getElementById('dbInfoOverlay').addEventListener('click', function(e){
+    if(e.target === this) closeInfo();
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape') closeInfo();
+  });
+
+  window.dbOpenInfo = openInfo;
+})();
 </script>
