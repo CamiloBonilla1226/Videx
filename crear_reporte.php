@@ -42,7 +42,23 @@ try {
         'evangelismo' => 77,
         'bautizo' => 99,
         'gran_celebracion' => 8,
-        'reunion_cotidiana' => 1
+        'reunion_cotidiana' => 1,
+        'siembra_abundante' => 10,
+        'caminata_oracion' => 11,
+        'identificar_hijo_paz' => 12,
+        'oracion_exp_ferviente' => 13,
+        'taller' => 14,
+        'otra_actividad' => 5
+    );
+
+    $actividadesTipoEvangelismo = array(
+        'evangelismo',
+        'siembra_abundante',
+        'caminata_oracion',
+        'identificar_hijo_paz',
+        'oracion_exp_ferviente',
+        'taller',
+        'otra_actividad'
     );
 
     if (!isset($actividades[$tipoActividad])) {
@@ -72,7 +88,7 @@ try {
     $preparandose = max(0, intval($data['preparandose'] ?? 0));
     $comentario = addslashes((string)($data['comentario'] ?? ''));
 
-    if ($tipoActividad === 'evangelismo') {
+    if (in_array($tipoActividad, $actividadesTipoEvangelismo, true)) {
         $bautizados = 0;
         $discipulado = 0;
         $preparandose = 0;
