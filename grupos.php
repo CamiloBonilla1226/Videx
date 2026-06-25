@@ -966,6 +966,10 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         border-left: 4px solid #7f8c8d;
     }
 
+    .activity-button.otra {
+        border-left: 4px solid #8e44ad;
+    }
+
     .activity-button strong {
         display: block;
         font-size: 16px;
@@ -1423,6 +1427,36 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                 <button type="button" class="activity-button reunion" onclick="selectActivity('reunion_cotidiana')">
                     <strong>🤝 Coach</strong>
                     <span>Reunión regular del grupo</span>
+                </button>
+
+                <button type="button" class="activity-button otra" onclick="selectActivity('siembra_abundante')">
+                    <strong>🌱 Siembra Abundante</strong>
+                    <span>Actividad de siembra abundante</span>
+                </button>
+
+                <button type="button" class="activity-button otra" onclick="selectActivity('caminata_oracion')">
+                    <strong>🚶 Caminata de Oración</strong>
+                    <span>Caminata de oración por el sector</span>
+                </button>
+
+                <button type="button" class="activity-button otra" onclick="selectActivity('identificar_hijo_paz')">
+                    <strong>🕊️ Identificar al Hijo de Paz</strong>
+                    <span>Actividad para identificar al hijo de paz</span>
+                </button>
+
+                <button type="button" class="activity-button otra" onclick="selectActivity('oracion_exp_ferviente')">
+                    <strong>🙏 Oración Exp. y Ferviente</strong>
+                    <span>Oración expectante y ferviente</span>
+                </button>
+
+                <button type="button" class="activity-button otra" onclick="selectActivity('taller')">
+                    <strong>🛠️ Taller</strong>
+                    <span>Taller de capacitación</span>
+                </button>
+
+                <button type="button" class="activity-button otra" onclick="selectActivity('otra_actividad')">
+                    <strong>➕ Otra Actividad</strong>
+                    <span>Otra actividad no listada</span>
                 </button>
             </div>
         </div>
@@ -2975,7 +3009,15 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         } else if (tipoActividad === 'gran_celebracion') {
             comentariosSection.style.display = 'block';
             asistenciaLabel.textContent = 'Asistencia';
-        } else if (tipoActividad === 'evangelismo') {
+        } else if ([
+            'evangelismo',
+            'siembra_abundante',
+            'caminata_oracion',
+            'identificar_hijo_paz',
+            'oracion_exp_ferviente',
+            'taller',
+            'otra_actividad'
+        ].includes(tipoActividad)) {
             comentariosSection.style.display = 'block';
             configurarMetricas({
                 mostrar: true,
@@ -3001,7 +3043,13 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             'evangelismo': '🌍 Nuevo Reporte - Evangelismo',
             'gran_celebracion': '🎉 Nuevo Reporte - Gran Celebración',
             'bautizo': '💧 Nuevo Reporte - Bautizo',
-            'reunion_cotidiana': '🤝 Nuevo Reporte - Coach'
+            'reunion_cotidiana': '🤝 Nuevo Reporte - Coach',
+            'siembra_abundante': '🌱 Nuevo Reporte - Siembra Abundante',
+            'caminata_oracion': '🚶 Nuevo Reporte - Caminata de Oración',
+            'identificar_hijo_paz': '🕊️ Nuevo Reporte - Identificar al Hijo de Paz',
+            'oracion_exp_ferviente': '🙏 Nuevo Reporte - Oración Exp. y Ferviente',
+            'taller': '🛠️ Nuevo Reporte - Taller',
+            'otra_actividad': '➕ Nuevo Reporte - Otra Actividad'
         };
         document.getElementById('formTitle').textContent = titles[tipoActividad] || 'Nuevo Reporte';
 
