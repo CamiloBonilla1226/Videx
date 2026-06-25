@@ -1460,6 +1460,11 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                     <strong>➕ Otra Actividad</strong>
                     <span>Otra actividad no listada</span>
                 </button>
+
+                <button type="button" class="activity-button otra" onclick="selectActivity('capacitacion')">
+                    <strong>🎓 Capacitación</strong>
+                    <span>Actividad de capacitación</span>
+                </button>
             </div>
         </div>
 
@@ -3018,7 +3023,8 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             'identificar_hijo_paz',
             'oracion_exp_ferviente',
             'taller',
-            'otra_actividad'
+            'otra_actividad',
+            'capacitacion'
         ].includes(tipoActividad)) {
             comentariosSection.style.display = 'block';
             configurarMetricas({
@@ -3051,7 +3057,8 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
             'identificar_hijo_paz': '🕊️ Nuevo Reporte - Identificar al Hijo de Paz',
             'oracion_exp_ferviente': '🙏 Nuevo Reporte - Oración Exp. y Ferviente',
             'taller': '🛠️ Nuevo Reporte - Taller',
-            'otra_actividad': '➕ Nuevo Reporte - Otra Actividad'
+            'otra_actividad': '➕ Nuevo Reporte - Otra Actividad',
+            'capacitacion': '🎓 Nuevo Reporte - Capacitación'
         };
         document.getElementById('formTitle').textContent = titles[tipoActividad] || 'Nuevo Reporte';
 

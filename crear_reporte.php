@@ -48,7 +48,8 @@ try {
         'identificar_hijo_paz' => 12,
         'oracion_exp_ferviente' => 13,
         'taller' => 14,
-        'otra_actividad' => 5
+        'otra_actividad' => 5,
+        'capacitacion' => 100
     );
 
     $actividadesTipoEvangelismo = array(
@@ -58,7 +59,8 @@ try {
         'identificar_hijo_paz',
         'oracion_exp_ferviente',
         'taller',
-        'otra_actividad'
+        'otra_actividad',
+        'capacitacion'
     );
 
     if (!isset($actividades[$tipoActividad])) {
