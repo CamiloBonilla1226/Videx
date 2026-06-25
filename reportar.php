@@ -1555,7 +1555,7 @@ if($idReporteActual > 0){
             if($generacionPertenece === ""){
                 $generacionPertenece = $generacionNumeroOriginal;
             }
-            if((int)$idActividad == 77){
+            if(in_array((int)$idActividad, array(77, 5, 10, 11, 12, 13, 14, 100), true)){
                 $generacionNumero = 77;
             }else if((int)$idActividad == 8){
                 $generacionNumero = 8;
@@ -1605,7 +1605,7 @@ if($idReporteActual > 0){
             $mapeo_bautizar = $PSN1->f("mapeo_bautizar");  
             $mapeo_trabajadores = $PSN1->f("mapeo_trabajadores");  
 
-            $esActividadEvangelismo = ((int)$idActividad == 77);
+            $esActividadEvangelismo = in_array((int)$idActividad, array(77, 5, 10, 11, 12, 13, 14, 100), true);
             $esActividadGranCelebracion = ((int)$idActividad == 8);
             $esActividadCoach = ((int)$idActividad == 1);
             $esActividadBautizo = ((int)$idActividad == 99);
