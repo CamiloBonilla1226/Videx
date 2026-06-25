@@ -1236,7 +1236,7 @@ if(isset($_GET["doc"]) && !empty( $_GET["doc"]) && is_logged_in())
 
         ?>
 
-        <li><a href="index.php?doc=mis_documentos" target="_self" title="Ver mis documentos"><i class="fas fa-cloud-download-alt"></i> Descargas</a></li>
+                 <li><a href="index.php?doc=mis_documentos" target="_self" title="Ver mis documentos"><i class="fas fa-cloud-download-alt"></i> Tutoriales / Videos</a></li>
 
             
 

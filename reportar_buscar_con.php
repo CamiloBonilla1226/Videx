@@ -519,12 +519,12 @@ SUM(sat_reportes.preparandose) as preparandose,
 
             <p>
                 📚 <strong>Preparándose:</strong>
-                Total de personas que se encuentran en proceso de preparación.
+                Suma total de personas que se encuentran en proceso de preparación en reportes de coaching.
             </p>
 
             <p>
                 🎯 <strong>En Discipulado:</strong>
-                Total de personas que se encuentran en proceso de discipulado.
+               Suma total de personas que se encuentran en proceso de discipulado en reportes de coaching.
             </p>
 
             <p>

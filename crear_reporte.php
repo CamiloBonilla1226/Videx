@@ -186,11 +186,6 @@ try {
 
     $idGrupoMadre = (int)$PSN1->f('idGrupoMadre');
     $generacionNumero = (int)$PSN1->f('generacionNumero');
-    if ($tipoActividad === 'evangelismo') {
-        $generacionNumero = 77;
-    } elseif ($tipoActividad === 'gran_celebracion') {
-        $generacionNumero = 8;
-    }
     $plantador = addslashes((string)$PSN1->f('plantador'));
     $sitioReunion = addslashes((string)$PSN1->f('sitioReunion'));
     $grupoMadre_txt = addslashes((string)$PSN1->f('grupoMadre_txt'));
