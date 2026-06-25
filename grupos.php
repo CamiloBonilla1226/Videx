@@ -953,19 +953,19 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
     }
 
     .activity-button.evangelismo {
-        border-left: 4px solid #5a6c57;
+        border-left: 4px solid #8e44ad;
     }
 
     .activity-button.gran-celebracion {
-        border-left: 4px solid #7f8c8d;
+        border-left: 4px solid #8e44ad;
     }
 
     .activity-button.bautizo {
-        border-left: 4px solid #2c3e50;
+        border-left: 4px solid #8e44ad;
     }
 
     .activity-button.reunion {
-        border-left: 4px solid #7f8c8d;
+        border-left: 4px solid #8e44ad;
     }
 
     .activity-button.otra {
