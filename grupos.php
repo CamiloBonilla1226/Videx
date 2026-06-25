@@ -904,6 +904,8 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
         max-width: 500px;
         width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
     }
 
     .activity-modal-header {
@@ -1468,7 +1470,7 @@ $nombreFacilitador = $_SESSION['nombre'] ?? 'Usuario';
                 <button class="activity-modal-close" onclick="closeActivityModal()">✕</button>
             </div>
 
-            <form id="newReportForm" onsubmit="saveNewReport(event)" style="max-height: 500px; overflow-y: auto;">
+            <form id="newReportForm" onsubmit="saveNewReport(event)">
                 <div class="form-field-error form-general-error" id="newReportFormError"></div>
                 <!-- Campo de Fecha de Actividad -->
                 <div class="form-group">
